@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../styles/clock.css"/>
+    <script type="module" src="../scripts/clock.js" defer></script>
+    <title>Mosher Lawms</title>
+  </head>
+  <body>
+    <div class="data-section">
+      <div class="top-div">
+        <h3>Clock In/Out</h3>
+      </div>
+      <div class="dropdowns">
+        <label for="emp-select">Employee</label>
+        <select id="emp-select">
+          <option value="">--</option>
+        </select>
+        <label for="cust-select">Customer</label>
+        <select id="cust-select">
+          <option value="">--</option>
+        </select>
+      </div>
+      <div class="clock-buttons">
+        <button id="clock-in-button" type="button">Clock In</button>
+      </div>
+    </div>
+    <div class="active-section">
+      <h3>Active Shifts</h3>
+      <p id="shift-error"></p>
+      <div class="active-list-section">
+        <ul id="activeShiftsList" class="shift-list">
+          <li class="empty-msg">No active shifts.</li>
+        </ul>
+      </div>
+    </div>
+  </body>
+  
+  </html>

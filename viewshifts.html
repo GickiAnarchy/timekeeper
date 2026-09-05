@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles/shifts.css"/>
+    <script type="module" src="scripts/shifts.js" defer></script>
+    <title>Mosher Lawms</title>
+  </head>
+  <body>
+    <div class="shifts-section">
+      <h3><u>Shift History</u></h3>
+      <ul id="shiftList" class="shifts-list">
+        <li class="empty-list shift-card">No Shift History</li>
+      </ul>
+    </div>
+    
+    <!-- SHIFT VIEW MODAL -->
+    <dialog class="modal" id="viewShiftModal">
+      <h3>Shift Details</h3>
+      <div class="shift-data" id="shiftBase">
+        <label for="shift-emp">Employee:</label>
+        <select id="shift-emp"></select>
+        <label for="shift-cust">Customer:</label>
+        <select id="shift-cust"></select>
+      </div>
+      <div class="shift-data" id="shiftTime">
+        <label for="shift-start">Start:</label>
+        <input type="datetime-local" id="shift-start" />
+        <label for="shift-end">End:</label>
+        <input type="datetime-local" id="shift-end" />
+        <label for="total-hours">Hours:</label>
+        <input type="text" id="total-hours" disabled="true">
+      </div>
+      <div class="shift-data" id="shiftNote">
+        <label for="note-view">Notes:</label>
+        <textarea type="text" id="note-view"></textarea>
+        <label for="paid-checkbox-view">
+          <input type="checkbox" id="paid-checkbox-view" /> Paid
+        </label>
+      </div>
+      <button type="button" id="ok-btn">OK</button>
+    </dialog>
+  </body>
+</html>
+

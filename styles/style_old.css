@@ -1,0 +1,216 @@
+@font-face {
+  font-family: 'RabiesFont';
+  src: url('../fonts/rabies.ttf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: black;
+  color: white;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.center-home {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 90%;
+  max-width: 420px;
+  padding: 30px 20px;
+  border: solid 4px green;
+  border-radius: 40px 5px 40px 5px;
+  gap: 20px;
+  text-align: center;
+}
+
+.center-home hr {
+  height: 10px;
+  width: 18em;
+  
+}
+
+#logo-home {
+  font-family: 'RabiesFont', sans-serif;
+  color: white;
+  font-size: 3rem;
+  font-weight: normal;
+  margin: 0;
+  text-shadow: 3px 3px green;
+}
+
+.nav-container {
+  display: flex;
+  gap: 15px;
+  width: 100%;
+  justify-content: center;
+}
+
+.btns {
+  padding: 7px 12px;
+  //min-height: 24px;
+  cursor: pointer;
+  background-color: transparent;
+  color: antiquewhite;
+  border: 2px solid green;
+  border-radius: 10px;
+  font-size: 1em;
+  font-weight: bold;
+}
+
+.btns:hover {
+  background-color: green;
+}
+
+#back-arrow {
+  color: crimson;
+  position: fixed;
+  left: 15px;
+  top: 15px;
+  font-size: 1.1rem;
+  text-decoration: none;
+  font-weight: bold;
+  z-index: 100;
+}
+
+.main-clock {
+  justify-content: flex-start;
+  padding-top: 5px;
+  width: 100%;
+}
+
+.card {
+  border: 1px dashed purple;
+  margin: 15px auto;
+  padding: 15px;
+  width: 90%;
+  //max-width: 500px;
+  border-radius: 15px;
+}
+
+#main-clock {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  color: white;
+  border: solid 2px white;
+  border-radius: 20px;
+  background-color: #111;
+}
+
+#main-clock h2 {
+  color: purple;
+  margin-top: 0;
+  font-size: 1.5rem;
+}
+
+.clock-form {
+  display: flex;
+  flex-direction: column;
+  //width: 100%;
+  gap: 5px;
+}
+
+.clock-form label {
+  text-align: center;
+  width: 90%;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+.clock-form select, 
+#main-clock button {
+  align-self: center;
+  width: fit-content;
+  min-height: 25px;
+  padding: 10px;
+  font-size: 14px;
+  background-color: #222;
+  color: white;
+  border: 1px solid #555;
+  border-radius: 18px;
+}
+
+#clockInButton {
+  background-color: green;
+  color: white;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+#clockInButton:hover {
+  background-color: darkgreen;
+}
+
+#activeLists {
+  padding: 15px;
+  color: white;
+  background-color: #111;
+}
+
+.shift-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.shift-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #222;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+
+.stop-btn {
+  background-color: crimson;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  min-height: 40px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.error-msg {
+  color: #ff6b6b;
+  font-size: 0.9rem;
+}
+
+.home-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+}
+
+.top-image {
+  display: flex;
+  justify-content: center;
+  align-content: center;
+}
+
+#logo-image {
+  box-shadow: 3px 4px 8px 4px rgb(124,252,50,0.3);
+  width: 90%;
+  height: 75%;
+  margin-bottom: 10px;
+}

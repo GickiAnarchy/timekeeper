@@ -1,0 +1,44 @@
+.main-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: start;
+  gap: 15px;
+}
+
+.emp-add-section,
+.emp-list-section,
+.cust-add-section,
+.cust-list-section {
+  flex: 1; /* Gives both sections equal width side-by-side */
+}
+
+.add-form {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid black;
+  padding: 5px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 25px;
+}
+
+/* Add vertical spacing to the textarea */
+#cust-note {
+  margin-top: 5px;
+  margin-bottom: 15px;
+  display: block;
+}
+
+/* Space out the label above the textarea */
+label[for="cust-note"] {
+  margin-top: 10px;
+  display: block;
+}
+
+li {
+  justify-content: center;
+  padding: 2px;
+  font-size: 14px;
+  border: 2px solid green;
+}

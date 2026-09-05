@@ -1,0 +1,14 @@
+.ledger-table {
+border: 2px solid black;  
+}
+
+th {
+  background-color: #009879;
+  border: 1px solid #black
+  color: #ffffff;
+  font-weight: bold;
+}
+
+tr {
+  border-bottom: 1px solid #black;
+}

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../styles/data.css"/>
+    <script type="module" src="../scripts/data.js" defer></script>
+    <title>Mosher Lawms</title>
+  </head>
+  <body>
+    <h2>Customers</h2>
+    <div class="main-container">
+      <div class="cust-list-section">
+        <ol class="cust-list" id="cust-list">
+          <li class="empty-list cust-item">No Customers</li>
+        </ol>
+      </div>
+        <div class="cust-add-section">
+          <form class="add-form" id="add-cust-form">
+            <div class="top-form">
+              <label for="cust-name">Name:</label>
+              <input type="text" id="cust-name">
+              <label for="cust-loc">Location:</label>
+              <input type="text" id="cust-loc">
+              <label for="cust-note">Note:</label>
+              <textarea id="cust-note" col="15" rows="7"></textarea>
+            </div>
+            <div class="bottom-form">
+              <button type="submit" id="add-cust-btn">Add</button>
+              <button type="reset" id="reset-btn">Reset</button>
+            </div>
+          </form>
+        </div>
+    </div>
+  </body>
+  
+</html>
