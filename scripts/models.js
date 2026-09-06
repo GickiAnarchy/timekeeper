@@ -91,10 +91,8 @@ export class WorkShift {
     this.id = id || crypto.randomUUID();
     this.employee = employee;
     this.customer = customer;
-    
     this.clockInTime = null;
     this.clockOutTime = null;
-    
     this.note = note;
     this.isPaid = isPaid;
   }

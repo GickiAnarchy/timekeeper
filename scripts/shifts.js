@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   function showViewModal(shift) {
     const modal = document.getElementById('viewShiftModal');
+    const shiftForm = document.getElementById('shift-form');
     const empSelect = document.getElementById('shift-emp');
     const custSelect = document.getElementById('shift-cust');
     const timeIn = document.getElementById('shift-start');
@@ -30,6 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const totalHours = document.getElementById('total-hours');
     const noteView = document.getElementById('note-view');
     const okBtn = document.getElementById('ok-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
     const paidBox = document.getElementById('paid-checkbox-view');
     
     // Populate dropdown options
@@ -43,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     timeIn.value = formatForDateTimeLocal(shift.clockInTime);
     timeOut.value = formatForDateTimeLocal(shift.clockOutTime);
     totalHours.value = shift.getHoursWorked();
-    noteView.value = shift.note || '';
+    noteView.textContent = shift.note;
     paidBox.checked = shift.isPaid;
     
     // Ensure clean event binding
@@ -73,8 +75,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         newOkBtn.disabled = false;
       }
     };
+    
+    const handleCancel = async () => {
+      modal.close();
+    };
 
     newOkBtn.addEventListener('click', handleOk, { once: true });
+    cancelBtn.addEventListener('click', handleCancel);
 
     modal.showModal();
   }
