@@ -177,10 +177,19 @@ export class Payment {
 }
 
 export class Invoice {
-  constructor(id, cust, items = []) {
+  constructor(cust, items = [], id = null) {
     this.id = id || crypto.randomUUID();
-    this.cust = cust;
+    this.customer = cust;
     this.items = items;
+  }
+  
+  addItem(name, value) {
+    this.items.push({name:name, value:Number(value)});
+  }
+  
+  totalBill() {
+    const total = this.items.reduce((sum, item) => sum + Number(item.value || 0), 0);
+    return Number(total.toFixed(2));
   }
   
 }
@@ -194,8 +203,9 @@ export class AppDataStore {
   constructor() {
     this.employees = new Map();
     this.customers = new Map();
-    this.payments = []
+    this.payments = [];
     this.shifts = [];
+    this.invoices = [];
     this.isAdmin = null;
   }
 
@@ -204,6 +214,38 @@ export class AppDataStore {
     await this.loadCustomers();
     await this.loadShifts();
     await this.loadPayments();
+    await this.loadInvoices();
+  }
+
+  //  INVOICE --
+  async loadInvoices() {
+    this.invoices = [];
+    try {
+      const querySnapshot = await getDocs(collection(db, "invoices"));
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const customer = (this.customers && this.customers.get(data.custId)) || new Customer(data.custId, 'Unknown');
+        const items = data.items || [];
+        
+        const inv = new Invoice(customer, items, docSnap.id);
+        
+        this.invoices.push(inv);
+      });
+    } catch (e) {
+      console.error("Error loading invoices from Firestore:", e);
+    }
+  }
+  
+  async saveInvoice(invoice) {
+    await setDoc(doc(db, "invoices", invoice.id), {
+      custId: invoice.customer ? invoice.customer.id : null,
+      items: invoice.items
+    });
+  }
+  
+  async deleteInvoice(invoiceId) {
+    await deleteDoc(doc(db, "invoices", invoiceId));
+    this.invoices = this.invoices.filter(s => s.id !== invoiceId);
   }
 
   //  EMPLOYEE --
@@ -219,7 +261,7 @@ export class AppDataStore {
       console.error("Error loading employees from Firestore:", e);
     }
   }
-  
+
   async addEmployee(name, wage) {
     const cleanName = normalize(name);
     if (!cleanName) throw new Error("Employee name cannot be empty.");
@@ -382,6 +424,7 @@ export class AppDataStore {
     return shift;
   }
 
+  //  PAYMENT --
   async loadPayments() {
     this.payments = [];
     try {

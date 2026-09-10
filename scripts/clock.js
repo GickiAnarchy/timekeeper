@@ -56,9 +56,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (shift.isOnBreak) {
         breakInBtn.disabled = true;
         breakOutBtn.disabled = false;
+        li.classList.add('on-break');
       } else {
         breakInBtn.disabled = false;
         breakOutBtn.disabled = true;
+        li.classList.remove('on-break');
       }
       activeShiftsList.appendChild(li);
     });
@@ -105,9 +107,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const shiftToStop = store.shifts.find(s => s.id === shiftId);
         
         if (shiftToStop) {
-          shiftToStop.stopShift();
-          await store.saveShift(shiftToStop);
-          renderActiveShifts();
+          if (confirm("Are you sure you want to clock out?")) {
+            shiftToStop.stopShift();
+            await store.saveShift(shiftToStop);
+            renderActiveShifts();
+          }
+            
         } // shicttostop if statement
       }
       
