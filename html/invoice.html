@@ -5,22 +5,33 @@
     <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../styles/invoices.css"/>
-    <script type="module" src="../scripts/invoices.js" defer></script>
+    <script type="module" src="../scripts/invoice.js" defer></script>
     <title>Mosher Lawms</title>
   </head>
   
   <body>
     <header class="invoice-header">
-      
       <div class="cust-select-div">
         <label for="cust-select">Customer:</label>
         <select id="cust-select">
           <option value÷"">--</option>
         </select>
       </div>
-      <button type="button" id="get-inv-btn">Get Invoice</button>
-      
+      <button type="button" id="add-inv-btn">Add Invoice</button>
     </header>
+    <main>
+      <div class="invoice-list-div">
+        <ul id="invoice-list">
+          <li class="empty-list list-item">..</li>
+        </ul>
+      </div>
+    </main>
+    
+    <!-- Add/View Invoice Modal -->
+    <dialog class="modal" id="inv-modal">
+      
+    </dialog>
+    
   </body>
   
 </html>

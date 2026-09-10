@@ -177,10 +177,12 @@ export class Payment {
 }
 
 export class Invoice {
-  constructor(cust, items = [], id = null) {
+  static rec_number = 0
+  constructor(cust, items = [], id = null, recordNum = null) {
     this.id = id || crypto.randomUUID();
     this.customer = cust;
     this.items = items;
+    Invoice.rec_number++;
   }
   
   addItem(name, value) {
@@ -190,6 +192,10 @@ export class Invoice {
   totalBill() {
     const total = this.items.reduce((sum, item) => sum + Number(item.value || 0), 0);
     return Number(total.toFixed(2));
+  }
+  
+  getRecordNumber() {
+    return Invoice.rec_number;
   }
   
 }

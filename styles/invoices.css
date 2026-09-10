@@ -18,3 +18,15 @@
   height: fit-content;
   width: 35%;
 }
+
+#invoice-list {
+  list-style-type: none;
+}
+
+.inv-option {
+  margin-top: 4px;
+  margin-bottom: 4px;
+  justify-content: center;
+  text-align: center;
+  border: 2px solid #0a7605;
+}
