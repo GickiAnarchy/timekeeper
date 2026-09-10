@@ -87,14 +87,45 @@ export class Customer {
 }
 
 export class WorkShift {
-  constructor(employee, customer, id = null, note = null, isPaid = false) {
+  constructor(employee, customer, id = null, note = null, isPaid = false, breaks = []) {
     this.id = id || crypto.randomUUID();
     this.employee = employee;
     this.customer = customer;
     this.clockInTime = null;
     this.clockOutTime = null;
+    this.breaks = breaks;
     this.note = note;
     this.isPaid = isPaid;
+  }
+  
+  startBreak() {
+    this.breaks.push({ start:new Date(), end: null });
+  }
+  
+  stopBreak() {
+    const activeBreak = this.breaks.find(b => b.start && !b.end);
+    if (activeBreak) {
+      activeBreak.end = new Date();
+    }
+  }
+  
+  get isOnBreak() {
+    const aBreak = this.breaks.find(b => b.start && !b.end);
+    if (aBreak) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  
+  // Calculate total break duration in milliseconds
+  getTotalBreakTimeMs() {
+    return this.breaks.reduce((total, b) => {
+      if (b.start && b.end) {
+        return total + (b.end - b.start);
+      }
+      return total;
+    }, 0);
   }
 
   startShift() {
@@ -104,6 +135,9 @@ export class WorkShift {
 
   stopShift() {
     if (!this.clockInTime) return;
+    if (this.isOnBreak) { 
+      this.stopBreak();
+    }
     this.clockOutTime = new Date();
   }
   
@@ -122,7 +156,8 @@ export class WorkShift {
   getHoursWorked() {
     if (!this.isComplete) return 0;
     const diffInMs = this.clockOutTime - this.clockInTime;
-    return Number((diffInMs / (1000 * 60 * 60)).toFixed(2));
+    const netMs = diffInMs - this.getTotalBreakTimeMs();
+    return Number((Math.max(0, netMs) / (1000 * 60 * 60)).toFixed(2));
   }
 
   getShiftPay() {
@@ -141,6 +176,14 @@ export class Payment {
   }
 }
 
+export class Invoice {
+  constructor(id, cust, items = []) {
+    this.id = id || crypto.randomUUID();
+    this.cust = cust;
+    this.items = items;
+  }
+  
+}
 
 
 /*
@@ -273,8 +316,9 @@ export class AppDataStore {
         const data = docSnap.data();
         const emp = (this.employees && this.employees.get(data.employeeId)) || new Employee(data.employeeId, 'Unknown Employee', 0);
         const site = (this.customers && this.customers.get(data.custId)) || new Customer(data.custId, 'Unknown Site');
+        const parsedBreaks = (data.breaks || []).map(b => ({start: b.start ? new Date(b.start) : null,end: b.end ? new Date(b.end) : null}));
 
-        const shift = new WorkShift(emp, site, docSnap.id, data.note || null, data.isPaid);
+        const shift = new WorkShift(emp, site, docSnap.id, data.note || null, data.isPaid, parsedBreaks);
 
         shift.clockInTime = data.clockInTime ? new Date(data.clockInTime) : null;
         shift.clockOutTime = data.clockOutTime ? new Date(data.clockOutTime) : null;
@@ -287,13 +331,16 @@ export class AppDataStore {
   }
 
   async saveShift(shift) {
+    const formattedBreaks = shift.breaks.map(b => ({start: b.start instanceof Date ? b.start.toISOString() : b.start, end: b.end instanceof Date ? b.end.toISOString() : b.end}));
+    
     await setDoc(doc(db, "shifts", shift.id), {
       employeeId: shift.employee ? shift.employee.id : null,
       custId: shift.customer ? shift.customer.id : null,
       clockInTime: shift.clockInTime ? shift.clockInTime.toISOString() : null,
       clockOutTime: shift.clockOutTime ? shift.clockOutTime.toISOString() : null,
       note: shift.note || null,
-      isPaid: shift.isPaid || false
+      isPaid: shift.isPaid || false,
+      breaks: formattedBreaks
     }); 
   }
   
@@ -309,6 +356,8 @@ export class AppDataStore {
 
     const start = clockInTime instanceof Date ? clockInTime : new Date(clockInTime);
     const end = clockOutTime instanceof Date ? clockOutTime : new Date(clockOutTime);
+    const formattedBreaks = shift.breaks.map(b => ({start: b.start instanceof Date ? b.start.toISOString() : b.start, end: b.end instanceof Date ? b.end.toISOString() : b.end}));
+    
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
       throw new Error("Please provide valid start and end times.");
     }
@@ -327,7 +376,8 @@ export class AppDataStore {
       clockInTime: start.toISOString(),
       clockOutTime: end.toISOString(),
       note: shift.note,
-      isPaid: shift.isPaid
+      isPaid: shift.isPaid,
+      breaks: formattedBreaks
     });
     return shift;
   }
@@ -444,6 +494,7 @@ export class AppDataStore {
     await this.loadShifts();
   }
 }
+
 
 export const store = new AppDataStore();
 

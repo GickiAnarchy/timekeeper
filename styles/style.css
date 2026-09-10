@@ -12,6 +12,7 @@
   box-sizing: border-box;
 }
 
+
 /* Area Assignments */
 .logo {
   grid-area: logo;

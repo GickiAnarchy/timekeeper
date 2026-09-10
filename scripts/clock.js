@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const clockInButton = document.getElementById('clock-in-button');
   const activeShiftsList = document.getElementById('activeShiftsList');
   const shiftError = document.getElementById('shift-error');
+
   
   function renderActiveShifts() {
     if (!activeShiftsList) return;
@@ -43,8 +44,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         <strong>${shift.employee ? shift.employee.name : 'Unknown'}</strong> @ ${shift.customer ? shift.customer.name : 'Unknown'}<br>
         <small>Started: ${timeStr}</small>
       </div>
+      <div class="break-buttons">
+      <button type="button" id="start-break-btn" class="start-break-btn" data-id="${shift.id}">Start Break</button>
+      <button type="button" id="stop-break-btn" class="stop-break-btn" data-id="${shift.id}" disabled="true">Stop Break</button>
+      </div>
       <button type="button" class="stop-btn" data-id="${shift.id}">Clock Out</button>
       `;
+      
+      const breakInBtn = li.querySelector('.start-break-btn');
+      const breakOutBtn = li.querySelector('.stop-break-btn');
+      if (shift.isOnBreak) {
+        breakInBtn.disabled = true;
+        breakOutBtn.disabled = false;
+      } else {
+        breakInBtn.disabled = false;
+        breakOutBtn.disabled = true;
+      }
       activeShiftsList.appendChild(li);
     });
   }
@@ -95,7 +110,29 @@ document.addEventListener('DOMContentLoaded', async () => {
           renderActiveShifts();
         } // shicttostop if statement
       }
-    }); //active shift list listener
+      
+      if (e.target.classList.contains('start-break-btn')) {
+        const shiftId = e.target.getAttribute('data-id');
+        const shiftToBreak = store.shifts.find(s => s.id === shiftId);
+        if (shiftToBreak) {
+          shiftToBreak.startBreak();
+          await store.saveShift(shiftToBreak);
+          renderActiveShifts();
+        }
+      }
+      
+      if (e.target.classList.contains('stop-break-btn')) {
+        const shiftId = e.target.getAttribute('data-id');
+        const shiftToBreak = store.shifts.find(s => s.id === shiftId);
+        if (shiftToBreak) {
+          shiftToBreak.stopBreak();
+          await store.saveShift(shiftToBreak);
+          renderActiveShifts();
+        }
+      }
+      
+    }); //active shift list slistener
+    
     renderActiveShifts();
   } // active shifts list if statement
 
