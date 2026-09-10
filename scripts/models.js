@@ -178,7 +178,7 @@ export class Payment {
 
 export class Invoice {
   static rec_number = 0
-  constructor(cust, items = [], id = null, recordNum = null) {
+  constructor(cust, items = [], id = null) {
     this.id = id || crypto.randomUUID();
     this.customer = cust;
     this.items = items;

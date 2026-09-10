@@ -4,9 +4,6 @@ import { store, populateCustomerDropdowns, Invoice } from './models.js';
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
   
-  //const nI = new Invoice("TestCustomer");
-  //await store.saveInvoice(nI);
-  
 
   const custSelect = document.getElementById('cust-select');
   if (custSelect) {
@@ -19,7 +16,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!custId) return;
     const invoices = store.invoices.filter(i => i.customer.id === custId);
     const invList = document.getElementById('invoice-list');
-    if (!invList || invoices.length === 0) return;
+    if (!invList) return;
+    invList.innerHTML = "";
+    if (invoices.length === 0) return;
     invoices.forEach((inv) => {
       const li = document.createElement('li');
       li.className = 'list-item';
@@ -32,4 +31,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
   
+  const addButton = document.getElementById('add-inv-btn');
+  
+  addButton?.addEventListener('click', async () => {
+    const cId = custSelect.value;
+    const cus = store.customers.get(cId);
+    const newInvoice = new Invoice(cus);
+    await store.saveInvoice(newInvoice);
+    /*
+      TODO: 
+      Load modal
+    */
+  });
+
 });
