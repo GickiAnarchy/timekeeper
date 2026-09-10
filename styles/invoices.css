@@ -1,0 +1,20 @@
+.invoice-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.cust-select-div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1px;
+  margin: 5px;
+}
+
+#get-inv-btn {
+  height: fit-content;
+  width: 35%;
+}
