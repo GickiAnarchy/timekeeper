@@ -47,6 +47,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         alert('Please enter a valid name and wage.');
         return;
       }
+      
+      if (eName === "Export") {
+        //Export Data Here
+        empForm.reset();
+        return;
+      }
 
       await store.addEmployee(eName, eWage);
       empForm.reset();
