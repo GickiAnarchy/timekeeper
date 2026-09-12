@@ -1,3 +1,15 @@
+.imp-text {
+  text-align: center;
+  color: darkorange;
+  text-shadow: 5px 5px 5px lightgray;
+  background-color: black;
+  padding: 10px;
+}
+
+html {
+  background-color: black;
+}
+
 .ledger-table {
 border: 2px solid black;  
 }
