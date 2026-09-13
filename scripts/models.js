@@ -63,6 +63,16 @@ export const toLocalISO = (date) => {
   return new Date(date.getTime() - off).toISOString().slice(0, 16);
 };
 
+export function formatTime24(date) {
+  if (!date || !(date instanceof Date) || isNaN(date)) return '';
+  
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  
+  return `${hours}:${minutes}`;
+}
+
+
 //JSON downloader
 const downloadJSON = (data, filename) => {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -125,8 +135,13 @@ export class WorkShift {
   
   stopBreak() {
     const activeBreak = this.breaks.find(b => b.start && !b.end);
+    const endTime = roundTo15Minutes();
     if (activeBreak) {
-      activeBreak.end = roundTo15Minutes();
+      if (formatTime24(activeBreak.start) === formatTime24(endTime)) {
+        this.breaks = this.breaks.filter(b => b !== activeBreak);
+      } else {
+      activeBreak.end = endTime;
+      }
     }
   }
   

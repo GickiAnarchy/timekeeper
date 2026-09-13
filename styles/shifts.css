@@ -42,6 +42,10 @@ h3 {
   justify-content: space-around;
 }
 
+.break-input {
+  width: fit-content;
+}
+
 select {
   padding: 3px;
 }

@@ -1,8 +1,10 @@
 import { 
   store, 
   populateEmployeeDropdowns, 
-  populateCustomerDropdowns
+  populateCustomerDropdowns,
+  formatTime24
 } from './models.js';
+
 
 function formatForDateTimeLocal(date) {
   if (!date || !(date instanceof Date) || isNaN(date)) return '';
@@ -33,6 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const okBtn = document.getElementById('ok-btn');
     const cancelBtn = document.getElementById('cancel-btn');
     const paidBox = document.getElementById('paid-checkbox-view');
+    const breaksList = document.getElementById('breaks-list');
     
     // Populate dropdown options
     populateEmployeeDropdowns(empSelect);
@@ -41,6 +44,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Set active values using IDs
     if (shift.employee) empSelect.value = shift.employee.id;
     if (shift.customer) custSelect.value = shift.customer.id;
+    
+    // Break Times
+    breaksList.innerHTML = ''; // Clear prior entries
+
+    shift.breaks.forEach((breakItem, index) => {
+      const li = document.createElement('li');
+      
+      // Format as HH:MM for input type="time"
+      const startStr = breakItem.start ? formatTime24(new Date(breakItem.start)) : '';
+      const endStr = breakItem.end ? formatTime24(new Date(breakItem.end)) : '';
+    
+      li.innerHTML = `
+        <span>Break #${index + 1}:</span>
+        <input class="break-input" type="time" value="${startStr}" />
+        <span>to</span>
+        <input class="break-input" type="time" value="${endStr}" />
+      `;
+    
+      breaksList.appendChild(li);
+    });
+
 
     timeIn.value = formatForDateTimeLocal(shift.clockInTime);
     timeOut.value = formatForDateTimeLocal(shift.clockOutTime);
@@ -50,6 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Ensure clean event binding
     const newOkBtn = okBtn.cloneNode(true);
+    newOkBtn.disabled = false;
     okBtn.parentNode.replaceChild(newOkBtn, okBtn);
 
     const handleOk = async () => {
