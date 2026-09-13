@@ -4,6 +4,7 @@
   justify-content: center;
   align-items: center;
   margin-top: 0;
+  border: 2px solid #199e23;
 }
 
 .select-div {
@@ -12,4 +13,5 @@
   width: fill;
   justify-content: space-between;
   text-align: center;
+  margin: 3px;
 }
