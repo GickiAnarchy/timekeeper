@@ -24,19 +24,32 @@
           <select class="sel" id="inv-select">
             <option value=""></option>
           </select>
-        </div>
-     </div> 
-
+        </div> 
+       <button id="add-inv-btn">Create Invoice</button>
+      </div>
+      
     </header>
     <main>
-      
+      <table>
+        <thead>
+          <tr>
+            <th colspan="2">Item</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody id="invoice-table">
+          
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">
+              <strong>Total:</strong>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
     </main>
-    
-    <!-- Add/View Invoice Modal -->
-    <dialog class="modal" id="inv-modal">
-      
-    </dialog>
-    
+        
   </body>
   
 </html>
