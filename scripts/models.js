@@ -214,25 +214,24 @@ export class Payment {
 }
 
 export class Invoice {
-  static rec_number = 0
   constructor(cust, items = [], id = null) {
     this.id = id || crypto.randomUUID();
     this.customer = cust;
     this.items = items;
-    Invoice.rec_number++;
   }
   
   addItem(name, value) {
     this.items.push({name:name, value:Number(value)});
   }
   
+  deleteItem(name, value) {
+    const dItem = this.items.find(i => i.name === name && i.value === value);
+    this.items = this.items.filter(i => i !== dItem);
+  }
+  
   totalBill() {
     const total = this.items.reduce((sum, item) => sum + Number(item.value || 0), 0);
     return Number(total.toFixed(2));
-  }
-  
-  getRecordNumber() {
-    return Invoice.rec_number;
   }
   
 }

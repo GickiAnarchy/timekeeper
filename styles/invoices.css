@@ -1,32 +1,15 @@
-.invoice-header {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  margin-top: 1px;
-}
-
-.cust-select-div {
+.inv-dropdowns {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 1px;
-  margin: 5px;
+  margin-top: 0;
 }
 
-#get-inv-btn {
-  height: fit-content;
-  width: 35%;
-}
-
-#invoice-list {
-  list-style-type: none;
-}
-
-.inv-option {
-  margin-top: 4px;
-  margin-bottom: 4px;
-  justify-content: center;
+.select-div {
+  display: flex;
+  flex-direction: row;
+  width: fill;
+  justify-content: space-between;
   text-align: center;
-  border: 2px solid #0a7605;
 }
