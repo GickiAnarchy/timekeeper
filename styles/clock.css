@@ -17,7 +17,7 @@ body * {
 
 .break-buttons {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
 }
 
 #clock-in-button {
@@ -38,8 +38,10 @@ body * {
 }
 
 .stop-btn {
-  width: 30%;
+  width: 35%;
+  max-height: 25px;
   background-color: red;
+  padding: 3px;
 }
 
 ul {
@@ -55,7 +57,9 @@ li {
 }
 
 .active-card {
-  border: 1px solid black;
+  border: 4px solid green;
+  border-radius: 12px;
+  box-shadow: 3px 4px 5px black;
   width: 100%;
 }
 

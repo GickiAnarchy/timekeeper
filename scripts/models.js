@@ -33,6 +33,26 @@ const db = getFirestore(app);
   HELPER FUNCTIONS
 */
 
+
+// Rounds a Date object to the nearest 15-minute mark (00, 15, 30, 45)
+export const roundTo15Minutes = (date = new Date()) => {
+  const rounded = new Date(date);
+  const ms = 1000 * 60 * 15; // 15 minutes in milliseconds
+  return new Date(Math.round(rounded.getTime() / ms) * ms);
+};
+
+// Round DOWN to previous 15-minute mark (e.g., 9:14 -> 9:00)
+export const roundDown15Minutes = (date = new Date()) => {
+  const ms = 1000 * 60 * 15;
+  return new Date(Math.floor(date.getTime() / ms) * ms);
+};
+
+// Round UP to next 15-minute mark (e.g., 9:01 -> 9:15)
+export const roundUp15Minutes = (date = new Date()) => {
+  const ms = 1000 * 60 * 15;
+  return new Date(Math.ceil(date.getTime() / ms) * ms);
+};
+
 //Normalizes the name string
 const normalize = (str) => (str ? str.trim().toLowerCase() : '');
 
@@ -99,13 +119,14 @@ export class WorkShift {
   }
   
   startBreak() {
-    this.breaks.push({ start:new Date(), end: null });
+    const breakIn = roundTo15Minutes();
+    this.breaks.push({ start: breakIn, end: null });
   }
   
   stopBreak() {
     const activeBreak = this.breaks.find(b => b.start && !b.end);
     if (activeBreak) {
-      activeBreak.end = new Date();
+      activeBreak.end = roundTo15Minutes();
     }
   }
   
@@ -129,7 +150,8 @@ export class WorkShift {
   }
 
   startShift() {
-    this.clockInTime = new Date();
+    //const inTime = new Date();
+    this.clockInTime = roundTo15Minutes();
     this.clockOutTime = null;
   }
 
@@ -138,7 +160,7 @@ export class WorkShift {
     if (this.isOnBreak) { 
       this.stopBreak();
     }
-    this.clockOutTime = new Date();
+    this.clockOutTime = roundTo15Minutes();
   }
   
   addNote(newnote) {

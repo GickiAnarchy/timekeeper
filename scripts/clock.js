@@ -41,14 +41,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       li.innerHTML = `
       <div class="active-card">
-        <strong>${shift.employee ? shift.employee.name : 'Unknown'}</strong> @ ${shift.customer ? shift.customer.name : 'Unknown'}<br>
-        <small>Started: ${timeStr}</small>
+        <div class="active-info">
+          <strong>${shift.employee ? shift.employee.name : 'Unknown'}</strong> @ ${shift.customer ? shift.customer.name : 'Unknown'}<br>
+          <small>Started: ${timeStr}</small>
+        </div>
+        <div class="break-buttons">
+        <button type="button" id="start-break-btn" class="start-break-btn" data-id="${shift.id}">Start Break</button>
+        <button type="button" id="stop-break-btn" class="stop-break-btn" data-id="${shift.id}" disabled="true">Stop Break</button>
+        </div>
+        <button type="button" class="stop-btn" data-id="${shift.id}">Clock Out</button>
       </div>
-      <div class="break-buttons">
-      <button type="button" id="start-break-btn" class="start-break-btn" data-id="${shift.id}">Start Break</button>
-      <button type="button" id="stop-break-btn" class="stop-break-btn" data-id="${shift.id}" disabled="true">Stop Break</button>
-      </div>
-      <button type="button" class="stop-btn" data-id="${shift.id}">Clock Out</button>
       `;
       
       const breakInBtn = li.querySelector('.start-break-btn');
