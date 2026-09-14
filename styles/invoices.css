@@ -1,3 +1,13 @@
+.invoice-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  min-width: 100%;
+  border: 2px solid linear-gradient(to right, #095910, #82b382);
+}
+
 .inv-dropdowns {
   display: flex;
   flex-direction: column;
