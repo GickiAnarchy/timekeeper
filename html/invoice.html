@@ -45,7 +45,6 @@
           <tr>
             <td colspan="3">No invoice selected</td>
           </tr>
-          
         </tbody>
         <tfoot>
           <tr>
@@ -56,7 +55,18 @@
         </tfoot>
       </table>
     </main>
-        
+    
+    <dialog class="modal" id="item-modal">
+      <form id="add-item-form">
+        <input id="name-input" placeholder="Item name" type="text">
+        <input id="value-input" placeholder="Item value" type="number">
+        <div class="modal-btns">
+          <button type="submit" id="submit-btn">Add</button>
+          <button type="reset" id="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </dialog>
+    
   </body>
   
 </html>

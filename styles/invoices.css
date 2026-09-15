@@ -25,3 +25,8 @@
   text-align: center;
   margin: 3px;
 }
+
+
+table, tr, th, td {
+  border: 1px solid black;
+}

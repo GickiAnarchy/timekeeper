@@ -24,3 +24,16 @@ th {
 tr {
   border-bottom: 1px solid #black;
 }
+
+#add-item-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-btns {
+  display: flex;
+  flex-direction: row;
+}
+

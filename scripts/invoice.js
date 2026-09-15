@@ -7,7 +7,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const custSelect = document.getElementById('cust-select');
   const invList = document.getElementById('inv-select');
+  const addItemBtn = document.getElementById('add-item-btn');
   const addInvBtn = document.getElementById('add-inv-btn');
+  
+  
   if (custSelect) {
     populateCustomerDropdowns(custSelect);
     custSelect.addEventListener('change', renderList);
@@ -39,6 +42,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const selectedInvoice = store.invoices.find(i => i.id === selectedInvoiceId);
     populateInvoiceDetails(selectedInvoice);
   });
+  
+  addItemBtn.addEventListener('click', async () => {
+    const selectedInvoiceId = invList.value;
+    const selectedInvoice = store.invoices.find(i => i.id === selectedInvoiceId);
+    addItemModal(selectedInvoice);
+  });
 
   function renderList() {
     const custId = custSelect.value;
@@ -68,6 +77,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         invDetails.appendChild(row);
       });
     }
+  }
+  
+  function addItemModal(inv) {
+    const modal = getElementById('item-modal');
+    const nameInput = getElementById('name-input');
+    const valueInput = getElementById('value-input');
+    
   }
   
 
