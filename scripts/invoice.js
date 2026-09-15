@@ -83,7 +83,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modal = getElementById('item-modal');
     const nameInput = getElementById('name-input');
     const valueInput = getElementById('value-input');
-    
+    const submitBtn = getElementById('submit-btn');
+    const cancelBtn = getElementById('cancel-btn');
+    const itemForm = getElementById('add-item-form');
+
+    submitBtn.addEventListener('submit', async () => {
+      iName = nameInput.value;
+      iValue = valueInput.value;
+      inv.addItem(iName, iValue);
+      await store.saveInvoice(inv);
+      itemForm.reset();
+      modal.style.display = 'none';
+      modal.close();
+    });
+
+    cancelBtn.addEventListener('reset', () => {
+      itemForm.reset();
+      modal.style.display = 'none';
+      modal.close();
+    });
+
+    modal.show();
+
   }
   
 
