@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (smallBanner && activeCount > 0) {
     smallBanner.textContent = `Time Manager - ${activeCount} active shifts`;
     smallBanner.classList.add('make-red');
+  } else {
+    smallBanner.classList.remove('make-red');
   }
   
   const pageSelect = document.getElementById('page-select');
