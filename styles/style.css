@@ -46,6 +46,7 @@ html, body {
   justify-content: center;
   padding: 8px;
   box-sizing: border-box;
+  background-color: linear-gradient(to right, #0000006e, #00000000);
 }
 
 .top-banner h1 {
