@@ -3,109 +3,186 @@ import { store, populateCustomerDropdowns, Invoice } from './models.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
-  
 
   const custSelect = document.getElementById('cust-select');
   const invList = document.getElementById('inv-select');
   const addItemBtn = document.getElementById('add-item-btn');
+  const removeItemBtn = document.getElementById('remove-item-btn');
   const addInvBtn = document.getElementById('add-inv-btn');
-  
-  
-  if (custSelect) {
-    populateCustomerDropdowns(custSelect);
-    custSelect.addEventListener('change', renderList);
-  }
+  const deleteInvBtn = document.getElementById('delete-inv-btn');
+  const invoiceBody = document.getElementById('invoice-table-body');
 
-  const custInvoices = store.invoices.find(i => i.customer.name === custSelect.value);
+  if (!custSelect || !invList || !addItemBtn || !removeItemBtn ||
+      !addInvBtn || !deleteInvBtn || !invoiceBody) return;
 
-  if (!custInvoices || custInvoices.length === 0) {
-    invList.innerHTML = '<option value="">No invoices found</option>';
-  } else {
-    invList.innerHTML = '';
-    custInvoices.forEach(invoice => {
-      const option = document.createElement('option');
-      option.value = invoice.id;
-      option.textContent = `Invoice #${invoice.id} - ${invoice.customer.name}`;
-      invList.appendChild(option);
-    });
-  }
+  let selectedItemIndex = null;
+
+  populateCustomerDropdowns(custSelect);
+  custSelect.addEventListener('change', renderInvoiceList);
+  invList.addEventListener('change', renderSelectedInvoice);
+  invoiceBody.addEventListener('click', selectItemRow);
 
   addInvBtn.addEventListener('click', async () => {
-    const cusId = custSelect.value;
-    const newInvoice = new Invoice(cusId);
+    const customer = store.customers.get(custSelect.value);
+    if (!customer) return;
+
+    const newInvoice = new Invoice(customer);
     await store.saveInvoice(newInvoice);
-    renderList();
+    store.invoices.push(newInvoice);
+    renderInvoiceList();
+    invList.value = newInvoice.id;
+    populateInvoiceDetails(newInvoice);
   });
 
-  invList.addEventListener('change', () => {
-    const selectedInvoiceId = invList.value;
-    const selectedInvoice = store.invoices.find(i => i.id === selectedInvoiceId);
-    populateInvoiceDetails(selectedInvoice);
-  });
-  
-  addItemBtn.addEventListener('click', async () => {
-    const selectedInvoiceId = invList.value;
-    const selectedInvoice = store.invoices.find(i => i.id === selectedInvoiceId);
-    addItemModal(selectedInvoice);
+  deleteInvBtn.addEventListener('click', async () => {
+    const invoice = getSelectedInvoice();
+    if (!invoice) return;
+
+    const invoiceLabel = shortInvoiceId(invoice.id);
+    if (!window.confirm(`Delete invoice #${invoiceLabel}? This cannot be undone.`)) return;
+
+    await store.deleteInvoice(invoice.id);
+    selectedItemIndex = null;
+    renderInvoiceList();
   });
 
-  function renderList() {
-    const custId = custSelect.value;
-    const custInvoices = store.invoices.filter(i => i.customer.id === custId);
-    custInvoices.forEach(invoice => {
+  addItemBtn.addEventListener('click', () => {
+    const invoice = getSelectedInvoice();
+    if (invoice) addItemModal(invoice);
+  });
+
+  removeItemBtn.addEventListener('click', async () => {
+    const invoice = getSelectedInvoice();
+    if (!invoice || selectedItemIndex === null) return;
+
+    const item = invoice.items[selectedItemIndex];
+    if (!item) return;
+
+    if (!window.confirm(`Remove “${item.name}” from this invoice?`)) return;
+
+    invoice.items.splice(selectedItemIndex, 1);
+    await store.saveInvoice(invoice);
+    selectedItemIndex = null;
+    populateInvoiceDetails(invoice);
+  });
+
+  renderInvoiceList();
+
+  function getSelectedInvoice() {
+    return store.invoices.find(invoice => invoice.id === invList.value) || null;
+  }
+
+  function shortInvoiceId(id) {
+    return String(id).slice(-6);
+  }
+
+  function renderInvoiceList() {
+    const customerId = custSelect.value;
+    const customerInvoices = store.invoices.filter(
+      invoice => invoice.customer && invoice.customer.id === customerId
+    );
+
+    invList.innerHTML = '';
+    selectedItemIndex = null;
+
+    if (customerInvoices.length === 0) {
+      invList.innerHTML = '<option value="">No invoices found</option>';
+      populateInvoiceDetails(null);
+      return;
+    }
+
+    customerInvoices.forEach(invoice => {
       const option = document.createElement('option');
       option.value = invoice.id;
-      option.textContent = `Invoice #${invoice.id} - ${invoice.customer.name}`;
+      option.textContent = `Invoice #${shortInvoiceId(invoice.id)} - ${invoice.customer.name}`;
       invList.appendChild(option);
     });
+
+    populateInvoiceDetails(customerInvoices[0]);
+  }
+
+  function renderSelectedInvoice() {
+    selectedItemIndex = null;
+    populateInvoiceDetails(getSelectedInvoice());
+  }
+
+  function selectItemRow(event) {
+    const row = event.target.closest('tr[data-item-index]');
+    if (!row) return;
+
+    invoiceBody.querySelectorAll('tr.selected-item').forEach(selectedRow => {
+      selectedRow.classList.remove('selected-item');
+    });
+    row.classList.add('selected-item');
+    selectedItemIndex = Number(row.dataset.itemIndex);
   }
 
   function populateInvoiceDetails(invoice) {
-    const invDetails = document.getElementById('invoice-table-body');
-    invDetails.innerHTML = '';
+    const totalCell = document.querySelector('tfoot strong');
+    invoiceBody.innerHTML = '';
+    selectedItemIndex = null;
+
+    if (!invoice) {
+      invoiceBody.innerHTML = '<tr><td colspan="3">No invoice selected</td></tr>';
+      if (totalCell) totalCell.textContent = 'Total: $0.00';
+      return;
+    }
+
     if (invoice.items.length === 0) {
-      const row = document.createElement('tr');
-      row.innerHTML = '<td colspan="3">No items in this invoice</td>';
+      invoiceBody.innerHTML = '<tr><td colspan="3">No items in this invoice</td></tr>';
     } else {
-      invoice.items.forEach(item => {
+      invoice.items.forEach((item, index) => {
         const row = document.createElement('tr');
+        row.dataset.itemIndex = index;
+        row.title = 'Click to select this item';
         row.innerHTML = `
-          <td>${item.description}</td>
-          <td>$${item.price.toFixed(2)}</td>
-          <td>${item.quantity}</td>
+          <td colspan="2">${item.name}</td>
+          <td>$${Number(item.value || 0).toFixed(2)}</td>
         `;
-        invDetails.appendChild(row);
+        invoiceBody.appendChild(row);
       });
     }
+
+    if (totalCell) totalCell.textContent = `Total: $${invoice.totalBill().toFixed(2)}`;
   }
-  
-  function addItemModal(inv) {
-    const modal = getElementById('item-modal');
-    const nameInput = getElementById('name-input');
-    const valueInput = getElementById('value-input');
-    const submitBtn = getElementById('submit-btn');
-    const cancelBtn = getElementById('cancel-btn');
-    const itemForm = getElementById('add-item-form');
 
-    submitBtn.addEventListener('submit', async () => {
-      iName = nameInput.value;
-      iValue = valueInput.value;
-      inv.addItem(iName, iValue);
-      await store.saveInvoice(inv);
+  function addItemModal(invoice) {
+    const modal = document.getElementById('item-modal');
+    const nameInput = document.getElementById('name-input');
+    const valueInput = document.getElementById('value-input');
+    const itemForm = document.getElementById('add-item-form');
+
+    if (!modal || !nameInput || !valueInput || !itemForm) return;
+
+    nameInput.value = '';
+    valueInput.value = '';
+    modal.showModal();
+
+    const closeModal = () => {
+      itemForm.onreset = null;
       itemForm.reset();
-      modal.style.display = 'none';
-      modal.close();
-    });
+      itemForm.onreset = handleReset;
+      if (modal.open) modal.close();
+    };
 
-    cancelBtn.addEventListener('reset', () => {
-      itemForm.reset();
-      modal.style.display = 'none';
-      modal.close();
-    });
+    const handleReset = event => {
+      event.preventDefault();
+      closeModal();
+    };
 
-    modal.show();
+    itemForm.onsubmit = async event => {
+      event.preventDefault();
 
+      const name = nameInput.value.trim();
+      const value = Number(valueInput.value);
+      if (!name || !Number.isFinite(value) || value < 0) return;
+
+      invoice.addItem(name, value);
+      await store.saveInvoice(invoice);
+      closeModal();
+      populateInvoiceDetails(invoice);
+    };
+
+    itemForm.onreset = handleReset;
   }
-  
-
 });
