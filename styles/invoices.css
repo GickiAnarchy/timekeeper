@@ -26,6 +26,26 @@
   margin: 3px;
 }
 
+.invoice-actions,
+.item-btns {
+  display: flex;
+  gap: 6px;
+  margin: 6px;
+}
+
+#delete-inv-btn {
+  color: #8b0000;
+}
+
+#invoice-table-body tr[data-item-index] {
+  cursor: pointer;
+}
+
+#invoice-table-body tr.selected-item {
+  background-color: #d9f0dc;
+  outline: 2px solid #199e23;
+}
+
 
 table, tr, th, td {
   border: 1px solid black;
