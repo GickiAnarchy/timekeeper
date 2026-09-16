@@ -201,6 +201,7 @@ export class WorkShift {
     if (this.isPaid) return 0;
     return this.employee ? this.employee.getPay(this.getHoursWorked()) : 0;
   }
+
 }
 
 export class Payment {
@@ -464,6 +465,11 @@ export class AppDataStore {
       breaks: formattedBreaks
     });
     return shift;
+  }
+
+  async howManyActive() {
+    const activeShifts = this.shifts.filter(s => !s.isComplete);
+    return activeShifts.length;
   }
 
   //  PAYMENT --
