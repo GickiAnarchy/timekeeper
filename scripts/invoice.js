@@ -75,6 +75,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   function shortInvoiceId(id) {
     return String(id).slice(-6);
   }
+  function shortInvoiceId(id) {
+    return String(id).slice(-6);
+  }
+  
 
   function renderInvoiceList() {
     const customerId = custSelect.value;
