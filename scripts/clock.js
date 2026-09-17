@@ -2,6 +2,7 @@
 import { 
   store, 
   WorkShift, 
+  roundTo15Minutes,
   populateEmployeeDropdowns, 
   populateCustomerDropdowns 
 } from './models.js';
@@ -75,30 +76,47 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   if (clockInButton) {
     clockInButton.addEventListener('click', async () => {
-      
-      const empId = eDd.value;
+      const empIds = Array.from(eDd.selectedOptions)
+        .map(option => option.value)
+        .filter(Boolean);
       const custId = cDd.value;
       
-      if (!empId || !custId) {
-        shiftError.textContent = 'Please select both an employee and a job site.';
+      if (empIds.length === 0 || !custId) {
+        shiftError.textContent = 'Please select at least one employee and a job site.';
         return;
       }
       
-      const existingShift = store.shifts.find(s => s.employee && s.employee.id === empId && !s.isComplete);
-      if (existingShift) {
-        shiftError.textContent = `${existingShift.employee.name} is already clocked in!`;
+      const employees = empIds.map(empId => store.employees.get(empId)).filter(Boolean);
+      const alreadyClockedIn = employees.filter(emp =>
+        store.shifts.some(s => s.employee && s.employee.id === emp.id && !s.isComplete)
+      );
+      if (alreadyClockedIn.length > 0) {
+        const names = alreadyClockedIn.map(emp => emp.name).join(', ');
+        shiftError.textContent = `${names} ${alreadyClockedIn.length === 1 ? 'is' : 'are'} already clocked in!`;
         return;
       }
       
-      const emp = store.employees.get(empId);
       const cust = store.customers.get(custId);
-      
-      const shift = new WorkShift(emp,cust);
-      shift.startShift();
-      store.shifts.push(shift);
-      await store.saveShift(shift);
-      
-      renderActiveShifts();
+
+      clockInButton.disabled = true;
+      shiftError.textContent = '';
+      try {
+        const clockInTime = roundTo15Minutes();
+        const shifts = employees.map(emp => {
+          const shift = new WorkShift(emp, cust);
+          shift.startShift(clockInTime);
+          return shift;
+        });
+
+        await Promise.all(shifts.map(shift => store.saveShift(shift)));
+        store.shifts.push(...shifts);
+        renderActiveShifts();
+      } catch (error) {
+        console.error('Unable to clock in employees:', error);
+        shiftError.textContent = 'Unable to clock in the selected employees. Please try again.';
+      } finally {
+        clockInButton.disabled = false;
+      }
     }); //clock in button listener
   } // clock in button if statement
 
