@@ -28,6 +28,15 @@ body * {
   background-color: darkgreen;
 }
 
+#emp-select {
+  min-width: 220px;
+}
+
+#employee-select-help {
+  margin-top: 4px;
+  text-align: center;
+}
+
 .active-section {
   justify-content: flex-start;
   align-items: flex-start;

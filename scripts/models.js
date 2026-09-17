@@ -164,9 +164,8 @@ export class WorkShift {
     }, 0);
   }
 
-  startShift() {
-    //const inTime = new Date();
-    this.clockInTime = roundTo15Minutes();
+  startShift(clockInTime = roundTo15Minutes()) {
+    this.clockInTime = clockInTime;
     this.clockOutTime = null;
   }
 
@@ -610,4 +609,3 @@ export function populateCustomerDropdowns(custDropdownElement) {
   });
   console.log("populated customers");
 }
-
