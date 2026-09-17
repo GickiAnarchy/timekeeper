@@ -39,11 +39,16 @@ body * {
 
 .active-section {
   justify-content: flex-start;
-  align-items: flex-start;
+  align-items: center;
+  text-align: center;
   margin-top: 15px;
   border: 2px solid black;
   height: 20rem;
   width: auto;
+}
+
+.active-section h3 {
+  text-align: center;
 }
 
 .stop-btn {
@@ -54,14 +59,18 @@ body * {
 }
 
 ul {
-  justify-content: flex-start;
+  justify-content: center;
+  text-align: center;
+  text-align: center;
 }
 
 li {
   display: flex;
+  text-align: center;
   flex-direction: row;
+  align-items: center;
   justify-content: flex-start;
-  width: 100%;
+  width: auto;
   padding: 8px;
 }
 
