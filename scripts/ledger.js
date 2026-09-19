@@ -3,16 +3,20 @@ import { store, populateEmployeeDropdowns } from './models.js';
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
 
-  let runningTotal = 0;
-
   const form = document.getElementById('ledger-form');
   const dateInput = document.getElementById('date');
   const typeSelect = document.getElementById('type');
   const hoursInput = document.getElementById('hours');
   const amountInput = document.getElementById('amount');
+  const empSelect = document.getElementById('employee-select');
   const tableBody = document.getElementById('ledger-body');
 
-  // Set default date to today (YYYY-MM-DD format)
+  // Populate employee dropdown if present in the HTML
+  if (empSelect) {
+    populateEmployeeDropdowns(empSelect);
+  }
+
+  // Set default date to today (YYYY-MM-DD)
   const today = new Date().toISOString().split('T')[0];
   dateInput.value = today;
 
@@ -29,8 +33,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Render all entries stored in the Ledger instance
+  const renderLedger = () => {
+    tableBody.innerHTML = '';
+    let runningTotal = 0;
+
+    store.ledger.entries.forEach((entry) => {
+      const type = (entry.type || '').toLowerCase();
+      const amount = Number(entry.amount || 0);
+
+      if (type === 'normal') {
+        runningTotal += amount;
+      } else if (type === 'advance') {
+        runningTotal -= amount;
+      }
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${entry.index}</td>
+        <td>${entry.date || ''}</td>
+        <td>${type ? type.charAt(0).toUpperCase() + type.slice(1) : ''}</td>
+        <td>${entry.hours || 0}</td>
+        <td>$${amount.toFixed(2)}</td>
+        <td>$${runningTotal.toFixed(2)}</td>
+        <td>${entry.notes || ''}</td>
+        <td><button type="button" class="delete-btn" data-id="${entry.id}">Delete</button></td>
+      `;
+      tableBody.appendChild(row);
+    });
+  };
+
+  // Initial render of saved entries
+  renderLedger();
+
   // Handle Form Submission
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const date = dateInput.value;
@@ -42,31 +79,46 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (type === 'normal') {
       hours = parseFloat(hoursInput.value) || 0;
-      amount = hours * 15;
-      runningTotal += amount;
+      
+      // Use selected employee wage if available, fallback to 15
+      let wage = 15;
+      if (empSelect && empSelect.value) {
+        const emp = store.employees.get(empSelect.value);
+        if (emp) wage = emp.wage;
+      }
+      
+      amount = hours * wage;
     } else if (type === 'advance') {
       hours = 0;
       amount = parseFloat(amountInput.value) || 0;
-      runningTotal -= amount;
     }
 
-    // Append new row to table
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${date}</td>
-      <td>${type.charAt(0).toUpperCase() + type.slice(1)}</td>
-      <td>${hours}</td>
-      <td>$${amount.toFixed(2)}</td>
-      <td>$${runningTotal.toFixed(2)}</td>
-      <td>${notes}</td>
-    `;
-    tableBody.appendChild(row);
+    // Save to Firestore & Store
+    await store.saveLedgerEntry({
+      date,
+      type,
+      hours,
+      amount,
+      notes
+    });
+
+    // Re-render UI table
+    renderLedger();
 
     // Reset form fields
     form.reset();
     dateInput.value = today;
     typeSelect.dispatchEvent(new Event('change'));
   });
-});
 
+  // Handle Deletions
+  tableBody.addEventListener('click', async (e) => {
+    if (e.target.classList.contains('delete-btn')) {
+      const id = e.target.getAttribute('data-id');
+      if (id) {
+        await store.deleteLedgerEntry(id);
+        renderLedger();
+      }
+    }
+  });
 });
