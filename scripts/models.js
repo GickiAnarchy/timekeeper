@@ -245,6 +245,18 @@ class LedgerRow {
     this.amount = amount ?? null;
     this.notes = notes ?? null;
   }
+  
+  getData() {
+    const data = {
+      'index':this.index,
+      'date':this.date,
+      'hours':this.hours,
+      'amount':this.amount,
+      'notes':this.notes
+    };
+    return data;
+  }
+  
 }
 
 class Ledger {
@@ -304,6 +316,7 @@ export class AppDataStore {
     this.payments = [];
     this.shifts = [];
     this.invoices = [];
+    this.ledgerEntries = [];
     this.isAdmin = null;
   }
 
