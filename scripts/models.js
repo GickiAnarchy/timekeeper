@@ -236,8 +236,9 @@ export class Invoice {
   
 }
 
-class LedgerRow {
-  constructor(index, date, type, hours, amount, notes) {
+export class LedgerRow {
+  constructor(id = null, index, date, type, hours, amount, notes) {
+    this.id = id || crypto.randomUUID();
     this.index = index ?? null;
     this.date = date ?? null;
     this.type = type ?? null;
@@ -247,19 +248,19 @@ class LedgerRow {
   }
   
   getData() {
-    const data = {
-      'index':this.index,
-      'date':this.date,
-      'hours':this.hours,
-      'amount':this.amount,
-      'notes':this.notes
+    return {
+      id: this.id,
+      index: this.index,
+      date: this.date,
+      type: this.type,
+      hours: this.hours,
+      amount: this.amount,
+      notes: this.notes
     };
-    return data;
   }
-  
 }
 
-class Ledger {
+export class Ledger {
   constructor(rowList = []) {
     this.entries = rowList;
   }
@@ -267,6 +268,7 @@ class Ledger {
   addEntry(data = {}) {
     const nextIndex = this.entries.length + 1;
     const entry = new LedgerRow(
+      data.id,
       nextIndex, 
       data.date, 
       data.type, 
@@ -275,13 +277,14 @@ class Ledger {
       data.notes
     );
     this.entries.push(entry);
+    return entry;
   }
   
-  deleteEntry(targetIndex) {
-    const idx = this.entries.findIndex(entry => entry.index === targetIndex);
+  deleteEntry(id) {
+    const idx = this.entries.findIndex(entry => entry.id === id);
     if (idx !== -1) {
       this.entries.splice(idx, 1);
-      this.reindex(); // Optional: keeps 1-based index property sequential
+      this.reindex();
     }
   }
 
@@ -292,15 +295,14 @@ class Ledger {
   }
   
   getTotal() {
-    let total = 0;
-    this.entries.forEach((e) => {
-      if (e.type.toLowerCase() === 'normal') {
-        total += e.amount;
-      } else if (e.type.toLowerCase() === 'advance') {
-        total -= e.amount;
-      }
-    });
-    return total;
+    return this.entries.reduce((total, e) => {
+      const entryType = (e.type || '').toLowerCase();
+      const amt = Number(e.amount || 0);
+      
+      if (entryType === 'normal') return total + amt;
+      if (entryType === 'advance') return total - amt;
+      return total;
+    }, 0);
   }
 }
 
@@ -326,6 +328,44 @@ export class AppDataStore {
     await this.loadShifts();
     await this.loadPayments();
     await this.loadInvoices();
+    await this.loadLedger();
+  }
+
+  //  LEDGER --
+  async loadLedger() {
+    this.ledger = new Ledger();
+    try {
+      const querySnapshot = await getDocs(collection(db, "ledgerRows"));
+      const loadedEntries = [];
+      
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        loadedEntries.push({ ...data, id: docSnap.id });
+      });
+
+      // Sort by index before populating
+      loadedEntries.sort((a, b) => (a.index || 0) - (b.index || 0));
+      loadedEntries.forEach(data => this.ledger.addEntry(data));
+
+    } catch (e) {
+      console.error("Error loading Ledger from Firestore:", e);
+    }
+  }
+
+  async saveLedgerEntry(data) {
+    const entry = this.ledger.addEntry(data);
+    await setDoc(doc(db, "ledgerRows", entry.id), entry.getData());
+    return entry;
+  }
+
+  async deleteLedgerEntry(entryId) {
+    await deleteDoc(doc(db, "ledgerRows", entryId));
+    this.ledger.deleteEntry(entryId);
+    
+    // Sync updated indexes back to Firestore
+    for (const entry of this.ledger.entries) {
+      await updateDoc(doc(db, "ledgerRows", entry.id), { index: entry.index });
+    }
   }
 
   //  INVOICE --
