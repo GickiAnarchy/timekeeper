@@ -236,6 +236,28 @@ export class Invoice {
   
 }
 
+class LedgerRow {
+  constructor(index, date, type, hours, amount, notes) {
+    this.index = index || null;
+    this.date = date || null;
+    this.type = type || null;
+    this.hours = hours || null;
+    this.notes = notes || null;
+  }
+}
+
+class Ledger {
+  constructor(roeList = []) {
+    this.entries = rowList;
+  }
+  
+  addEntry(data) {
+    index = this.entries.length + 1;
+    entry = new LedgerRow(index, data.date, data.type, data.hours, data.amount, data.notes);
+    
+  }
+  
+}
 
 /*
   DATA STORE
