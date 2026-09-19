@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const amountInput = document.getElementById('amount');
   const empSelect = document.getElementById('employee-select');
   const tableBody = document.getElementById('ledger-body');
+  const totalRow = document.getElementById('ledger-total');
 
   // Populate employee dropdown if present in the HTML
   if (empSelect) {
@@ -37,6 +38,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const renderLedger = () => {
     tableBody.innerHTML = '';
     let runningTotal = 0;
+    
+    totalRow.innerHTML = "";
 
     store.ledger.entries.forEach((entry) => {
       const type = (entry.type || '').toLowerCase();
@@ -55,12 +58,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${type ? type.charAt(0).toUpperCase() + type.slice(1) : ''}</td>
         <td>${entry.hours || 0}</td>
         <td>$${amount.toFixed(2)}</td>
-        <td>$${runningTotal.toFixed(2)}</td>
-        <td>${entry.notes || ''}</td>
+        <td colspan="2">${entry.notes || ''}</td>
         <td><button type="button" class="delete-btn" data-id="${entry.id}">Delete</button></td>
       `;
       tableBody.appendChild(row);
     });
+    totalRow.innerHTML = `<td>Total: $${store.ledger.getTotal()}</td>`;
   };
 
   // Initial render of saved entries
