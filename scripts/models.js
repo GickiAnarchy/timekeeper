@@ -278,6 +278,18 @@ class Ledger {
       entry.index = i + 1;
     });
   }
+  
+  getTotal() {
+    let total = 0;
+    this.entries.forEach((e) => {
+      if (e.type.toLowerCase() === 'normal') {
+        total += e.amount;
+      } else if (e.type.toLowerCase() === 'advance') {
+        total -= e.amount;
+      }
+    });
+    return total;
+  }
 }
 
 
