@@ -238,26 +238,48 @@ export class Invoice {
 
 class LedgerRow {
   constructor(index, date, type, hours, amount, notes) {
-    this.index = index || null;
-    this.date = date || null;
-    this.type = type || null;
-    this.hours = hours || null;
-    this.notes = notes || null;
+    this.index = index ?? null;
+    this.date = date ?? null;
+    this.type = type ?? null;
+    this.hours = hours ?? null;
+    this.amount = amount ?? null;
+    this.notes = notes ?? null;
   }
 }
 
 class Ledger {
-  constructor(roeList = []) {
+  constructor(rowList = []) {
     this.entries = rowList;
   }
   
-  addEntry(data) {
-    index = this.entries.length + 1;
-    entry = new LedgerRow(index, data.date, data.type, data.hours, data.amount, data.notes);
-    
+  addEntry(data = {}) {
+    const nextIndex = this.entries.length + 1;
+    const entry = new LedgerRow(
+      nextIndex, 
+      data.date, 
+      data.type, 
+      data.hours, 
+      data.amount, 
+      data.notes
+    );
+    this.entries.push(entry);
   }
   
+  deleteEntry(targetIndex) {
+    const idx = this.entries.findIndex(entry => entry.index === targetIndex);
+    if (idx !== -1) {
+      this.entries.splice(idx, 1);
+      this.reindex(); // Optional: keeps 1-based index property sequential
+    }
+  }
+
+  reindex() {
+    this.entries.forEach((entry, i) => {
+      entry.index = i + 1;
+    });
+  }
 }
+
 
 /*
   DATA STORE
