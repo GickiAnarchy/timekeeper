@@ -1,3 +1,7 @@
+
+import { changeHeader } from './index.js';
+
+
 /*
   Firebase Setup
 */
@@ -323,12 +327,14 @@ export class AppDataStore {
   }
 
   async init() {
+    changeHeader("Loading");
     await this.loadEmployees();
     await this.loadCustomers();
     await this.loadShifts();
     await this.loadPayments();
     await this.loadInvoices();
     await this.loadLedger();
+    changeHeader();
   }
 
   //  LEDGER --
