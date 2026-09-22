@@ -68,6 +68,8 @@ html, body {
 
 .main-content {
   grid-area: content;
+  justify-content: center;
+  align-items: center;
   margin-top: 0;
   border: 4px solid #000;
   width: 100%;
