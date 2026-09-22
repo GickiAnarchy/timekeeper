@@ -11,3 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+
+export function changeHeader(newHeader = "Mosher Lawns") {
+  const theHeader = document.getElementById('main-header');
+  if (theHeader) {
+    theHeader.textContent = newHeader;
+  }
+}
+
