@@ -1,7 +1,4 @@
 
-import { changeHeader } from './index.js';
-
-
 /*
   Firebase Setup
 */
