@@ -1,3 +1,7 @@
+:root {
+  --bg-gold: radial-gradient(circle, #3d2b1f 0%, #170d07 100%);
+}
+
 html, body {
   margin: 0;
   padding: 0;
