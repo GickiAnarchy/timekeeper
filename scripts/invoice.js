@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const addInvBtn = document.getElementById('add-inv-btn');
   const deleteInvBtn = document.getElementById('delete-inv-btn');
   const invoiceBody = document.getElementById('invoice-table-body');
+  const markPaidBtn = document.getElementById('mark-paid-btn');
+  const paidLabel = document.getElementById('paid-notice');
 
   if (!custSelect || !invList || !addItemBtn || !removeItemBtn ||
       !addInvBtn || !deleteInvBtn || !invoiceBody) return;
@@ -65,6 +67,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectedItemIndex = null;
     populateInvoiceDetails(invoice);
   });
+  
+  markPaidBtn.addEventListener('click', () => {
+    let checkInv = getSelectedInvoice();
+    if (checkInv) {
+      checkInv.isPaid = true;
+    }
+  });
 
   renderInvoiceList();
 
@@ -75,10 +84,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   function shortInvoiceId(id) {
     return String(id).slice(-6);
   }
-  function shortInvoiceId(id) {
-    return String(id).slice(-6);
-  }
-  
 
   function renderInvoiceList() {
     const customerId = custSelect.value;
@@ -135,6 +140,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (invoice.items.length === 0) {
       invoiceBody.innerHTML = '<tr><td colspan="3">No items in this invoice</td></tr>';
     } else {
+      if (invoice.isPaid) {
+        paidLabel.textContent = "PAID";
+        markPaidBtn.disabled = true;
+      } else {
+        paidLabel.textContent = "";
+        markPaidBtn.disabled = false;
+      }
+      
       invoice.items.forEach((item, index) => {
         const row = document.createElement('tr');
         row.dataset.itemIndex = index;
