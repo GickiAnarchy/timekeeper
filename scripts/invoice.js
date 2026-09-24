@@ -67,13 +67,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectedItemIndex = null;
     populateInvoiceDetails(invoice);
   });
-  
-  markPaidBtn.addEventListener('click', () => {
-    let checkInv = getSelectedInvoice();
-    if (checkInv) {
-      checkInv.isPaid = true;
-    }
-  });
 
   renderInvoiceList();
 
@@ -111,8 +104,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderSelectedInvoice() {
+    markPaidBtn.removeEventListener('click');
+    markPaidBtn.removeEventListener();
     selectedItemIndex = null;
     populateInvoiceDetails(getSelectedInvoice());
+    markPaidBtn.addEventListener('click', () => {
+      let checkInv = getSelectedInvoice();
+      if (checkInv) {
+        checkInv.isPaid = true;
+      }
+    });
   }
 
   function selectItemRow(event) {
