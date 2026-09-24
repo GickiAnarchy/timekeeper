@@ -28,6 +28,7 @@
        <div class="invoice-actions">
          <button id="add-inv-btn">Create Invoice</button>
          <button id="delete-inv-btn" type="button">Delete Invoice</button>
+         <button id="mark-paid-btn" type="button" disabled>Mark Paid</button>
        </div>
       </div>
       <div class="item-btns">
@@ -55,8 +56,8 @@
               <strong>Total:</strong>
             </td>
           </tr>
-          <tr class="paid-notice">
-            <td></td>
+          <tr>
+            <td class="paid-notice" id="paid-notice"></td>
           </tr>
         </tfoot>
       </table>
