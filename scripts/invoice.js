@@ -133,36 +133,47 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function populateInvoiceDetails(invoice) {
-    const totalCell = document.querySelector('tfoot strong');
-    invoiceBody.innerHTML = '';
-    selectedItemIndex = null;
-
-    if (!invoice) {
-      invoiceBody.innerHTML = '<tr><td colspan="3">No invoice selected</td></tr>';
-      if (totalCell) totalCell.textContent = 'Total: $0.00';
-      if (paidLabel) paidLabel.innerHTML = '';
-      return;
-    }
-
-    if (paidLabel) {
-      if (invoice.isPaid) {
-        paidLabel.innerHTML = `<td colspan="3">PAID</td>`;
-      } else {
-        paidLabel.innerHTML = `
-          <td colspan="3">
-            <button id="mark-paid-btn" type="button">Mark Paid</button>
-          </td>
-        `;
-        const markPaidBtn = paidLabel.querySelector('#mark-paid-btn');
-        if (markPaidBtn) {
-          markPaidBtn.addEventListener('click', async () => {
-            invoice.isPaid = true;
-            await store.saveInvoice(invoice);
-            populateInvoiceDetails(invoice);
-          }, { once: true });
+      try {
+        const totalCell = document.querySelector('tfoot strong');
+        const invTable = document.getElementById('inv-table');
+        invoiceBody.innerHTML = '';
+        selectedItemIndex = null;
+    
+        if (!invoice) {
+          invoiceBody.innerHTML = '<tr><td colspan="3">No invoice selected</td></tr>';
+          if (totalCell) totalCell.textContent = 'Total: $0.00';
+          if (paidLabel) paidLabel.innerHTML = '';
+          return;
         }
+    
+        if (paidLabel) {
+          if (invoice.isPaid) {
+            paidLabel.innerHTML = `<td colspan="3">PAID</td>`;
+            if (invTable) {
+              document.getElementById('inv-table').classList.add('is-paid');
+            }
+          } else {
+            paidLabel.innerHTML = `
+              <td colspan="3">
+                <button id="mark-paid-btn" type="button">Mark Paid</button>
+              </td>
+            `;
+            const markPaidBtn = paidLabel.querySelector('#mark-paid-btn');
+            if (markPaidBtn) {
+              markPaidBtn.addEventListener('click', async () => {
+                invoice.isPaid = true;
+                await store.saveInvoice(invoice);
+                populateInvoiceDetails(invoice);
+              }, { once: true });
+            }
+            if (invTable) {
+              invTable.classList.remove('is-paid');
+            }
+          }
+        }
+      } catch (e) {
+        console.log(`${e}`);
       }
-    }
 
     if (!invoice.items || invoice.items.length === 0) {
       invoiceBody.innerHTML = '<tr><td colspan="3">No items in this invoice</td></tr>';
