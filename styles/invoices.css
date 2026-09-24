@@ -46,10 +46,14 @@
   outline: 2px solid #199e23;
 }
 
-
-#inv-table tr, th, td {
+tr, th, td {
   border: 1px solid black;
-  transition: border-color 0.6s ease;
+}
+
+#inv-table {
+  border: 2px solid black;
+  /*border-collapse: collapse;*/
+  transition: border-color 1.5s ease;
 }
 
 #inv-table.is-paid {
