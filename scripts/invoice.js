@@ -104,16 +104,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderSelectedInvoice() {
-    markPaidBtn.removeEventListener('click');
-    markPaidBtn.removeEventListener();
     selectedItemIndex = null;
     populateInvoiceDetails(getSelectedInvoice());
-    markPaidBtn.addEventListener('click', () => {
-      let checkInv = getSelectedInvoice();
-      if (checkInv) {
-        checkInv.isPaid = true;
-      }
-    });
   }
 
   function selectItemRow(event) {
@@ -142,11 +134,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       invoiceBody.innerHTML = '<tr><td colspan="3">No items in this invoice</td></tr>';
     } else {
       if (invoice.isPaid) {
-        paidLabel.textContent = "PAID";
-        markPaidBtn.disabled = true;
+        paidLabel.innerHTML = `<td>PAID</td>`;
       } else {
-        paidLabel.textContent = "";
-        markPaidBtn.disabled = false;
+        paidLabel.innerHTML = `
+        <button id="mark-paid-btn" type="button" disabled>Mark Paid</button>
+        `;
       }
       
       invoice.items.forEach((item, index) => {
@@ -162,6 +154,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (totalCell) totalCell.textContent = `Total: $${invoice.totalBill().toFixed(2)}`;
+    const markPaidBtn = document.getElementById('mark-paid-btn');
+    if (markPaidBtn) {
+      markPaidBtn.addEventListener('click', async () => {
+        invoice.isPaid = true;
+        await store.saveInvoice(invoice);
+        populateInvoiceDetails(invoice);
+      });
+    }
   }
 
   function addItemModal(invoice) {
