@@ -1,6 +1,5 @@
 import { store, populateCustomerDropdowns, Invoice } from './models.js';
 
-
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
 
@@ -11,24 +10,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   const addInvBtn = document.getElementById('add-inv-btn');
   const deleteInvBtn = document.getElementById('delete-inv-btn');
   const invoiceBody = document.getElementById('invoice-table-body');
+  const paidLabel = document.getElementById('paid-notice');
 
   if (!custSelect || !invList || !addItemBtn || !removeItemBtn ||
       !addInvBtn || !deleteInvBtn || !invoiceBody) return;
 
   let selectedItemIndex = null;
 
-  populateCustomerDropdowns(custSelect);
+  // Populate customers dropdown
+  await populateCustomerDropdowns(custSelect);
+
   custSelect.addEventListener('change', renderInvoiceList);
   invList.addEventListener('change', renderSelectedInvoice);
   invoiceBody.addEventListener('click', selectItemRow);
 
   addInvBtn.addEventListener('click', async () => {
-    const customer = store.customers.get(custSelect.value);
+    const custId = custSelect.value;
+    let customer = null;
+
+    if (store.customers instanceof Map) {
+      customer = store.customers.get(custId) || store.customers.get(Number(custId));
+    } else if (typeof store.customers === 'object' && store.customers !== null) {
+      customer = store.customers[custId];
+    } else if (Array.isArray(store.customers)) {
+      customer = store.customers.find(c => String(c.id) === String(custId));
+    }
+
     if (!customer) return;
 
     const newInvoice = new Invoice(customer);
     await store.saveInvoice(newInvoice);
-    store.invoices.push(newInvoice);
+    if (Array.isArray(store.invoices)) {
+      store.invoices.push(newInvoice);
+    }
     renderInvoiceList();
     invList.value = newInvoice.id;
     populateInvoiceDetails(newInvoice);
@@ -69,27 +83,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderInvoiceList();
 
   function getSelectedInvoice() {
-    return store.invoices.find(invoice => invoice.id === invList.value) || null;
+    if (!Array.isArray(store.invoices)) return null;
+    return store.invoices.find(invoice => String(invoice.id) === String(invList.value)) || null;
   }
 
   function shortInvoiceId(id) {
     return String(id).slice(-6);
   }
-  function shortInvoiceId(id) {
-    return String(id).slice(-6);
-  }
-  
 
   function renderInvoiceList() {
     const customerId = custSelect.value;
-    const customerInvoices = store.invoices.filter(
-      invoice => invoice.customer && invoice.customer.id === customerId
+    const customerInvoices = (store.invoices || []).filter(
+      invoice => invoice.customer && String(invoice.customer.id) === String(customerId)
     );
 
     invList.innerHTML = '';
     selectedItemIndex = null;
 
-    if (customerInvoices.length === 0) {
+    if (!customerId || customerInvoices.length === 0) {
       invList.innerHTML = '<option value="">No invoices found</option>';
       populateInvoiceDetails(null);
       return;
@@ -98,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     customerInvoices.forEach(invoice => {
       const option = document.createElement('option');
       option.value = invoice.id;
-      option.textContent = `Invoice #${shortInvoiceId(invoice.id)} - ${invoice.customer.name}`;
+      option.textContent = `Invoice #${shortInvoiceId(invoice.id)} - ${invoice.customer.name || 'Customer'}`;
       invList.appendChild(option);
     });
 
@@ -122,17 +133,49 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function populateInvoiceDetails(invoice) {
-    const totalCell = document.querySelector('tfoot strong');
-    invoiceBody.innerHTML = '';
-    selectedItemIndex = null;
+      try {
+        const totalCell = document.querySelector('tfoot strong');
+        const invTable = document.getElementById('inv-table');
+        invoiceBody.innerHTML = '';
+        selectedItemIndex = null;
+    
+        if (!invoice) {
+          invoiceBody.innerHTML = '<tr><td colspan="3">No invoice selected</td></tr>';
+          if (totalCell) totalCell.textContent = 'Total: $0.00';
+          if (paidLabel) paidLabel.innerHTML = '';
+          return;
+        }
+    
+        if (paidLabel) {
+          if (invoice.isPaid) {
+            paidLabel.innerHTML = `<td colspan="3">PAID</td>`;
+            if (invTable) {
+              document.getElementById('inv-table').classList.add('is-paid');
+            }
+          } else {
+            paidLabel.innerHTML = `
+              <td colspan="3">
+                <button id="mark-paid-btn" type="button">Mark Paid</button>
+              </td>
+            `;
+            const markPaidBtn = paidLabel.querySelector('#mark-paid-btn');
+            if (markPaidBtn) {
+              markPaidBtn.addEventListener('click', async () => {
+                invoice.isPaid = true;
+                await store.saveInvoice(invoice);
+                populateInvoiceDetails(invoice);
+              }, { once: true });
+            }
+            if (invTable) {
+              invTable.classList.remove('is-paid');
+            }
+          }
+        }
+      } catch (e) {
+        console.log(`${e}`);
+      }
 
-    if (!invoice) {
-      invoiceBody.innerHTML = '<tr><td colspan="3">No invoice selected</td></tr>';
-      if (totalCell) totalCell.textContent = 'Total: $0.00';
-      return;
-    }
-
-    if (invoice.items.length === 0) {
+    if (!invoice.items || invoice.items.length === 0) {
       invoiceBody.innerHTML = '<tr><td colspan="3">No items in this invoice</td></tr>';
     } else {
       invoice.items.forEach((item, index) => {
@@ -147,7 +190,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    if (totalCell) totalCell.textContent = `Total: $${invoice.totalBill().toFixed(2)}`;
+    if (totalCell) {
+      const total = typeof invoice.totalBill === 'function' 
+        ? invoice.totalBill() 
+        : (invoice.items || []).reduce((sum, item) => sum + Number(item.value || 0), 0);
+      totalCell.textContent = `Total: $${total.toFixed(2)}`;
+    }
   }
 
   function addItemModal(invoice) {
@@ -181,7 +229,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const value = Number(valueInput.value);
       if (!name || !Number.isFinite(value) || value < 0) return;
 
-      invoice.addItem(name, value);
+      if (typeof invoice.addItem === 'function') {
+        invoice.addItem(name, value);
+      } else {
+        if (!invoice.items) invoice.items = [];
+        invoice.items.push({ name, value });
+      }
+
       await store.saveInvoice(invoice);
       closeModal();
       populateInvoiceDetails(invoice);
@@ -189,5 +243,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     itemForm.onreset = handleReset;
   }
-
 });
