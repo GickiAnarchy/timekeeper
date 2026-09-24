@@ -9,3 +9,10 @@ A javascript project to keep track of hours working.
 
 Yup
 
+
+
+const dateOnly = new Intl.DateTimeFormat('en-US', {
+  month: '2-digit',
+  day: '2-digit',
+  year: 'numeric'
+}).format(now);
