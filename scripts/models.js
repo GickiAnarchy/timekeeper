@@ -1,4 +1,3 @@
-
 /*
   Firebase Setup
 */
@@ -34,6 +33,12 @@ const db = getFirestore(app);
   HELPER FUNCTIONS
 */
 
+function changeHeader(text = '') {
+  const header = document.querySelector('header h1') || document.querySelector('header');
+  if (header && text) {
+    header.dataset.originalText = header.dataset.originalText || header.textContent;
+  }
+}
 
 // Rounds a Date object to the nearest 15-minute mark (00, 15, 30, 45)
 export const roundTo15Minutes = (date = new Date()) => {
@@ -54,10 +59,10 @@ export const roundUp15Minutes = (date = new Date()) => {
   return new Date(Math.ceil(date.getTime() / ms) * ms);
 };
 
-//Normalizes the name string
+// Normalizes the name string
 const normalize = (str) => (str ? str.trim().toLowerCase() : '');
 
-//Formats the datetime object
+// Formats the datetime object
 export const toLocalISO = (date) => {
   if (!date) return '';
   const off = date.getTimezoneOffset() * 60000;
@@ -73,8 +78,7 @@ export function formatTime24(date) {
   return `${hours}:${minutes}`;
 }
 
-
-//JSON downloader
+// JSON downloader
 const downloadJSON = (data, filename) => {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -83,8 +87,7 @@ const downloadJSON = (data, filename) => {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-}
-
+};
 
 
 /*
@@ -113,7 +116,8 @@ export class Customer {
 
   customInfo() {
     const noteString = this.note ? ` - ${this.note}` : '';
-    return `${this.name}${noteString} - ${this.location}`;
+    const locString = this.location ? ` - ${this.location}` : '';
+    return `${this.name}${noteString}${locString}`;
   }
 }
 
@@ -141,21 +145,15 @@ export class WorkShift {
       if (formatTime24(activeBreak.start) === formatTime24(endTime)) {
         this.breaks = this.breaks.filter(b => b !== activeBreak);
       } else {
-      activeBreak.end = endTime;
+        activeBreak.end = endTime;
       }
     }
   }
   
   get isOnBreak() {
-    const aBreak = this.breaks.find(b => b.start && !b.end);
-    if (aBreak) {
-      return true;
-    } else {
-      return false;
-    }
+    return Boolean(this.breaks.find(b => b.start && !b.end));
   }
   
-  // Calculate total break duration in milliseconds
   getTotalBreakTimeMs() {
     return this.breaks.reduce((total, b) => {
       if (b.start && b.end) {
@@ -201,7 +199,6 @@ export class WorkShift {
     if (this.isPaid) return 0;
     return this.employee ? this.employee.getPay(this.getHoursWorked()) : 0;
   }
-
 }
 
 export class Payment {
@@ -219,11 +216,11 @@ export class Invoice {
     this.id = id || crypto.randomUUID();
     this.customer = cust;
     this.items = items;
-    this.isPaid
+    this.isPaid = Boolean(isPaid);
   }
   
   addItem(name, value) {
-    this.items.push({name:name, value:Number(value)});
+    this.items.push({ name: name, value: Number(value) });
   }
   
   deleteItem(name, value) {
@@ -235,7 +232,6 @@ export class Invoice {
     const total = this.items.reduce((sum, item) => sum + Number(item.value || 0), 0);
     return Number(total.toFixed(2));
   }
-  
 }
 
 export class LedgerRow {
@@ -335,7 +331,7 @@ export class AppDataStore {
     changeHeader();
   }
 
-  //  LEDGER --
+  // LEDGER --
   async loadLedger() {
     this.ledger = new Ledger();
     try {
@@ -347,7 +343,6 @@ export class AppDataStore {
         loadedEntries.push({ ...data, id: docSnap.id });
       });
 
-      // Sort by index before populating
       loadedEntries.sort((a, b) => (a.index || 0) - (b.index || 0));
       loadedEntries.forEach(data => this.ledger.addEntry(data));
 
@@ -366,13 +361,12 @@ export class AppDataStore {
     await deleteDoc(doc(db, "ledgerRows", entryId));
     this.ledger.deleteEntry(entryId);
     
-    // Sync updated indexes back to Firestore
     for (const entry of this.ledger.entries) {
       await updateDoc(doc(db, "ledgerRows", entry.id), { index: entry.index });
     }
   }
 
-  //  INVOICE --
+  // INVOICE --
   async loadInvoices() {
     this.invoices = [];
     try {
@@ -396,7 +390,7 @@ export class AppDataStore {
     await setDoc(doc(db, "invoices", invoice.id), {
       custId: invoice.customer ? invoice.customer.id : null,
       items: invoice.items,
-      isPaid: invoice.isPaid ? invoice.isPaid : false
+      isPaid: Boolean(invoice.isPaid)
     });
   }
   
@@ -405,7 +399,7 @@ export class AppDataStore {
     this.invoices = this.invoices.filter(s => s.id !== invoiceId);
   }
 
-  //  EMPLOYEE --
+  // EMPLOYEE --
   async loadEmployees() {
     this.employees.clear();
     try {
@@ -446,7 +440,7 @@ export class AppDataStore {
     return false;
   }
 
-  //  CUSTOMER --
+  // CUSTOMER --
   async loadCustomers() {
     this.customers.clear();
     try {
@@ -515,7 +509,7 @@ export class AppDataStore {
         const data = docSnap.data();
         const emp = (this.employees && this.employees.get(data.employeeId)) || new Employee(data.employeeId, 'Unknown Employee', 0);
         const site = (this.customers && this.customers.get(data.custId)) || new Customer(data.custId, 'Unknown Site');
-        const parsedBreaks = (data.breaks || []).map(b => ({start: b.start ? new Date(b.start) : null,end: b.end ? new Date(b.end) : null}));
+        const parsedBreaks = (data.breaks || []).map(b => ({start: b.start ? new Date(b.start) : null, end: b.end ? new Date(b.end) : null}));
 
         const shift = new WorkShift(emp, site, docSnap.id, data.note || null, data.isPaid, parsedBreaks);
 
@@ -586,7 +580,7 @@ export class AppDataStore {
     return activeShifts.length;
   }
 
-  //  PAYMENT --
+  // PAYMENT --
   async loadPayments() {
     this.payments = [];
     try {
@@ -700,10 +694,10 @@ export class AppDataStore {
   }
 }
 
-
 export const store = new AppDataStore();
 
 export function populateEmployeeDropdowns(empDropdownElement) {
+  if (!empDropdownElement) return;
   empDropdownElement.innerHTML = '<option value="">--Employee--</option>';
   store.employees.forEach((emp) => {
     const opt = document.createElement('option');
@@ -711,10 +705,10 @@ export function populateEmployeeDropdowns(empDropdownElement) {
     opt.textContent = `${emp.name} -- ($${emp.wage}/hr)`;
     empDropdownElement.appendChild(opt);
   });
-  console.log("populated employees");
-  }
-  
+}
+
 export function populateCustomerDropdowns(custDropdownElement) {
+  if (!custDropdownElement) return;
   custDropdownElement.innerHTML = '<option value="">--Customer--</option>';
   store.customers.forEach((cust) => {
     const opt = document.createElement('option');
@@ -722,5 +716,4 @@ export function populateCustomerDropdowns(custDropdownElement) {
     opt.textContent = cust.customInfo();
     custDropdownElement.appendChild(opt);
   });
-  console.log("populated customers");
 }
