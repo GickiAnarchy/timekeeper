@@ -215,10 +215,11 @@ export class Payment {
 }
 
 export class Invoice {
-  constructor(cust, items = [], id = null) {
+  constructor(cust, items = [], id = null, isPaid = false) {
     this.id = id || crypto.randomUUID();
     this.customer = cust;
     this.items = items;
+    this.isPaid
   }
   
   addItem(name, value) {
@@ -380,8 +381,9 @@ export class AppDataStore {
         const data = docSnap.data();
         const customer = (this.customers && this.customers.get(data.custId)) || new Customer(data.custId, 'Unknown');
         const items = data.items || [];
+        const isPaid = data.isPaid || false;
         
-        const inv = new Invoice(customer, items, docSnap.id);
+        const inv = new Invoice(customer, items, docSnap.id, isPaid);
         
         this.invoices.push(inv);
       });
@@ -393,7 +395,8 @@ export class AppDataStore {
   async saveInvoice(invoice) {
     await setDoc(doc(db, "invoices", invoice.id), {
       custId: invoice.customer ? invoice.customer.id : null,
-      items: invoice.items
+      items: invoice.items,
+      isPaid: invoice.isPaid ? invoice.isPaid : false
     });
   }
   
