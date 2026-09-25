@@ -1,2 +1,10 @@
 timekeeper.code-workspace
 fonts/
+/tmp
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example

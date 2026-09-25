@@ -7,15 +7,9 @@ A javascript project to keep track of hours working.
 
 [Link to the site.](https://www.gickianarchy.github.io/timekeeper/)
 
-Yup
+
+Added an animated transparent celestial body overlaid over the entire site, time of day determines state. Touch starts/pauses animation
 
 
 
-const dateOnly = new Intl.DateTimeFormat('en-US', {
-  month: '2-digit',
-  day: '2-digit',
-  year: 'numeric'
-}).format(now);
 
-
-on
