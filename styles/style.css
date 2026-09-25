@@ -2,6 +2,10 @@
   --bg-gold: radial-gradient(circle, #3d2b1f 0%, #170d07 100%);
 }
 
+* {
+  opacity: 0.9;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -35,9 +39,9 @@ html, body {
 }
 
 .logo img {
-  width: 150px;
-  height: 150px;
-  //object-fit: contain;
+  width: 105px;
+  height: 105px;
+  object-fit: contain;
   border-radius: 50%;
 }
 
@@ -62,13 +66,13 @@ html, body {
   
 .top-banner .nav-bar {
   font-size: 12px;
-    background-color: lightgreen;
-    padding: 2px;
-  }
+  background-color: lightgreen;
+  padding: 2px;
+}
   
-  select {
-    border-radius: 7px;
-  }
+select {
+  border-radius: 7px;
+}
 
 .main-content {
   grid-area: content;
@@ -96,7 +100,7 @@ body.home-body {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  min-height: auto; /* Overrides any default min-height pushing content down */
+  min-height: auto;
 }
 
 .home-header {
@@ -142,7 +146,6 @@ body.home-body {
 .home-footer p {
   margin: 2px;
 }
-
 
 /* WIP */
 .wip {

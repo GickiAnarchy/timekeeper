@@ -1,0 +1,118 @@
+:root {
+  --celestial-color: rgba(255, 215, 0, 0.35); /* Sun with higher transparency */
+  --celestial-shadow: rgba(255, 215, 0, 0.25);
+  --celestial-position-y: 60px;
+}
+
+/* Evening / Sunset Theme */
+.theme-evening {
+  --celestial-color: rgba(255, 69, 0, 0.4);
+  --celestial-shadow: rgba(255, 69, 0, 0.25);
+  --celestial-position-y: 120px;
+}
+
+/* Afternoon Theme */
+.theme-afternoon {
+  --bg-gradient: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
+  --text-color: #1a252f;
+  --celestial-color: rgba(255, 247, 0, 0.35);
+  --celestial-shadow: rgba(255, 247, 0, 0.3);
+  --celestial-position-y: 20px;
+}
+
+/* Night Theme */
+.theme-night {
+  --celestial-color: rgba(245, 246, 250, 0.3); /* Moon with transparency */
+  --celestial-shadow: rgba(245, 246, 250, 0.2);
+  --celestial-position-y: 40px;
+}
+
+.sky {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none; /* Allows clicks to pass through background space */
+  z-index: 9999; /* Places celestial elements over top of all app layout layers */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* Celestial Body Base Styling */
+.celestial-body {
+  position: absolute;
+  top: 0;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background-color: var(--celestial-color);
+  box-shadow: 0 0 30px var(--celestial-shadow);
+  transform: translateY(var(--celestial-position-y));
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  pointer-events: auto; /* Re-enables touch/click interaction on the orb itself */
+  opacity: 0.6; /* Sets overall element transparency */
+  
+  /* Continuous ambient pulse animation when idle */
+  animation: pulse 4s infinite alternate ease-in-out;
+
+  transition: transform 2s ease-in-out, 
+              background-color 2s ease-in-out,
+              box-shadow 2s ease-in-out,
+              opacity 0.3s ease;
+}
+
+.celestial-body:hover {
+  opacity: 0.85; /* Slightly brightens when hovered */
+}
+
+/* Subtle continuous idle animation */
+@keyframes pulse {
+  0% {
+    scale: 1;
+  }
+  100% {
+    scale: 1.05;
+  }
+}
+
+/* Phase 1: Launch Up out of the top of the viewport */
+.celestial-body.launching {
+  animation: launchUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+}
+
+/* Phase 2: Rise slowly from the bottom back to default position */
+.celestial-body.rising {
+  animation: riseFromBottom 5.5s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+}
+
+/* Pause keyframe animation playback state on interaction */
+.celestial-body.paused {
+  animation-play-state: paused !important;
+}
+
+/* Animation Keyframes */
+@keyframes launchUp {
+  0% {
+    transform: translateY(var(--celestial-position-y));
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-120vh);
+    opacity: 0.3;
+  }
+}
+
+@keyframes riseFromBottom {
+  0% {
+    transform: translateY(120vh);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(var(--celestial-position-y));
+    opacity: 0.6;
+  }
+}
