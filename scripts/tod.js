@@ -33,18 +33,18 @@ if (celestialBody) {
   function handleInteraction(event) {
     event.preventDefault();
 
-    if (celestialBody.classList.contains('launching') || celestialBody.classList.contains('rising')) {
+    if (celestialBody.classList.contains('shrinkAway') || celestialBody.classList.contains('rising')) {
       celestialBody.classList.toggle('paused');
     } else {
-      celestialBody.classList.add('launching');
+      celestialBody.classList.add('shrinkAway');
     }
   }
 
   celestialBody.addEventListener('animationend', (event) => {
     if (event.animationName === 'pulse') return;
 
-    if (event.animationName === 'launchUp') {
-      celestialBody.classList.remove('launching');
+    if (event.animationName === 'shrinkOut') {
+      celestialBody.classList.remove('shrinkAway');
       celestialBody.classList.add('rising');
     } else if (event.animationName === 'riseFromBottom') {
       celestialBody.classList.remove('rising', 'paused');

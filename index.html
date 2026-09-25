@@ -1,44 +1,47 @@
 <!DOCTYPE html>
 
 <html>
-  <head>
-    <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./styles/style.css"/>
-    <link rel="stylesheet" href="./styles/tod.css"/>
-    <title>Mosher Lawns</title>
-    <script type="module" src="./scripts/tod.js" defer></script>
-    <script type="module" src="./scripts/index.js" defer></script>
-  </head>
-  <body>
-    <div class="layout-container">
-      <header class="logo">
-        <img src="https://raw.githubusercontent.com/GickiAnarchy/timekeeper/main/imgs/logo_bw.jpg" alt="Logo">
-      </header>
-      
-      <div class="sky">
-        <div class="celestial-body"></div>
-      </div>
-      
-      <header class="top-banner">
-        <h1 id="main-header">Mosher Lawns</h1>
-        <small>Time Manager</small>
-        <nav class="nav-bar">
-          <label for="page-select">Jump To:</label>
-          <select id="page-select" class="nav-menu">
-            <option id="home-link" value="html/home.html">Home</option>
-            <option id="clock-link" value="html/clock.html">Clock In/Out</option>
-            <option id="history-link" value="html/viewshifts.html">Shift History</option>
-            <option id="emp-link" value="html/emp.html">Employees</option>
-            <option id="cust-link" value="html/cust.html">Customers</option>
-            <option id="ledger-link" value="html/payledger.html">Ledger</option>
-            <option id="invoices-link" value="html/invoice.html">Invoices</option>
-          </select>
-        </nav>
-      </header>
-      <main class="main-content">
-        <iframe name="main-content" src="html/home.html"></iframe>
-      </main>
+
+<head>
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./styles/style.css" />
+  <link rel="stylesheet" href="./styles/tod.css" />
+  <title>Mosher Lawns</title>
+  <script type="module" src="./scripts/tod.js" defer></script>
+  <script type="module" src="./scripts/index.js" defer></script>
+</head>
+
+<body>
+  <div class="layout-container">
+    <header class="logo">
+      <img src="https://raw.githubusercontent.com/GickiAnarchy/timekeeper/live/imgs/logo_bw.jpg" alt="Logo">
+    </header>
+    
+    <div class="sky">
+      <div class="celestial-body"></div>
     </div>
-  </body>
+    
+    <header class="top-banner">
+      <h1 id="main-header">Mosher Lawns</h1>
+      <small>Time Manager</small>
+      <nav class="nav-bar">
+        <label for="page-select">Jump To:</label>
+        <select id="page-select" class="nav-menu">
+          <option id="home-link" value="html/home.html">Home</option>
+          <option id="clock-link" value="html/clock.html">Clock In/Out</option>
+          <option id="history-link" value="html/viewshifts.html">Shift History</option>
+          <option id="emp-link" value="html/emp.html">Employees</option>
+          <option id="cust-link" value="html/cust.html">Customers</option>
+          <option id="ledger-link" value="html/payledger.html">Ledger</option>
+          <option id="invoices-link" value="html/invoice.html">Invoices</option>
+        </select>
+      </nav>
+    </header>
+    <main class="main-content">
+      <iframe name="main-content" src="html/home.html"></iframe>
+    </main>
+  </div>
+</body>
+
 </html>
