@@ -1,51 +1,47 @@
 :root {
-  --celestial-color: rgba(255, 215, 0, 0.35); /* Sun with higher transparency */
-  --celestial-shadow: rgba(255, 215, 0, 0.25);
+  --celestial-color: rgba(255, 215, 0, 0.8);
+  --celestial-shadow: rgba(255, 215, 0,0.4);
   --celestial-position-y: 60px;
 }
 
-/* Evening / Sunset Theme */
 .theme-evening {
-  --celestial-color: rgba(255, 69, 0, 0.4);
-  --celestial-shadow: rgba(255, 69, 0, 0.25);
+  --celestial-color: rgba(255, 69, 0, 0.8);
+  --celestial-shadow: rgba(255, 69, 0, 0.4);
   --celestial-position-y: 120px;
 }
 
-/* Afternoon Theme */
 .theme-afternoon {
-  --bg-gradient: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
-  --text-color: #1a252f;
-  --celestial-color: rgba(255, 247, 0, 0.35);
-  --celestial-shadow: rgba(255, 247, 0, 0.3);
+  --celestial-color: rgba(255, 247, 0, 0.8);
+  --celestial-shadow: rgba(255, 247, 0,0.4);
   --celestial-position-y: 20px;
 }
 
-/* Night Theme */
 .theme-night {
-  --celestial-color: rgba(245, 246, 250, 0.3); /* Moon with transparency */
-  --celestial-shadow: rgba(245, 246, 250, 0.2);
+  --celestial-color: rgba(99, 126, 241, 0.75);
+  --celestial-shadow: rgba(245, 246, 250, 0.4);
   --celestial-position-y: 40px;
 }
 
+/* Full-viewport overlay; the transparent layer never blocks the app. */
 .sky {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100vw;
   height: 100vh;
-  pointer-events: none; /* Allows clicks to pass through background space */
-  z-index: 9999; /* Places celestial elements over top of all app layout layers */
+  pointer-events: none;
+  z-index: 9999;
   display: flex;
   justify-content: center;
   align-items: flex-start;
 }
 
-/* Celestial Body Base Styling */
+/* The only visible element imported from the time-of-day animation. */
 .celestial-body {
   position: absolute;
   top: 0;
   width: 120px;
   height: 120px;
+  border: solid 3px purple;
   border-radius: 50%;
   background-color: var(--celestial-color);
   box-shadow: 0 0 30px var(--celestial-shadow);
@@ -53,66 +49,67 @@
   cursor: pointer;
   user-select: none;
   touch-action: manipulation;
-  pointer-events: auto; /* Re-enables touch/click interaction on the orb itself */
-  opacity: 0.6; /* Sets overall element transparency */
-  
-  /* Continuous ambient pulse animation when idle */
+  pointer-events: auto;
+  opacity: 0.62;
   animation: pulse 4s infinite alternate ease-in-out;
-
-  transition: transform 2s ease-in-out, 
-              background-color 2s ease-in-out,
-              box-shadow 2s ease-in-out,
-              opacity 0.3s ease;
+  transition: transform 2s ease-in-out, background-color 2s ease-in-out,
+    box-shadow 2s ease-in-out, opacity 0.3s ease;
 }
 
-.celestial-body:hover {
-  opacity: 0.85; /* Slightly brightens when hovered */
+.celestial-body:hover,
+.celestial-body:focus-visible {
+  opacity: 0.7;
+  outline: none;
 }
 
-/* Subtle continuous idle animation */
 @keyframes pulse {
-  0% {
-    scale: 1;
-  }
-  100% {
-    scale: 1.05;
-  }
+  0% { scale: 1; }
+  100% { scale: 1.05; }
 }
 
-/* Phase 1: Launch Up out of the top of the viewport */
 .celestial-body.launching {
-  animation: launchUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+  animation: launchUp 1s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
 }
 
-/* Phase 2: Rise slowly from the bottom back to default position */
 .celestial-body.rising {
-  animation: riseFromBottom 5.5s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+  animation: riseFromBottom 4.5s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
 }
 
-/* Pause keyframe animation playback state on interaction */
 .celestial-body.paused {
   animation-play-state: paused !important;
 }
 
-/* Animation Keyframes */
 @keyframes launchUp {
   0% {
     transform: translateY(var(--celestial-position-y));
-    opacity: 0.6;
+    opacity: 0.70;
   }
   100% {
     transform: translateY(-120vh);
-    opacity: 0.3;
+    opacity: 0.70;
   }
 }
 
 @keyframes riseFromBottom {
   0% {
     transform: translateY(120vh);
-    opacity: 0.3;
+    opacity: 0.7;
   }
   100% {
     transform: translateY(var(--celestial-position-y));
-    opacity: 0.6;
+    opacity: 0.70;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .celestial-body {
+    animation: none;
+    transition: none;
+  }
+
+  .celestial-body.launching,
+  .celestial-body.rising {
+    animation: none !important;
+  }
+}
+

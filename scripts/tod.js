@@ -1,63 +1,60 @@
 function updateTimeTheme() {
-  const now = new Date();
-  const hours = now.getHours();
   const sky = document.querySelector('.sky');
-  
-  // Reset theme classes
+  if (!sky) return;
+
+  const hours = new Date().getHours();
   sky.classList.remove('theme-morning', 'theme-afternoon', 'theme-evening', 'theme-night');
 
-  // Determine time of day and set active CSS theme
   if (hours >= 5 && hours < 12) {
     sky.classList.add('theme-morning');
-    
   } else if (hours >= 12 && hours < 17) {
     sky.classList.add('theme-afternoon');
-    
   } else if (hours >= 17 && hours < 21) {
     sky.classList.add('theme-evening');
-    
   } else {
     sky.classList.add('theme-night');
-    
   }
 }
 
-// Run clock theme calculation
 updateTimeTheme();
-setInterval(updateTimeTheme, 1000);
+setInterval(updateTimeTheme, 60 * 1000);
 
-/* --- CELESTIAL BODY INTERACTION LOGIC --- */
-
+/* The imported interaction is intentionally limited to the celestial body. */
 const celestialBody = document.querySelector('.celestial-body');
 
-// Handle Touch / Click trigger
-function handleInteraction(event) {
-  event.preventDefault(); // Prevent duplicate touch/click triggering on mobile devices
+if (celestialBody) {
+  celestialBody.setAttribute('role', 'button');
+  celestialBody.setAttribute('tabindex', '0');
+  celestialBody.setAttribute(
+    'aria-label',
+    'Celestial body. Activate to launch it, then activate again to pause or resume.'
+  );
 
-  // If active animation is playing, toggle pause / play
-  if (celestialBody.classList.contains('launching') || celestialBody.classList.contains('rising')) {
-    celestialBody.classList.toggle('paused');
-    return;
+  function handleInteraction(event) {
+    event.preventDefault();
+
+    if (celestialBody.classList.contains('launching') || celestialBody.classList.contains('rising')) {
+      celestialBody.classList.toggle('paused');
+    } else {
+      celestialBody.classList.add('launching');
+    }
   }
 
-  // Otherwise, start launch phase
-  celestialBody.classList.add('launching');
+  celestialBody.addEventListener('animationend', (event) => {
+    if (event.animationName === 'pulse') return;
+
+    if (event.animationName === 'launchUp') {
+      celestialBody.classList.remove('launching');
+      celestialBody.classList.add('rising');
+    } else if (event.animationName === 'riseFromBottom') {
+      celestialBody.classList.remove('rising', 'paused');
+    }
+  });
+
+  celestialBody.addEventListener('pointerdown', handleInteraction);
+  celestialBody.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      handleInteraction(event);
+    }
+  });
 }
-
-// Handle animation completion transitions
-celestialBody.addEventListener('animationend', (event) => {
-  // Ignore ambient pulse keyframe events
-  if (event.animationName === 'pulse') return;
-
-  if (event.animationName === 'launchUp') {
-    // Once launched off screen, transition immediately to rising from bottom
-    celestialBody.classList.remove('launching');
-    celestialBody.classList.add('rising');
-  } else if (event.animationName === 'riseFromBottom') {
-    // Reset state back to idle after rising completion
-    celestialBody.classList.remove('rising', 'paused');
-  }
-});
-
-// Attach pointer and touch event listeners
-celestialBody.addEventListener('pointerdown', handleInteraction);
