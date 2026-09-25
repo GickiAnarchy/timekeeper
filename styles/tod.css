@@ -1,24 +1,24 @@
 :root {
   --celestial-color: rgba(255, 215, 0, 0.8);
-  --celestial-shadow: rgba(255, 215, 0,0.4);
-  --celestial-position-y: 60px;
+  --celestial-shadow: rgba(255, 140, 0, 0.61);
+  --celestial-position-y: -60px;
 }
 
 .theme-evening {
   --celestial-color: rgba(255, 69, 0, 0.8);
-  --celestial-shadow: rgba(255, 69, 0, 0.4);
+  --celestial-shadow: rgba(255, 200, 135, 0.58);
   --celestial-position-y: 120px;
 }
 
 .theme-afternoon {
   --celestial-color: rgba(255, 247, 0, 0.8);
-  --celestial-shadow: rgba(255, 247, 0,0.4);
+  --celestial-shadow: rgba(255, 247, 0,0.2);
   --celestial-position-y: 20px;
 }
 
 .theme-night {
   --celestial-color: rgba(99, 126, 241, 0.75);
-  --celestial-shadow: rgba(245, 246, 250, 0.4);
+  --celestial-shadow: rgba(245, 246, 250, 0.2);
   --celestial-position-y: 40px;
 }
 
@@ -39,9 +39,9 @@
 .celestial-body {
   position: absolute;
   top: 0;
-  width: 120px;
-  height: 120px;
-  border: solid 3px purple;
+  width: 100px;
+  height: 100px;
+  border: solid 3px rgba(222, 124, 16, 0.65);
   border-radius: 50%;
   background-color: var(--celestial-color);
   box-shadow: 0 0 30px var(--celestial-shadow);
@@ -50,15 +50,14 @@
   user-select: none;
   touch-action: manipulation;
   pointer-events: auto;
-  opacity: 0.62;
+  opacity: 0.3;
   animation: pulse 4s infinite alternate ease-in-out;
-  transition: transform 2s ease-in-out, background-color 2s ease-in-out,
-    box-shadow 2s ease-in-out, opacity 0.3s ease;
+  transition: transform 2s ease-in-out, background-color 2s ease-in-out, 
+  box-shadow 2s ease-in-out, opacity 0.3s ease;
 }
 
 .celestial-body:hover,
 .celestial-body:focus-visible {
-  opacity: 0.7;
   outline: none;
 }
 
@@ -67,16 +66,29 @@
   100% { scale: 1.05; }
 }
 
+.celestial-body.shrinkAway {
+  animation: shrinkOut 5s ease-out forwards !important;
+}
+
 .celestial-body.launching {
   animation: launchUp 1s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
 }
 
 .celestial-body.rising {
-  animation: riseFromBottom 4.5s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+  animation: riseFromBottom 10s ease-in-out  forwards !important;
 }
 
 .celestial-body.paused {
   animation-play-state: paused !important;
+}
+
+@keyframes shrinkOut {
+  0% {
+    scale: 100%;
+  }
+  100% {
+    scale: 0%;
+  }
 }
 
 @keyframes launchUp {
@@ -92,12 +104,23 @@
 
 @keyframes riseFromBottom {
   0% {
-    transform: translateY(120vh);
-    opacity: 0.7;
+    transform: translateY(300px);
+    scale: 320%;
+    opacity: 0.35;
+  }
+  20% {
+    scale: 280%;
+  }
+  70% {
+    scale: 145%;
+  }
+  85% {
+    scale: 120%;
   }
   100% {
     transform: translateY(var(--celestial-position-y));
-    opacity: 0.70;
+    scale: 100%;
+    opacity: 0.3;
   }
 }
 
