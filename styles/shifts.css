@@ -9,6 +9,16 @@ h3 {
   font-size: 22px;
 }
 
+hr {
+  background-color: #01CE1C;
+  width: 100%;
+  height: 10px;
+}
+
+.filters {
+  margin-bottom: 5px;
+}
+
 .shifts-section {
   display: flex;
   flex-direction: column;
@@ -23,8 +33,8 @@ h3 {
 }
 
 .shift-card {
-  margin: 10px;
-  padding: 5px;
+  margin: 5px;
+  padding: 3px;
   border: 2px solid purple;
   width: 100%;
 }

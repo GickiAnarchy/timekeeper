@@ -22,6 +22,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
   
   const shiftList = document.getElementById('shiftList');
+  const empFilter = document.getElementById('emp-filter');
+  
+  populateEmployeeDropdowns(empFilter);
+  
+  empFilter.addEventListener('change', async () => {
+    const eSelection = empFilter.value;
+    renderList(eSelection);
+  });
   
   function showViewModal(shift) {
     const modal = document.getElementById('viewShiftModal');
@@ -111,11 +119,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     modal.showModal();
   }
   
-  function renderList() {
+  function renderList(eFilter = null) {
     if (!shiftList) return;
 
-    const completeShifts = store.shifts.filter(s => s.isComplete);
-    
+    let completeShifts = store.shifts.filter(s => s.isComplete);
+
+    if (eFilter !== null) {
+      completeShifts = store.shifts.filter(s => (s.employee.id === eFilter) && s.isComplete );
+    }
+        
     if (completeShifts.length === 0) {
       shiftList.innerHTML = '<li class="empty-list shift-card">No Shift History - none</li>';
       return;

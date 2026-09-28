@@ -63,3 +63,10 @@ tr, th, td {
 .paid-notice {
   color: red;
 }
+
+.table-box {
+  display: flex;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
