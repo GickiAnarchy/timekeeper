@@ -145,6 +145,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (paidLabel) paidLabel.innerHTML = '';
           return;
         }
+        
+        if (totalCell) {
+          totalCell.textContent = `Total: $${invoice.totalBill()}`;
+        }
     
         if (paidLabel) {
           if (invoice.isPaid) {
@@ -188,13 +192,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
         invoiceBody.appendChild(row);
       });
-    }
-
-    if (totalCell) {
-      const total = typeof invoice.totalBill === 'function' 
-        ? invoice.totalBill() 
-        : (invoice.items || []).reduce((sum, item) => sum + Number(item.value || 0), 0);
-      totalCell.textContent = `Total: $${total.toFixed(2)}`;
     }
   }
 
