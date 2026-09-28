@@ -39,6 +39,10 @@ hr {
   width: 100%;
 }
 
+.shift-card.is-paid {
+  border: 2px solid red;
+}
+
 .shift-modal {
   justify-content: center;
   align-items: center;
@@ -58,8 +62,4 @@ hr {
 
 select {
   padding: 3px;
-}
-
-.time-row {
-  
 }

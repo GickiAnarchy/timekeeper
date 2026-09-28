@@ -161,6 +161,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       <button type="button" class="view-btn" data-id="${shift.id}">View</button>
       <button type="button" class="delete-btn" data-id="${shift.id}">Delete</button>
       `;
+      
+      if (shift.isPaid) {
+        li.classList.add('is-paid');
+      }
+      
       shiftList.appendChild(li);
     });
   }
