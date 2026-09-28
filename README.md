@@ -9,7 +9,7 @@ A javascript project to keep track of hours working.
 
 
 Added an animated transparent celestial body overlaid over the entire site, time of day determines state. Touch starts/pauses animation
-
+Removed the celestial body.
 
 
 
