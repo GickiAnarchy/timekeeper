@@ -23,13 +23,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   const shiftList = document.getElementById('shiftList');
   const empFilter = document.getElementById('emp-filter');
+  const custFilter = document.getElementById('cust-filter');
   
+  // Populate filter dropdowns and add default "All" option
   populateEmployeeDropdowns(empFilter);
+  populateCustomerDropdowns(custFilter);
   
-  empFilter.addEventListener('change', async () => {
-    const eSelection = empFilter.value;
-    renderList(eSelection);
-  });
+  empFilter.insertAdjacentHTML('afterbegin', '<option value="all" selected>All Employees</option>');
+  custFilter.insertAdjacentHTML('afterbegin', '<option value="all" selected>All Customers</option>');
+  
+  empFilter.addEventListener('change', renderList);
+  custFilter.addEventListener('change', renderList);
   
   function showViewModal(shift) {
     const modal = document.getElementById('viewShiftModal');
@@ -119,13 +123,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     modal.showModal();
   }
   
-  function renderList(eFilter = null) {
+  function renderList() {
     if (!shiftList) return;
+    
+    const eSelection = empFilter.value;
+    const cSelection = custFilter.value;
+    
+    console.log(`${eSelection}      ${cSelection}`);
 
     let completeShifts = store.shifts.filter(s => s.isComplete);
 
-    if (eFilter !== null) {
-      completeShifts = store.shifts.filter(s => (s.employee.id === eFilter) && s.isComplete );
+    if (eSelection && eSelection !== 'all') {
+      completeShifts = completeShifts.filter(s => s.employee?.id === eSelection);
+    }
+    
+    if (cSelection && cSelection !== 'all') {
+      completeShifts = completeShifts.filter(s => s.customer?.id === cSelection);
     }
         
     if (completeShifts.length === 0) {
