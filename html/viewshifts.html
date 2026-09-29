@@ -21,10 +21,17 @@
           <select id="cust-filter"></select>
         </div>
       </div>
+      <div class="paid-div">
+        <label for="paid-filter">Hide Paid:</label>
+        <input type="checkbox" id="paid-filter" />
+      </div>
       <hr>
-      <ul id="shiftList" class="shifts-list">
-        <li class="empty-list shift-card">No Shift History</li>
-      </ul>
+      <details class="shift-list-details">
+        <summary>Shift List</summary>
+        <ul id="shiftList" class="shifts-list">
+          <li class="empty-list shift-card">No Shift History</li>
+        </ul>
+      </details>
     </div>
     
     <!-- SHIFT VIEW MODAL -->

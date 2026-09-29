@@ -16,7 +16,10 @@ hr {
 }
 
 .filters {
+  display: flex;
+  flex-direction: row;
   margin-bottom: 5px;
+  justify-content: space-evenly;
 }
 
 .shifts-section {

@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const shiftList = document.getElementById('shiftList');
   const empFilter = document.getElementById('emp-filter');
   const custFilter = document.getElementById('cust-filter');
+  const paidCheckbox = document.getElementById('paid-filter');
   
   // Populate filter dropdowns and add default "All" option
   populateEmployeeDropdowns(empFilter);
@@ -34,6 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   empFilter.addEventListener('change', renderList);
   custFilter.addEventListener('change', renderList);
+  paidCheckbox.addEventListener('change', renderList);
   
   function showViewModal(shift) {
     const modal = document.getElementById('viewShiftModal');
@@ -139,6 +141,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (cSelection && cSelection !== 'all') {
       completeShifts = completeShifts.filter(s => s.customer?.id === cSelection);
+    }
+    
+    if (paidCheckbox.checked) {
+      completeShifts = completeShifts.filter(s => !s.isPaid);
     }
         
     if (completeShifts.length === 0) {
