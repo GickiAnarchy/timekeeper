@@ -5,7 +5,8 @@
 }
 
 .top-bar {
-  
+  display: flexbox;
+  justify-content: center;
 }
 
 .logo-box {
