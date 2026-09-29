@@ -11,7 +11,8 @@ import {
   getDocs, 
   doc, 
   updateDoc, 
-  deleteDoc 
+  deleteDoc,
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // 2. Your web app's Firebase configuration
@@ -234,56 +235,50 @@ export class Invoice {
   }
 }
 
-export class LedgerRow {
-  constructor(id = null, index, date, type, hours, amount, notes) {
-    this.id = id || crypto.randomUUID();
-    this.index = index ?? null;
-    this.date = date ?? null;
-    this.type = type ?? null;
-    this.hours = hours ?? null;
-    this.amount = amount ?? null;
-    this.notes = notes ?? null;
-  }
-  
-  getData() {
-    return {
-      id: this.id,
-      index: this.index,
-      date: this.date,
-      type: this.type,
-      hours: this.hours,
-      amount: this.amount,
-      notes: this.notes
-    };
-  }
-}
-
 export class Ledger {
-  constructor(rowList = []) {
-    this.entries = rowList;
+  constructor(initialEntries = []) {
+    this.entries = [];
+    if (Array.isArray(initialEntries) && initialEntries.length > 0) {
+      initialEntries.forEach(data => this.addEntry(data));
+    }
   }
-  
+
   addEntry(data = {}) {
-    const nextIndex = this.entries.length + 1;
-    const entry = new LedgerRow(
-      data.id,
-      nextIndex, 
-      data.date, 
-      data.type, 
-      data.hours, 
-      data.amount, 
-      data.notes
-    );
+    const entry = {
+      id: data.id || crypto.randomUUID(),
+      index: this.entries.length + 1,
+      date: data.date ?? null,
+      type: data.type ?? null,
+      hours: data.hours ?? null,
+      amount: data.amount ?? null,
+      notes: data.notes ?? null
+    };
+
     this.entries.push(entry);
     return entry;
   }
-  
+
+  updateEntry(id, updates = {}) {
+    const entry = this.getEntry(id);
+    if (!entry) return null;
+
+    Object.assign(entry, updates);
+    return entry;
+  }
+
   deleteEntry(id) {
-    const idx = this.entries.findIndex(entry => entry.id === id);
-    if (idx !== -1) {
-      this.entries.splice(idx, 1);
+    const initialLength = this.entries.length;
+    this.entries = this.entries.filter(entry => entry.id !== id);
+    
+    if (this.entries.length !== initialLength) {
       this.reindex();
+      return true;
     }
+    return false;
+  }
+
+  getEntry(id) {
+    return this.entries.find(entry => entry.id === id) || null;
   }
 
   reindex() {
@@ -291,16 +286,20 @@ export class Ledger {
       entry.index = i + 1;
     });
   }
-  
+
   getTotal() {
-    return this.entries.reduce((total, e) => {
-      const entryType = (e.type || '').toLowerCase();
-      const amt = Number(e.amount || 0);
-      
-      if (entryType === 'normal') return total + amt;
+    return this.entries.reduce((total, { type = '', amount = 0 }) => {
+      const entryType = type.toLowerCase();
+      const amt = Number(amount) || 0;
+
+      if (entryType === 'normal' || entryType === 'general') return total + amt;
       if (entryType === 'advance') return total - amt;
       return total;
     }, 0);
+  }
+
+  toJSON() {
+    return this.entries;
   }
 }
 
@@ -316,7 +315,7 @@ export class AppDataStore {
     this.payments = [];
     this.shifts = [];
     this.invoices = [];
-    this.ledgerEntries = [];
+    this.ledger = new Ledger();
     this.isAdmin = null;
   }
 
@@ -353,17 +352,31 @@ export class AppDataStore {
 
   async saveLedgerEntry(data) {
     const entry = this.ledger.addEntry(data);
-    await setDoc(doc(db, "ledgerRows", entry.id), entry.getData());
+    await setDoc(doc(db, "ledgerRows", entry.id), entry);
+    return entry;
+  }
+
+  async updateLedgerEntry(entryId, updates) {
+    const entry = this.ledger.updateEntry(entryId, updates);
+    if (!entry) throw new Error("Ledger entry not found.");
+
+    await updateDoc(doc(db, "ledgerRows", entryId), entry);
     return entry;
   }
 
   async deleteLedgerEntry(entryId) {
+    const isDeleted = this.ledger.deleteEntry(entryId);
+    if (!isDeleted) return;
+
     await deleteDoc(doc(db, "ledgerRows", entryId));
-    this.ledger.deleteEntry(entryId);
-    
-    for (const entry of this.ledger.entries) {
-      await updateDoc(doc(db, "ledgerRows", entry.id), { index: entry.index });
-    }
+
+    // Batch update updated index numbers in Firestore efficiently
+    const batch = writeBatch(db);
+    this.ledger.entries.forEach((entry) => {
+      const ref = doc(db, "ledgerRows", entry.id);
+      batch.update(ref, { index: entry.index });
+    });
+    await batch.commit();
   }
 
   // INVOICE --
@@ -524,7 +537,10 @@ export class AppDataStore {
   }
 
   async saveShift(shift) {
-    const formattedBreaks = shift.breaks.map(b => ({start: b.start instanceof Date ? b.start.toISOString() : b.start, end: b.end instanceof Date ? b.end.toISOString() : b.end}));
+    const formattedBreaks = shift.breaks.map(b => ({
+      start: b.start instanceof Date ? b.start.toISOString() : b.start, 
+      end: b.end instanceof Date ? b.end.toISOString() : b.end
+    }));
     
     await setDoc(doc(db, "shifts", shift.id), {
       employeeId: shift.employee ? shift.employee.id : null,
@@ -549,7 +565,10 @@ export class AppDataStore {
 
     const start = clockInTime instanceof Date ? clockInTime : new Date(clockInTime);
     const end = clockOutTime instanceof Date ? clockOutTime : new Date(clockOutTime);
-    const formattedBreaks = shift.breaks.map(b => ({start: b.start instanceof Date ? b.start.toISOString() : b.start, end: b.end instanceof Date ? b.end.toISOString() : b.end}));
+    const formattedBreaks = shift.breaks.map(b => ({
+      start: b.start instanceof Date ? b.start.toISOString() : b.start, 
+      end: b.end instanceof Date ? b.end.toISOString() : b.end
+    }));
     
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
       throw new Error("Please provide valid start and end times.");
