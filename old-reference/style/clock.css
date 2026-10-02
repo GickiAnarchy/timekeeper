@@ -12,12 +12,13 @@ body * {
 }
 
 .top-div {
+  height: 35px;
   position: relative;
   font-size: 24px;
-  color:transparent;
+  color: #C0F5BD;
   text-shadow: 0 4px 2px #000000 ;
-  background-image: linear-gradient(45deg, #bff9cd, #21fd59, #01641a);
-  padding: 0;
+  background-image: linear-gradient(180deg, #bff9cd, #21fd59, #01641a);
+  padding: 5px;
   margin-top: 0;
 }
 
@@ -64,6 +65,7 @@ body * {
   border: 2px solid black;
   height: 20rem;
   width: auto;
+  background-image: linear-gradient(45deg, #4E6E3EBB, #497A7FBB, #69497FBB);
 }
 
 .active-section h3 {

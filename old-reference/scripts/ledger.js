@@ -1,7 +1,12 @@
-import { store, populateEmployeeDropdowns } from './models.js';
+import {
+  store,
+  populateEmployeeDropdowns,
+  enableAutoScrollOnFocus
+} from './models.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
+  enableAutoScrollOnFocus();
 
   const form = document.getElementById('ledger-form');
   const dateInput = document.getElementById('date');
@@ -37,19 +42,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Render all entries stored in the Ledger instance
   const renderLedger = () => {
     tableBody.innerHTML = '';
-    let runningTotal = 0;
-    
-    totalRow.innerHTML = "";
 
     store.ledger.entries.forEach((entry) => {
       const type = (entry.type || '').toLowerCase();
       const amount = Number(entry.amount || 0);
-
-      if (type === 'normal') {
-        runningTotal += amount;
-      } else if (type === 'advance') {
-        runningTotal -= amount;
-      }
 
       const row = document.createElement('tr');
       row.innerHTML = `
@@ -63,7 +59,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       `;
       tableBody.appendChild(row);
     });
-    totalRow.innerHTML = `<td>Total: $${store.ledger.getTotal()}</td>`;
+
+    if (totalRow) {
+      const total = store.ledger.getTotal();
+      totalRow.innerHTML = `<strong>Total: $${total.toFixed(2)}</strong>`;
+    }
   };
 
   // Initial render of saved entries
@@ -94,6 +94,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (type === 'advance') {
       hours = 0;
       amount = parseFloat(amountInput.value) || 0;
+    } else if (type === 'general') {
+      const amountSpot = document.getElementById('amount');
+      const userInput = prompt("Please enter an amount:", "$0.00");
+
+      if (userInput !== null) {
+        console.log("User entered:", userInput);
+        amount = Number(userInput);
+        amountSpot.textContent = amount;
+      } else {
+        console.log("User cancelled the prompt.");
+      }
+
+      hours = 0;
     }
 
     // Save to Firestore & Store
@@ -105,11 +118,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       notes
     });
 
+    // Reset form fields
+    form.reset();
+
     // Re-render UI table
     renderLedger();
 
-    // Reset form fields
-    form.reset();
     dateInput.value = today;
     typeSelect.dispatchEvent(new Event('change'));
   });

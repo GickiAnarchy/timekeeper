@@ -20,7 +20,7 @@
             <th>Type</th>
             <th>Hours</th>
             <th>Amount</th>
-            <th  colspan="2">Notes</th>
+            <th colspan="2">Notes</th>
             <th>Action</th>
           </tr>
         </thead>
@@ -29,8 +29,8 @@
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="3" id="ledger-total">
-              <strong>Total</strong>
+            <td colspan="8" id="ledger-total">
+              <strong>Total: $0.00</strong>
             </td>
           </tr>
         </tfoot>
@@ -40,6 +40,11 @@
     <!-- Form to add new ledger entry -->
     <div class="form-container">
       <form id="ledger-form">
+        <label for="employee-select">Employee:</label>
+        <select id="employee-select">
+          <option value="">--Employee--</option>
+        </select>
+
         <label for="date">Date:</label>
         <input type="date" id="date" required>
 
@@ -47,6 +52,7 @@
         <select id="type" required>
           <option value="normal">Normal</option>
           <option value="advance">Advance</option>
+          <option value="general">General</option>
         </select>
 
         <label for="hours">Hours:</label>

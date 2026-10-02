@@ -2,7 +2,8 @@ import {
   store, 
   populateEmployeeDropdowns, 
   populateCustomerDropdowns,
-  formatTime24
+  formatTime24,
+  enableAutoScrollOnFocus
 } from './models.js';
 
 
@@ -20,8 +21,23 @@ function formatForDateTimeLocal(date) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
+  enableAutoScrollOnFocus();
   
   const shiftList = document.getElementById('shiftList');
+  const empFilter = document.getElementById('emp-filter');
+  const custFilter = document.getElementById('cust-filter');
+  const paidCheckbox = document.getElementById('paid-filter');
+  
+  // Populate filter dropdowns and add default "All" option
+  populateEmployeeDropdowns(empFilter);
+  populateCustomerDropdowns(custFilter);
+  
+  empFilter.insertAdjacentHTML('afterbegin', '<option value="all" selected>All Employees</option>');
+  custFilter.insertAdjacentHTML('afterbegin', '<option value="all" selected>All Customers</option>');
+  
+  empFilter.addEventListener('change', renderList);
+  custFilter.addEventListener('change', renderList);
+  paidCheckbox.addEventListener('change', renderList);
   
   function showViewModal(shift) {
     const modal = document.getElementById('viewShiftModal');
@@ -113,9 +129,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   function renderList() {
     if (!shiftList) return;
-
-    const completeShifts = store.shifts.filter(s => s.isComplete);
     
+    const eSelection = empFilter.value;
+    const cSelection = custFilter.value;
+    
+    console.log(`${eSelection}      ${cSelection}`);
+
+    let completeShifts = store.shifts.filter(s => s.isComplete);
+
+    if (eSelection && eSelection !== 'all') {
+      completeShifts = completeShifts.filter(s => s.employee?.id === eSelection);
+    }
+    
+    if (cSelection && cSelection !== 'all') {
+      completeShifts = completeShifts.filter(s => s.customer?.id === cSelection);
+    }
+    
+    if (paidCheckbox.checked) {
+      completeShifts = completeShifts.filter(s => !s.isPaid);
+    }
+        
     if (completeShifts.length === 0) {
       shiftList.innerHTML = '<li class="empty-list shift-card">No Shift History - none</li>';
       return;
@@ -149,6 +182,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       <button type="button" class="view-btn" data-id="${shift.id}">View</button>
       <button type="button" class="delete-btn" data-id="${shift.id}">Delete</button>
       `;
+      
+      if (shift.isPaid) {
+        li.classList.add('is-paid');
+      }
+      
       shiftList.appendChild(li);
     });
   }

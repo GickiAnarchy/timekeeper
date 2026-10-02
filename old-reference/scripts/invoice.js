@@ -1,7 +1,13 @@
-import { store, populateCustomerDropdowns, Invoice } from './models.js';
+import {
+  store,
+  populateCustomerDropdowns,
+  Invoice,
+  enableAutoScrollOnFocus
+} from './models.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
+  enableAutoScrollOnFocus();
 
   const custSelect = document.getElementById('cust-select');
   const invList = document.getElementById('inv-select');
@@ -145,6 +151,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (paidLabel) paidLabel.innerHTML = '';
           return;
         }
+        
+        if (totalCell) {
+          totalCell.textContent = `Total: $${invoice.totalBill()}`;
+        }
     
         if (paidLabel) {
           if (invoice.isPaid) {
@@ -188,13 +198,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
         invoiceBody.appendChild(row);
       });
-    }
-
-    if (totalCell) {
-      const total = typeof invoice.totalBill === 'function' 
-        ? invoice.totalBill() 
-        : (invoice.items || []).reduce((sum, item) => sum + Number(item.value || 0), 0);
-      totalCell.textContent = `Total: $${total.toFixed(2)}`;
     }
   }
 

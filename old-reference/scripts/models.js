@@ -91,6 +91,20 @@ const downloadJSON = (data, filename) => {
 };
 
 
+export function enableAutoScrollOnFocus() {
+  document.addEventListener('focusin', (event) => {
+    const target = event.target;
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
+      setTimeout(() => {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  });
+}
+
+
+
+
 /*
   DATA MODELS
 */
@@ -118,7 +132,7 @@ export class Customer {
   customInfo() {
     const noteString = this.note ? ` - ${this.note}` : '';
     const locString = this.location ? ` - ${this.location}` : '';
-    return `${this.name}${noteString}${locString}`;
+    return `${this.name} - ${locString}`;
   }
 }
 

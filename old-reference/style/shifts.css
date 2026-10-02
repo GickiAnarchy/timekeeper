@@ -9,6 +9,27 @@ h3 {
   font-size: 22px;
 }
 
+hr {
+  background-color: #01CE1C;
+  width: 100%;
+  height: 10px;
+}
+
+.filters {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 5px;
+  justify-content: space-evenly;
+}
+
+.filter-sel {
+  border: 1px solid #1199076B;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 .shifts-section {
   display: flex;
   flex-direction: column;
@@ -23,10 +44,14 @@ h3 {
 }
 
 .shift-card {
-  margin: 10px;
-  padding: 5px;
+  margin: 5px;
+  padding: 3px;
   border: 2px solid purple;
   width: 100%;
+}
+
+.shift-card.is-paid {
+  border: 2px solid red;
 }
 
 .shift-modal {
@@ -48,8 +73,5 @@ h3 {
 
 select {
   padding: 3px;
-}
-
-.time-row {
-  
+  width: 70%;
 }

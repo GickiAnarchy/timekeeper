@@ -1,0 +1,8 @@
+
+:root {
+  --ml-color-one: #254630;
+  --ml-color-two: #6f9447;
+  --ml-color-three: #b97b4b;
+  --ml-color-four: #e8e3d4;
+  --ml-color-gradient: linear-gradient(120deg, #946400, #BA8005, #F3AC15, #E0CF29, #D5F88F, #95CC28);
+}
