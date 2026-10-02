@@ -22,6 +22,14 @@ hr {
   justify-content: space-evenly;
 }
 
+.filter-sel {
+  border: 1px solid #1199076B;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 .shifts-section {
   display: flex;
   flex-direction: column;
@@ -65,4 +73,5 @@ hr {
 
 select {
   padding: 3px;
+  width: 70%;
 }

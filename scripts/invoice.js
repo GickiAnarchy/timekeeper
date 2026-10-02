@@ -1,7 +1,13 @@
-import { store, populateCustomerDropdowns, Invoice } from './models.js';
+import {
+  store,
+  populateCustomerDropdowns,
+  Invoice,
+  enableAutoScrollOnFocus
+} from './models.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
+  enableAutoScrollOnFocus();
 
   const custSelect = document.getElementById('cust-select');
   const invList = document.getElementById('inv-select');

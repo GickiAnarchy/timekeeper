@@ -2,7 +2,8 @@ import {
   store, 
   populateEmployeeDropdowns, 
   populateCustomerDropdowns,
-  formatTime24
+  formatTime24,
+  enableAutoScrollOnFocus
 } from './models.js';
 
 
@@ -20,6 +21,7 @@ function formatForDateTimeLocal(date) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
+  enableAutoScrollOnFocus();
   
   const shiftList = document.getElementById('shiftList');
   const empFilter = document.getElementById('emp-filter');

@@ -1,7 +1,12 @@
-import { store, populateEmployeeDropdowns } from './models.js';
+import {
+  store,
+  populateEmployeeDropdowns,
+  enableAutoScrollOnFocus
+} from './models.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
+  enableAutoScrollOnFocus();
 
   const form = document.getElementById('ledger-form');
   const dateInput = document.getElementById('date');
