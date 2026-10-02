@@ -1,11 +1,9 @@
 import { changeHeader, roundTo15Minutes, formatTime24 } from './utils.js';
 
-
 /*
   Firebase Setup
 */
 
-// 1. Import Firebase & Firestore Modular SDKs (CDN Links)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
   getFirestore, 
@@ -15,10 +13,11 @@ import {
   doc, 
   updateDoc, 
   deleteDoc,
-  writeBatch
+  writeBatch,
+  query,
+  where
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// 2. Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDn_y846YGhK689a3-2S6VvO46uElD1JXw",
   authDomain: "timekeeper-ad253.firebaseapp.com",
@@ -28,16 +27,8 @@ const firebaseConfig = {
   appId: "1:516577372091:web:3bb56f8017058ffcd9869e"
 };
 
-// 3. Initialize Firebase & Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
-
-/*
-  HELPER FUNCTIONS
-*/
-
-
 
 
 /*
@@ -64,10 +55,18 @@ export class Customer {
     this.note = note;
   }
 
-  customInfo() {
+  customInfo(maxLocLength = 15) {
     const noteString = this.note ? ` - ${this.note}` : '';
-    const locString = this.location ? ` - ${this.location}` : '';
-    return `${this.name}${noteString}${locString}`;
+    let locString = '';
+    
+    if (this.location) {
+      const truncated = this.location.length > maxLocLength 
+        ? `${this.location.slice(0, maxLocLength - 2)}..` 
+        : this.location;
+      locString = ` - ${truncated}`;
+    }
+    
+    return `${this.name}${locString}${noteString}`;
   }
 }
 
@@ -127,11 +126,7 @@ export class WorkShift {
   }
   
   addNote(newnote) {
-    if (!this.note) {
-      this.note = newnote;
-    } else {
-      this.note = `${this.note}\n${newnote}`;
-    }
+    this.note = this.note ? `${this.note}\n${newnote}` : newnote;
   }
 
   get isComplete() {
@@ -151,16 +146,6 @@ export class WorkShift {
   }
 }
 
-export class Payment {
-  constructor(employeeId, amount, date = null, note = '', id = null) {
-    this.id = id || crypto.randomUUID();
-    this.employeeId = employeeId;
-    this.amount = Number(amount);
-    this.date = date ? new Date(date) : new Date();
-    this.note = note;
-  }
-}
-
 export class Invoice {
   constructor(cust, items = [], id = null, isPaid = false) {
     this.id = id || crypto.randomUUID();
@@ -170,12 +155,11 @@ export class Invoice {
   }
   
   addItem(name, value) {
-    this.items.push({ name: name, value: Number(value) });
+    this.items.push({ name, value: Number(value) });
   }
   
   deleteItem(name, value) {
-    const dItem = this.items.find(i => i.name === name && i.value === value);
-    this.items = this.items.filter(i => i !== dItem);
+    this.items = this.items.filter(i => !(i.name === name && i.value === value));
   }
   
   totalBill() {
@@ -185,7 +169,8 @@ export class Invoice {
 }
 
 export class Ledger {
-  constructor(initialEntries = []) {
+  constructor(emp = null, initialEntries = []) {
+    this.employee = emp;
     this.entries = [];
     if (Array.isArray(initialEntries) && initialEntries.length > 0) {
       initialEntries.forEach(data => this.addEntry(data));
@@ -197,9 +182,9 @@ export class Ledger {
       id: data.id || crypto.randomUUID(),
       index: this.entries.length + 1,
       date: data.date ?? null,
-      type: data.type ?? null,
-      hours: data.hours ?? null,
-      amount: data.amount ?? null,
+      type: data.type ?? 'general',
+      hours: data.hours != null ? Number(data.hours) : null,
+      amount: data.amount != null ? Number(data.amount) : 0,
       notes: data.notes ?? null
     };
 
@@ -211,19 +196,20 @@ export class Ledger {
     const entry = this.getEntry(id);
     if (!entry) return null;
 
+    if (updates.amount != null) updates.amount = Number(updates.amount);
+    if (updates.hours != null) updates.hours = Number(updates.hours);
+
     Object.assign(entry, updates);
     return entry;
   }
 
   deleteEntry(id) {
-    const initialLength = this.entries.length;
-    this.entries = this.entries.filter(entry => entry.id !== id);
-    
-    if (this.entries.length !== initialLength) {
-      this.reindex();
-      return true;
-    }
-    return false;
+    const indexToRemove = this.entries.findIndex(entry => entry.id === id);
+    if (indexToRemove === -1) return false;
+
+    this.entries.splice(indexToRemove, 1);
+    this.reindex();
+    return true;
   }
 
   getEntry(id) {
@@ -237,18 +223,20 @@ export class Ledger {
   }
 
   getTotal() {
-    return this.entries.reduce((total, { type = '', amount = 0 }) => {
-      const entryType = type.toLowerCase();
-      const amt = Number(amount) || 0;
+    return this.entries.reduce((total, entry) => {
+      const entryType = (entry.type || '').toLowerCase();
+      const amt = entry.amount || 0;
 
-      if (entryType === 'normal' || entryType === 'general') return total + amt;
       if (entryType === 'advance') return total - amt;
-      return total;
+      return total + amt;
     }, 0);
   }
 
   toJSON() {
-    return this.entries;
+    return {
+      employeeId: this.employee ? this.employee.id : null,
+      entries: this.entries
+    };
   }
 }
 
@@ -261,10 +249,9 @@ export class AppDataStore {
   constructor() {
     this.employees = new Map();
     this.customers = new Map();
-    this.payments = [];
     this.shifts = [];
     this.invoices = [];
-    this.ledger = new Ledger();
+    this.ledgers = [];
     this.isAdmin = null;
   }
 
@@ -273,55 +260,96 @@ export class AppDataStore {
     await this.loadEmployees();
     await this.loadCustomers();
     await this.loadShifts();
-    await this.loadPayments();
     await this.loadInvoices();
-    await this.loadLedger();
+    await this.loadAllLedgers();
     changeHeader();
   }
 
-  // LEDGER --
-  async loadLedger() {
-    this.ledger = new Ledger();
+  // LEDGERS --
+  getLedgerForEmployee(employeeId) {
+    return this.ledgers.find(l => l.employee && l.employee.id === employeeId) || null;
+  }
+
+  async loadLedger(employeeId) {
+    if (!employeeId) return null;
+
+    const emp = this.employees.get(employeeId) || new Employee(employeeId, 'Unknown Employee', 0);
+    const ledger = new Ledger(emp);
+
     try {
-      const querySnapshot = await getDocs(collection(db, "ledgerRows"));
+      const q = query(collection(db, "ledgerRows"), where("employeeId", "==", employeeId));
+      const querySnapshot = await getDocs(q);
       const loadedEntries = [];
       
       querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        loadedEntries.push({ ...data, id: docSnap.id });
+        loadedEntries.push({ ...docSnap.data(), id: docSnap.id });
       });
 
       loadedEntries.sort((a, b) => (a.index || 0) - (b.index || 0));
-      loadedEntries.forEach(data => this.ledger.addEntry(data));
+      loadedEntries.forEach(data => ledger.addEntry(data));
 
+      // Update or add ledger to store list
+      const existingIdx = this.ledgers.findIndex(l => l.employee && l.employee.id === employeeId);
+      if (existingIdx !== -1) {
+        this.ledgers[existingIdx] = ledger;
+      } else {
+        this.ledgers.push(ledger);
+      }
+
+      return ledger;
     } catch (e) {
       console.error("Error loading Ledger from Firestore:", e);
+      return null;
     }
   }
 
-  async saveLedgerEntry(data) {
-    const entry = this.ledger.addEntry(data);
-    await setDoc(doc(db, "ledgerRows", entry.id), entry);
+  async loadAllLedgers() {
+    this.ledgers = [];
+    for (const [employeeId] of this.employees) {
+      await this.loadLedger(employeeId);
+    }
+  }
+
+  async saveLedgerEntry(employeeId, data) {
+    let ledger = this.getLedgerForEmployee(employeeId);
+    if (!ledger) {
+      ledger = await this.loadLedger(employeeId);
+    }
+
+    const entry = ledger.addEntry(data);
+    
+    const payload = {
+      ...entry,
+      employeeId: employeeId
+    };
+
+    await setDoc(doc(db, "ledgerRows", entry.id), payload);
     return entry;
   }
 
-  async updateLedgerEntry(entryId, updates) {
-    const entry = this.ledger.updateEntry(entryId, updates);
+  async updateLedgerEntry(employeeId, entryId, updates) {
+    const ledger = this.getLedgerForEmployee(employeeId);
+    if (!ledger) throw new Error("Ledger not found for employee.");
+
+    const entry = ledger.updateEntry(entryId, updates);
     if (!entry) throw new Error("Ledger entry not found.");
 
     await updateDoc(doc(db, "ledgerRows", entryId), entry);
     return entry;
   }
 
-  async deleteLedgerEntry(entryId) {
-    const isDeleted = this.ledger.deleteEntry(entryId);
+  async deleteLedgerEntry(employeeId, entryId) {
+    const ledger = this.getLedgerForEmployee(employeeId);
+    if (!ledger) return;
+
+    const isDeleted = ledger.deleteEntry(entryId);
     if (!isDeleted) return;
 
     await deleteDoc(doc(db, "ledgerRows", entryId));
 
-    // Batch update updated index numbers in Firestore efficiently
+    // Batch update remaining indexes
     const batch = writeBatch(db);
-    this.ledger.entries.forEach((entry) => {
+    ledger.entries.forEach((entry) => {
       const ref = doc(db, "ledgerRows", entry.id);
       batch.update(ref, { index: entry.index });
     });
@@ -335,13 +363,11 @@ export class AppDataStore {
       const querySnapshot = await getDocs(collection(db, "invoices"));
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        const customer = (this.customers && this.customers.get(data.custId)) || new Customer(data.custId, 'Unknown');
+        const customer = this.customers.get(data.custId) || new Customer(data.custId, 'Unknown');
         const items = data.items || [];
         const isPaid = data.isPaid || false;
         
-        const inv = new Invoice(customer, items, docSnap.id, isPaid);
-        
-        this.invoices.push(inv);
+        this.invoices.push(new Invoice(customer, items, docSnap.id, isPaid));
       });
     } catch (e) {
       console.error("Error loading invoices from Firestore:", e);
@@ -376,20 +402,23 @@ export class AppDataStore {
   }
 
   async addEmployee(name, wage) {
-    const cleanName = normalize(name);
+    const cleanName = name ? name.trim() : '';
     if (!cleanName) throw new Error("Employee name cannot be empty.");
 
     const isDuplicate = Array.from(this.employees.values()).some(
-      (emp) => normalize(emp.name) === cleanName
+      (emp) => emp.name.toLowerCase() === cleanName.toLowerCase()
     );
     if (isDuplicate) return null;
 
-    const emp = new Employee(null, name.trim(), wage);
+    const emp = new Employee(null, cleanName, wage);
     await setDoc(doc(db, "employees", emp.id), {
       name: emp.name,
       wage: emp.wage
     });
     this.employees.set(emp.id, emp);
+    
+    // Initialize ledger for new employee
+    this.ledgers.push(new Ledger(emp));
     return emp;
   }
 
@@ -397,6 +426,7 @@ export class AppDataStore {
     if (this.employees.has(id)) {
       await deleteDoc(doc(db, "employees", id));
       this.employees.delete(id);
+      this.ledgers = this.ledgers.filter(l => !l.employee || l.employee.id !== id);
       return true;
     }
     return false;
@@ -417,16 +447,10 @@ export class AppDataStore {
   }
   
   async addCustomer(name, location, note = null) {
-    const cleanName = normalize(name);
-    const cleanLocation = normalize(location);
+    const cleanName = name ? name.trim() : '';
     if (!cleanName) throw new Error("Customer name cannot be empty.");
 
-    const isDuplicate = Array.from(this.customers.values()).some(
-      (site) => normalize(site.name) === cleanName && normalize(site.location) === cleanLocation
-    );
-    if (isDuplicate) return null;
-
-    const site = new Customer(null, name.trim(), location ? location.trim() : null, note);
+    const site = new Customer(null, cleanName, location ? location.trim() : null, note);
     await setDoc(doc(db, "customers", site.id), {
       name: site.name,
       location: site.location,
@@ -469,12 +493,14 @@ export class AppDataStore {
       const querySnapshot = await getDocs(collection(db, "shifts"));
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        const emp = (this.employees && this.employees.get(data.employeeId)) || new Employee(data.employeeId, 'Unknown Employee', 0);
-        const site = (this.customers && this.customers.get(data.custId)) || new Customer(data.custId, 'Unknown Site');
-        const parsedBreaks = (data.breaks || []).map(b => ({start: b.start ? new Date(b.start) : null, end: b.end ? new Date(b.end) : null}));
+        const emp = this.employees.get(data.employeeId) || new Employee(data.employeeId, 'Unknown Employee', 0);
+        const site = this.customers.get(data.custId) || new Customer(data.custId, 'Unknown Site');
+        const parsedBreaks = (data.breaks || []).map(b => ({
+          start: b.start ? new Date(b.start) : null, 
+          end: b.end ? new Date(b.end) : null
+        }));
 
         const shift = new WorkShift(emp, site, docSnap.id, data.note || null, data.isPaid, parsedBreaks);
-
         shift.clockInTime = data.clockInTime ? new Date(data.clockInTime) : null;
         shift.clockOutTime = data.clockOutTime ? new Date(data.clockOutTime) : null;
         
@@ -543,69 +569,18 @@ export class AppDataStore {
     return shift;
   }
 
-  async howManyActive() {
-    const activeShifts = this.shifts.filter(s => !s.isComplete);
-    return activeShifts.length;
-  }
-
-  // PAYMENT --
-  async loadPayments() {
-    this.payments = [];
-    try {
-      const querySnapshot = await getDocs(collection(db, "payments"));
-      querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        const payment = new Payment(
-          data.employeeId,
-          data.amount,
-          data.date,
-          data.note,
-          docSnap.id
-        );
-        this.payments.push(payment);
-      });
-    } catch (e) {
-      console.error("Error loading payments from Firestore:", e);
+  getActiveShifts() {
+    if (this.shifts) {
+      return this.shifts.filter(s => s.clockInTime && !s.clockOutTime);
     }
   }
 
-  async addPayment(employeeId, amount, note = '') {
-    const payment = new Payment(employeeId, amount, new Date(), note);
-    await setDoc(doc(db, "payments", payment.id), {
-      employeeId: payment.employeeId,
-      amount: payment.amount,
-      date: payment.date.toISOString(),
-      note: payment.note
-    });
-    this.payments.push(payment);
-    return payment;
-  }
-  
-  async deletePayment(paymentId) {
-    await deleteDoc(doc(db, "payments", paymentId));
-    this.payments = this.payments.filter(p => p.id !== paymentId);
+  hasActiveShifts() {
+    return this.getActiveShifts().length > 0;
   }
 
-  // CALCULATE BALANCES FOR AN EMPLOYEE
-  getEmployeeLedger(employeeId) {
-    const empShifts = this.shifts.filter(
-      s => s.employee && s.employee.id === employeeId && s.isComplete
-    );
-    const empPayments = this.payments.filter(
-      p => p.employeeId === employeeId
-    );
-
-    const totalEarned = empShifts.reduce((sum, s) => sum + Number(s.getShiftPay()), 0);
-    const totalPaid = empPayments.reduce((sum, p) => sum + p.amount, 0);
-    const balanceOwed = Number((totalEarned - totalPaid).toFixed(2));
-
-    return {
-      shifts: empShifts,
-      payments: empPayments,
-      totalEarned,
-      totalPaid,
-      balanceOwed
-    };
+  getActiveShiftCount() {
+    return this.getActiveShifts().length;
   }
 
   // IMPORT & EXPORT
@@ -663,5 +638,3 @@ export class AppDataStore {
 }
 
 export const store = new AppDataStore();
-
-

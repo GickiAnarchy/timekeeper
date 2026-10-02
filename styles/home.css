@@ -7,10 +7,16 @@
   justify-content: column;
 }
 
-.shift-status {
-  color: var(-ml-color-two);
+.status-div {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 }
 
 .shift-status.noshifts {
+  color: var(-ml-color-two);
+}
+
+.shift-status.shifts {
   color: #d50505;
 }

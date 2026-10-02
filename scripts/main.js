@@ -1,4 +1,9 @@
-document.addEventListener('DOMContentLoaded', () => {
+import { store } from './models.js';
+
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await store.init();
+  
   const hamburger = document.getElementById('hamburger-btn');
   const navMenu = document.getElementById('nav-menu');
 
