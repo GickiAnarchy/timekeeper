@@ -7,6 +7,10 @@
   justify-content: column;
 }
 
-.shift-status noshifts {
-  
+.shift-status {
+  color: var(-ml-color-two);
+}
+
+.shift-status.noshifts {
+  color: #d50505;
 }
