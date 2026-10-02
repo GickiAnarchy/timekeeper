@@ -3,7 +3,8 @@ import {
   populateEmployeeDropdowns, 
   populateCustomerDropdowns,
   formatTime24,
-  enableAutoScrollOnFocus
+  enableAutoScrollOnFocus,
+  WorkShift
 } from './models.js';
 
 
@@ -27,6 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const empFilter = document.getElementById('emp-filter');
   const custFilter = document.getElementById('cust-filter');
   const paidCheckbox = document.getElementById('paid-filter');
+  const addButton = document.getElementById('add-button');
   
   // Populate filter dropdowns and add default "All" option
   populateEmployeeDropdowns(empFilter);
@@ -38,6 +40,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   empFilter.addEventListener('change', renderList);
   custFilter.addEventListener('change', renderList);
   paidCheckbox.addEventListener('change', renderList);
+  
+  addButton.addEventListener('click', async () => {
+    const eValue = empFilter.value;
+    const cValue = custFilter.value;
+    
+    if (!cValue || !eValue) {
+      alert("Need to filter an employee and customer first.");
+      return;
+    }
+    const ee = store.employees.find((e) => e.id === eValue);
+    const cc = store.customers.find((c) => c.id === cValue);
+    
+    const addedShift = new WorkShift(ee,cc);
+    showViewModal(addedShift);
+  });
+  
   
   function showViewModal(shift) {
     const modal = document.getElementById('viewShiftModal');
@@ -80,7 +98,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
       breaksList.appendChild(li);
     });
-
 
     timeIn.value = formatForDateTimeLocal(shift.clockInTime);
     timeOut.value = formatForDateTimeLocal(shift.clockOutTime);

@@ -103,8 +103,6 @@ export function enableAutoScrollOnFocus() {
 }
 
 
-
-
 /*
   DATA MODELS
 */
