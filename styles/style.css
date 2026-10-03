@@ -214,6 +214,17 @@ body {
   margin-left: 1rem;
 }
 
+#guest-link {
+  display: block;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.guest-link {
+  justify-content: center;
+  text-align: center;
+}
+
 .main-content {
   width: auto;
 }
