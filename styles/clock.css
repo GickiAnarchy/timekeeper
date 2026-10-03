@@ -1,0 +1,6 @@
+@import url(./variables.css);
+
+
+.main-container {
+    display: flexbox;
+}
