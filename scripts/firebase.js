@@ -7,7 +7,7 @@ import {
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDn_y846YGhK689a-3S6VvO46uElD1JXw",
+  apiKey: "AIzaSyDn_y846YGhK689a3-2S6VvO46uElD1JXw",
   authDomain: "timekeeper-ad253.firebaseapp.com",
   projectId: "timekeeper-ad253",
   storageBucket: "timekeeper-ad253.firebasestorage.app",
