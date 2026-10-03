@@ -1,23 +1,17 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="../styles/home.css"/>
+  <link rel="stylesheet" href="../styles/home.css">
   <script type="module" src="../scripts/home.js" defer></script>
 </head>
-
 <body>
   <div class="main-container">
     <h2>Home</h2>
-    
     <div class="status-div">
-      <p class="shift-status noshifts" id="shift-status"></p>
+      <p class="shift-status status-message" id="shift-status" role="status" aria-live="polite">Checking sign-in status…</p>
     </div>
-    
   </div>
-  
 </body>
-
 </html>

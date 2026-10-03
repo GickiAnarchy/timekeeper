@@ -1,15 +1,14 @@
 import { changeHeader, roundTo15Minutes, formatTime24 } from './utils.js';
+import { db } from './firebase.js';
 
 /*
   Firebase Setup
 */
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { 
-  getFirestore, 
+import {
   collection, 
   setDoc, 
-  getDocs, 
+  getDocs,
   doc, 
   updateDoc, 
   deleteDoc,
@@ -17,18 +16,6 @@ import {
   query,
   where
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDn_y846YGhK689a3-2S6VvO46uElD1JXw",
-  authDomain: "timekeeper-ad253.firebaseapp.com",
-  projectId: "timekeeper-ad253",
-  storageBucket: "timekeeper-ad253.firebasestorage.app",
-  messagingSenderId: "516577372091",
-  appId: "1:516577372091:web:3bb56f8017058ffcd9869e"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
 
 /*
@@ -252,10 +239,20 @@ export class AppDataStore {
     this.shifts = [];
     this.invoices = [];
     this.ledgers = [];
-    this.isAdmin = null;
+    this.loadErrors = [];
+  }
+
+  reset() {
+    this.employees.clear();
+    this.customers.clear();
+    this.shifts = [];
+    this.invoices = [];
+    this.ledgers = [];
+    this.loadErrors = [];
   }
 
   async init() {
+    this.loadErrors = [];
     changeHeader("Loading");
     await this.loadEmployees();
     await this.loadCustomers();
@@ -263,6 +260,10 @@ export class AppDataStore {
     await this.loadInvoices();
     await this.loadAllLedgers();
     changeHeader();
+    if (this.loadErrors.length > 0) {
+      const failedCollections = [...new Set(this.loadErrors.map(({ collection }) => collection))];
+      throw new Error(`Failed to load Firestore data: ${failedCollections.join(', ')}.`);
+    }
   }
 
   // LEDGERS --
@@ -299,6 +300,7 @@ export class AppDataStore {
       return ledger;
     } catch (e) {
       console.error("Error loading Ledger from Firestore:", e);
+      this.loadErrors.push({ collection: "ledgerRows", error: e });
       return null;
     }
   }
@@ -371,6 +373,7 @@ export class AppDataStore {
       });
     } catch (e) {
       console.error("Error loading invoices from Firestore:", e);
+      this.loadErrors.push({ collection: "invoices", error: e });
     }
   }
   
@@ -398,6 +401,7 @@ export class AppDataStore {
       });
     } catch (e) {
       console.error("Error loading employees from Firestore:", e);
+      this.loadErrors.push({ collection: "employees", error: e });
     }
   }
 
@@ -443,6 +447,7 @@ export class AppDataStore {
       });
     } catch (e) {
       console.error("Error loading customers from Firestore:", e);
+      this.loadErrors.push({ collection: "customers", error: e });
     }
   }
   
@@ -508,6 +513,7 @@ export class AppDataStore {
       });
     } catch (e) {
       console.error("Error loading shifts from Firestore:", e);
+      this.loadErrors.push({ collection: "shifts", error: e });
     }
   }
 

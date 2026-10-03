@@ -1,22 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./styles/style.css"/>
+    <link rel="stylesheet" href="./styles/style.css">
     <title>Mosher Lawns</title>
-    <script type="module" src="./scripts/utils.js" defer></script>
-    <script type="module" src="./scripts/models.js" defer></script>
     <script type="module" src="./scripts/main.js" defer></script>
   </head>
   <body>
-    <div class="index-container">
+    <section class="auth-gate" id="auth-gate" aria-labelledby="auth-heading">
+      <div class="auth-card">
+        <h1 id="auth-heading">Mosher Lawns admin</h1>
+        <p>Sign in with an enabled owner or admin account.</p>
+        <form id="login-form">
+          <label for="login-email">Email</label>
+          <input id="login-email" name="email" type="email" autocomplete="username" required>
+
+          <label for="login-password">Password</label>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+
+          <button class="auth-submit" id="login-submit" type="submit">Sign in</button>
+        </form>
+        <p class="auth-status" id="auth-status" role="status" aria-live="polite">Checking sign-in status…</p>
+        <button class="sign-out-button" id="gate-sign-out" type="button" hidden>Sign out</button>
+      </div>
+    </section>
+
+    <div class="index-container" id="app-shell" hidden>
       <header class="upper-container">
         <div class="title-banner">
           <h1>Mosher Lawns</h1>
         </div>
 
-        <!-- Hamburger Icon Button -->
         <button class="hamburger" id="hamburger-btn" aria-label="Toggle navigation menu" aria-expanded="false">
           <span></span>
           <span></span>
@@ -24,23 +39,19 @@
         </button>
 
         <div class="nav-box">
-          <nav class="nav-menu" id="nav-menu">
+          <nav class="nav-menu" id="nav-menu" aria-label="Main navigation">
             <ul class="nav-links">
               <li><a target="main-content" href="html/home.html">Home</a></li>
               <li><a target="main-content" href="html/clock.html">Clock</a></li>
-              <!--
-              <li><a target="main-content" href="#about">About Us</a></li>
-              <li><a target="main-content" href="#contact">Contact</a></li>
-              -->
             </ul>
           </nav>
         </div>
+        <button class="sign-out-button header-sign-out" id="header-sign-out" type="button" hidden>Sign out</button>
       </header>
     </div>
-    
-    <main class="main-content">
-      <iframe name="main-content" src="html/home.html"></iframe>
+
+    <main class="main-content" id="app-content" hidden>
+      <iframe name="main-content" title="Application content" src="about:blank"></iframe>
     </main>
-    
   </body>
 </html>

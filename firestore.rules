@@ -1,0 +1,50 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function enabledAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.enabled == true;
+    }
+
+    // A signed-in user may read only their own authorization record so the UI
+    // can determine whether access has been enabled. Provision records manually
+    // in Firebase Console; client-side writes are deliberately never allowed.
+    match /admins/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // These are the exact Firestore collections used by the current app and
+    // its archived client. The recursive wildcard also covers nested documents.
+    match /employees/{document=**} {
+      allow read, write: if enabledAdmin();
+    }
+    match /customers/{document=**} {
+      allow read, write: if enabledAdmin();
+    }
+    match /shifts/{document=**} {
+      allow read, write: if enabledAdmin();
+    }
+    match /invoices/{document=**} {
+      allow read, write: if enabledAdmin();
+    }
+    match /ledgerRows/{document=**} {
+      allow read, write: if enabledAdmin();
+    }
+    match /payments/{document=**} {
+      allow read, write: if enabledAdmin();
+    }
+
+    // Anything not explicitly matched above is denied, including new or
+    // misspelled collections and all other users' admin records.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
