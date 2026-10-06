@@ -191,13 +191,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         minute: '2-digit'
       }) : 'Unknown';
 
+      const dateStr = shift.clockInTime ? shift.clockInTime.toLocaleDateString() : 'Unknown';
+
       li.innerHTML = `
-      <div>
-        <strong>${shift.employee ? shift.employee.name : 'Unknown'}</strong> @ ${shift.customer ? shift.customer.name : 'Unknown'}<br>
-        <small>In: ${timeInStr}   Out: ${timeOutStr}</small>
+      <div class="date-div">
+        <p>${dateStr}</p>
       </div>
-      <button type="button" class="view-btn" data-id="${shift.id}">View</button>
-      <button type="button" class="delete-btn" data-id="${shift.id}">Delete</button>
+      <div class="emp-cust-div">
+        <strong>${shift.employee ? shift.employee.name : 'Unknown'}</strong> @ ${shift.customer ? shift.customer.name : 'Unknown'}<br>
+        <small class="time-small">In: ${timeInStr}   Out: ${timeOutStr}</small>
+      </div>
+      <div class="list-item-buttons">
+        <button type="button" class="view-btn" data-id="${shift.id}">View</button>
+        <button type="button" class="delete-btn" data-id="${shift.id}">Delete</button>
+      </div>
       `;
       
       if (shift.isPaid) {

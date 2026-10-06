@@ -3,6 +3,7 @@ body {
   flex-direction: column;
   justify-content: center;
   min-width: fit-content;
+  width: 100%;
 }
 
 h3 {
@@ -37,13 +38,32 @@ hr {
   align-items: center;
 }
 
+.date-div,
+.emp-cust-div,
+.list-item-buttons {
+  display: flex;
+  border: 1px solid #01CE1C;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.emp-cust-div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
 .shifts-list {
-  list-style-type: none;
+  list-style-type: disc;
   padding: 0;
   margin: 0;
 }
 
 .shift-card {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
   margin: 5px;
   padding: 3px;
   border: 2px solid purple;
