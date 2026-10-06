@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const deleteInvBtn = document.getElementById('delete-inv-btn');
   const invoiceBody = document.getElementById('invoice-table-body');
   const paidLabel = document.getElementById('paid-notice');
+  const openDiv = document.getElementById('open-div');
 
   if (!custSelect || !invList || !addItemBtn || !removeItemBtn ||
       !addInvBtn || !deleteInvBtn || !invoiceBody) return;
@@ -24,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let selectedItemIndex = null;
 
   // Populate customers dropdown
-  await populateCustomerDropdowns(custSelect);
+  populateCustomerDropdowns(custSelect);
 
   custSelect.addEventListener('change', renderInvoiceList);
   invList.addEventListener('change', renderSelectedInvoice);
@@ -98,6 +99,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderInvoiceList() {
+    const openInvoices = store.invoices.filter(invoice => !invoice.isPaid);
+    openDiv.innerHTML = "";
+
+    if (openInvoices.length !== 0) {
+      openDiv.innerHTML = `<p>${openInvoices.length} open invoices</p>`;
+    } else {
+      openDiv.innerHTML = "";
+    }
+
     const customerId = custSelect.value;
     const customerInvoices = (store.invoices || []).filter(
       invoice => invoice.customer && String(invoice.customer.id) === String(customerId)

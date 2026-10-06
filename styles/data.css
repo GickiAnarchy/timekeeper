@@ -112,6 +112,25 @@ body {
   font-size: 14px;
 }
 
+.emp-item, .cust-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.del-btn {
+  background-color: #f44336;
+  color: #ffffff;
+  border: none;
+  max-height: 50%;
+  width: auto;
+}
+
+.del-btn:hover {
+  background-color: #d32f2f;
+}
+
 .empty-list {
   list-style-type: none;
   color: #777;
