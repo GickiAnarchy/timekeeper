@@ -200,6 +200,31 @@ body.home-body {
   flex: 1;
 }
 
+.updates {
+  animation: disappearSlow 4s linear 10s 1 normal both;
+}
+/*
+animation: name duration timing delay count direction fill-mode play-state
+*/
+
+@keyframes disappearSlow {
+  0% {
+    opacity: 1.0;
+  }
+  75% {
+    opacity: 1.0;
+  }
+  85% {
+    opacity: 0.8;
+  }
+  95% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 .updates p {
   margin: 4px 0;
 }
