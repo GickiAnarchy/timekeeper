@@ -31,6 +31,8 @@ html, body {
   width: 105px;
   height: 105px;
   box-sizing: border-box;
+  
+  animation: fadeOutPop 15s ease-in infinite alternate;
 }
 
 /* Wrapper handling circular clip & pulsing border thickness */
@@ -46,7 +48,7 @@ html, body {
   justify-content: center;
   
   /* Animates the border thickness between 2px and 6px */
-  animation: pulse-padding 6s ease-in-out infinite alternate;
+  animation: pulse-padding 2s ease-in-out infinite alternate;
 }
 
 /* Pseudo-element handling the continuous spinning multi-color gradient */
@@ -63,7 +65,7 @@ html, body {
     #4EF067,
     #B4AE3E
   );
-  animation: spin-border 7s linear infinite;
+  animation: spin-border 4s linear infinite;
   z-index: 1;
 }
 
@@ -78,6 +80,24 @@ html, body {
 }
 
 /* Keyframe Animations */
+@keyframes fadeOutPop {
+  0% {
+    opacity: 1.0;
+  }
+  50% {
+    opacity: 1.0;
+  }
+  90% {
+    opacity: 1.0;
+  }
+  95% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0.1;
+  }
+}
+
 @keyframes spin-border {
   from {
     transform: rotate(0deg);
