@@ -8,5 +8,3 @@ A javascript project to keep track of hours working.
 [Link to the site.](https://www.gickianarchy.github.io/timekeeper/)
 
 
-
-live
