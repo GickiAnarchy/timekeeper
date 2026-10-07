@@ -315,6 +315,19 @@ export class Ledger {
   }
 }
 
+export class PlannedJob {
+  constructor(description, scheduledDate, customer = null,  isComplete = false, id = null) {
+    this.description = description;
+    this.scheduledDate = scheduledDate;
+    this.customer = customer;
+    this.isComplete = isComplete;
+    this.id = id || cryplo.randomUUID();
+  }
+  
+  
+  
+}
+
 
 /*
   DATA STORE
@@ -328,6 +341,7 @@ export class AppDataStore {
     this.shifts = [];
     this.invoices = [];
     this.ledger = new Ledger();
+    this.plannedJobs = [];
     this.isAdmin = null;
   }
 
@@ -339,6 +353,7 @@ export class AppDataStore {
     await this.loadPayments();
     await this.loadInvoices();
     await this.loadLedger();
+    await this.loadPlanned();
     changeHeader();
   }
 
@@ -723,6 +738,36 @@ export class AppDataStore {
     }
     await this.loadShifts();
   }
+
+  
+  // PLANNED JOBS
+  async loadPlanned() {
+    this.plannedJobs = [];
+    try {
+      const querySnapshot = await getDocs(collection(db, "planned"));
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const customer = (this.customers && this.customers.get(data.custId)) || new Customer(data.custId, 'Unknown Site');
+        
+        const planned = new PlannedJob(data.description, data.scheduledDate, customer, data.isComplete, docSnap.id);
+        
+        this.plannedJobs.push(planned);
+      });
+    } catch (e) {
+      console.error("Error loading planned jobs from Firestore:", e);
+    }
+  }
+  
+  async savePlanned(planned) {
+    await setDoc(doc(db, "planned", planned.id), {
+      custId: planned.customer ? planned.customer.id : null,
+      description: planned.description || null,
+      isComplete: planned.isComplete || false,
+      scheduledDate = planned.scheduledDate;
+    }); 
+  }
+
+  
 }
 
 export const store = new AppDataStore();
