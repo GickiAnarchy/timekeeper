@@ -48,7 +48,7 @@ html, body {
   justify-content: center;
   
   /* Animates the border thickness between 2px and 6px */
-  animation: pulse-padding 2s ease-in-out infinite alternate;
+  animation: pulse-padding 1.5s ease-in-out infinite alternate;
 }
 
 /* Pseudo-element handling the continuous spinning multi-color gradient */
@@ -65,7 +65,7 @@ html, body {
     #4EF067,
     #B4AE3E
   );
-  animation: spin-border 4s linear infinite;
+  animation: spin-border 5s linear infinite;
   z-index: 1;
 }
 
@@ -77,43 +77,6 @@ html, body {
   object-fit: contain;
   border-radius: 50%;
   background-color: #000;
-}
-
-/* Keyframe Animations */
-@keyframes fadeOutPop {
-  0% {
-    opacity: 1.0;
-  }
-  50% {
-    opacity: 1.0;
-  }
-  90% {
-    opacity: 1.0;
-  }
-  95% {
-    opacity: 0.5;
-  }
-  100% {
-    opacity: 0.1;
-  }
-}
-
-@keyframes spin-border {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes pulse-padding {
-  0% {
-    padding: 2px;
-  }
-  100% {
-    padding: 6px;
-  }
 }
 
 .top-banner {
@@ -201,28 +164,7 @@ body.home-body {
 }
 
 .updates {
-  animation: disappearSlow 4s linear 10s 1 normal both;
-}
-/*
-animation: name duration timing delay count direction fill-mode play-state
-*/
-
-@keyframes disappearSlow {
-  0% {
-    opacity: 1.0;
-  }
-  75% {
-    opacity: 1.0;
-  }
-  85% {
-    opacity: 0.8;
-  }
-  95% {
-    opacity: 0.3;
-  }
-  100% {
-    opacity: 0;
-  }
+  animation: disappearSlow 4s linear 20s 1 normal both;
 }
 
 .updates p {
@@ -243,14 +185,60 @@ animation: name duration timing delay count direction fill-mode play-state
   margin: 2px;
 }
 
-/* WIP */
-.wip {
-  flex: 1;
-  display: flex;
-  text-align: center;
-  justify-content: center;
-  align-items: center;
-  color: orange;
-  background-color: black;
-  border: 3px solid red;
+/*
+animation: name duration timing delay count direction fill-mode play-state
+*/
+/* Keyframe Animations */
+@keyframes fadeOutPop {
+  0% {
+    opacity: 1.0;
+  }
+  50% {
+    opacity: 1.0;
+  }
+  90% {
+    opacity: 1.0;
+  }
+  95% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0.1;
+  }
+}
+
+@keyframes spin-border {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-padding {
+  0% {
+    padding: 2px;
+  }
+  100% {
+    padding: 6px;
+  }
+}
+
+@keyframes disappearSlow {
+  0% {
+    opacity: 1.0;
+  }
+  75% {
+    opacity: 1.0;
+  }
+  85% {
+    opacity: 0.8;
+  }
+  95% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+  }
 }
