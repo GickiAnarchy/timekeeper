@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const logo = document.getElementById('logo');
   const borderWrapper = document.getElementById('border-wrapper');
   
+  
   pageSelect.addEventListener('change', (event) => {
     const selectedUrl = event.target.value;
     if (selectedUrl) {

@@ -164,7 +164,7 @@ body.home-body {
 }
 
 .updates {
-  animation: disappearSlow 4s linear 20s 1 normal both;
+  animation: disappearSlow 4s linear 10s 1 normal both;
 }
 
 .updates p {
@@ -241,4 +241,15 @@ animation: name duration timing delay count direction fill-mode play-state
   100% {
     opacity: 0;
   }
+}
+
+.welcome-div.hidden {
+  display: none;
+}
+
+.welcome-div {
+  display: flex;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
 }
