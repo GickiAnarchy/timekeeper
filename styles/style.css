@@ -134,13 +134,18 @@ body.home-body {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  min-height: auto;
+  min-height: 100vh;
+}
+
+body.home-body > footer {
+  margin-top: auto;
 }
 
 .home-header {
-  display: flex;
+  display: absolute;
   justify-content: center;
   margin-bottom: 12px;
+  
 }
 
 .home-img {
@@ -157,14 +162,13 @@ body.home-body {
   justify-content: flex-start;
   align-items: center;
   text-align: center;
-  border: 2px solid black;
+  /*border: 2px solid black;*/
   padding: 12px;
   margin-bottom: 12px;
   flex: 1;
-}
-
-.updates {
+  color: #BD0404;
   animation: disappearSlow 4s linear 10s 1 normal both;
+
 }
 
 .updates p {
@@ -176,7 +180,7 @@ body.home-body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  font-size: 14px;
+  font-size: 10px;
   padding: 4px;
   border: 2px solid black;
 }
@@ -226,19 +230,21 @@ animation: name duration timing delay count direction fill-mode play-state
 }
 
 @keyframes disappearSlow {
-  0% {
+  /* Hold initial state and color for the first 10s (approx 0% to 71.4%) */
+  0%, 51.4% {
+    color: #BD0404;
     opacity: 1.0;
   }
-  75% {
+  /* Transition color to green while maintaining full opacity */
+  75.7% {
+    transform: scale(100%);
+    color: #00853B;
     opacity: 1.0;
   }
-  85% {
-    opacity: 0.8;
-  }
-  95% {
-    opacity: 0.3;
-  }
+  /* Fade out smoothly from green to transparent */
   100% {
+    transform: scale(0%);
+    color: #00853B;
     opacity: 0;
   }
 }
