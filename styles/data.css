@@ -87,6 +87,10 @@ body {
   .section-content {
     grid-template-columns: 1fr 1fr;
   }
+
+  #customers-section .section-content {
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+  }
 }
 
 /* Lists Styling */
