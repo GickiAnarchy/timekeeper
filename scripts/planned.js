@@ -45,12 +45,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     plannedList.appendChild(li);
   }
   
-  addButton.addEventListener('click', showAddModal());
+  addButton.addEventListener('click', showAddModal);
   
   function showAddModal() {
-    const addButton = document.getElementById('modal-add-button');
+    const modalAddButton = document.getElementById('modal-add-button');
     const cancelButton = document.getElementById('modal-cancel-button');
+    const form = document.getElementById('add-form');
     
+    modalAddButton.addEventListener('submit', (event) => {
+      event.preventDefault();
+      // Handle modal add button click logic here
+    });
+
+    cancelButton.addEventListener('click', () => {
+      form.reset();
+      modal.close();
+    });
     
     modal.showModal();
     

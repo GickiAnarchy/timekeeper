@@ -1,5 +1,6 @@
 :root {
   --bg-gold: radial-gradient(circle, #3d2b1f 0%, #170d07 100%);
+  --mosher-green: #00853B;
 }
 
 html, body {
@@ -14,7 +15,8 @@ html, body {
   grid-template-rows: 105px 1fr;
   grid-template-areas:
     "logo    banner"
-    "content content";
+    "content content"
+    "footer footer";
   height: 100vh;
   gap: 12px;
   padding: 12px;
@@ -115,7 +117,7 @@ select {
   margin-top: 0;
   border: 4px solid #000;
   width: 100%;
-  height: 100%;
+  height: auto;
   min-height: 0;
   background-color: #0000001a;
 }
@@ -135,10 +137,6 @@ body.home-body {
   flex-direction: column;
   box-sizing: border-box;
   min-height: 100vh;
-}
-
-body.home-body > footer {
-  margin-top: auto;
 }
 
 .home-header {
@@ -175,7 +173,8 @@ body.home-body > footer {
   margin: 4px 0;
 }
 
-.home-footer {
+.main-footer {
+  grid-area: footer;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -183,10 +182,29 @@ body.home-body > footer {
   font-size: 10px;
   padding: 4px;
   border: 2px solid black;
+  margin-top: auto;
+  width: 100%;
 }
 
-.home-footer p {
+.main-footer p {
   margin: 2px;
+}
+
+.main-footer p {
+  margin: 2px;
+}
+
+.welcome-div.hidden {
+  display: none;
+}
+
+.welcome-div {
+  display: flex;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+
+  animation: specialIn 4.5s cubic-bezier(0.25, 0.1, 0.25, 1) 1 normal both;
 }
 
 /*
@@ -249,13 +267,17 @@ animation: name duration timing delay count direction fill-mode play-state
   }
 }
 
-.welcome-div.hidden {
-  display: none;
-}
-
-.welcome-div {
-  display: flex;
-  text-align: center;
-  justify-content: center;
-  align-items: center;
+@keyframes specialIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  90% {
+    color: #000; 
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    color: var(--mosher-green);
+  }
 }
