@@ -767,7 +767,8 @@ export class AppDataStore {
       description: planned.description || null,
       isComplete: planned.isComplete || false,
       scheduledDate: planned.scheduledDate || new Date()
-    }); 
+    });
+    console.log(`Job ID:${planned.id} saved`);
   }
   
 }

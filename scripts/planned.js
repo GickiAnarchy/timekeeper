@@ -47,14 +47,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   addButton.addEventListener('click', showAddModal);
   
+  //  ADD JOB MODAL
   function showAddModal() {
     const modalAddButton = document.getElementById('modal-add-button');
     const cancelButton = document.getElementById('modal-cancel-button');
     const form = document.getElementById('add-form');
     
-    modalAddButton.addEventListener('submit', (event) => {
+    modalAddButton.addEventListener('submit', async (event) => {
       event.preventDefault();
-      // Handle modal add button click logic here
+
+      const jobDate = document.getElementById('planned-date').value;      
+      const customer = store.customers.find(c => c.id === custMenu.value);
+      const description = document.getElementById('planned-description').value;
+
+      if (!customer) {
+        console.log('Customer not found');
+        return;
+      }
+
+      const newJob = new PlannedJob(jobDate, customer, description);
+      store.plannedJobs.push(newJob);
+      await store.savePlanned(newJob);
+      form.reset();
+      modal.close();
+      location.reload();
+
     });
 
     cancelButton.addEventListener('click', () => {
