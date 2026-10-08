@@ -1,107 +1,42 @@
-* {
-  align-items: center;
-  justify-content: center; 
+@import url("./ui.css");
+
+body { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(0, 1.2fr); align-content: start; gap: 16px; padding: clamp(14px, 3vw, 28px); }
+.data-section, .active-section { min-width: 0; padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 17px; box-shadow: var(--shadow-soft); }
+.top-div { margin-bottom: 16px; }
+.top-div h3, .active-section h3 { margin: 0; font-size: 16px; letter-spacing: -.035em; }
+.dropdowns { display: grid; grid-template-columns: 1fr; gap: 7px; }
+.dropdowns label { margin-top: 4px; }
+.dropdowns select { width: 100%; min-height: 40px; padding: 8px 10px; font-size: 12px; }
+#emp-select { min-height: 106px; }
+#emp-select option { padding: 5px; }
+.clock-buttons { margin-top: 15px; }
+#clock-in-button { width: 100%; min-height: 42px; color: #fff; background: var(--green); font-size: 12px; font-weight: 700; }
+#clock-in-button:hover { background: var(--green-deep); }
+#shift-error { min-height: 0; margin: 10px 0 0; color: var(--red); font-size: 11px; }
+.active-section { display: flex; flex-direction: column; align-items: stretch; gap: 13px; }
+.active-list-section { max-height: 540px; overflow: auto; }
+.shift-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.shift-list > li { list-style: none; }
+.shift-list .empty-msg { padding: 26px 12px; color: var(--muted); text-align: center; background: var(--surface-muted); border: 1px dashed var(--border); border-radius: 12px; }
+.active-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px; background: #fff; border: 1px solid var(--green-line); border-radius: 13px; box-shadow: 0 3px 10px rgba(28, 52, 40, .04); }
+.active-info { color: var(--ink-soft); font-size: 12px; line-height: 1.65; }
+.active-info strong { color: var(--ink); font-size: 13px; }
+.active-info small { color: var(--muted); font-size: 10px; }
+.break-buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+.break-buttons button, .stop-btn { min-height: 31px; padding: 0 9px; color: var(--green-deep); background: var(--green-soft); font-size: 9px; font-weight: 650; }
+.break-buttons button:hover { background: #dceee2; }
+.break-buttons button:disabled { opacity: .45; }
+.stop-btn { grid-column: 2; justify-self: end; color: #a33f3f; background: var(--red-soft); }
+.stop-btn:hover { color: #fff; background: #b84e4e; }
+.on-break .active-card { border-color: #edc9c2; background: #fffafa; }
+
+@media (max-width: 760px) {
+  body { grid-template-columns: minmax(0, 1fr); }
+  .data-section, .active-section { padding: 16px; }
 }
 
-body * {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: auto;
-}
-
-.top-div {
-  height: 35px;
-  position: relative;
-  font-size: 24px;
-  color: #C0F5BD;
-  text-shadow: 0 4px 2px #000000 ;
-  background-image: linear-gradient(180deg, #bff9cd, #21fd59, #01641a);
-  padding: 5px;
-  margin-top: 0;
-}
-
-.clock-buttons {
-  margin-top: 15px;
-}
-
-.break-buttons {
-  display: flex;
-  flex-direction: row;
-}
-
-#clock-in-button {
-  background-color: lightgray;
-}
-
-#clock-in-button:hover {
-  background-color: darkgreen;
-}
-
-#emp-select {
-  font-size: 18px;
-  min-width: 220px;
-}
-
-#emp-select option {
-  padding: 2px;
-}
-
-#employee-select-help {
-  margin-top: 4px;
-  text-align: center;
-}
-
-#cust-select {
-  font-size: 18px;
-}
-
-.active-section {
-  justify-content: flex-start;
-  align-items: center;
-  text-align: center;
-  margin-top: 15px;
-  border: 2px solid black;
-  height: 20rem;
-  width: auto;
-  background-image: linear-gradient(45deg, #4E6E3EBB, #497A7FBB, #69497FBB);
-}
-
-.active-section h3 {
-  text-align: center;
-}
-
-.stop-btn {
-  width: 35%;
-  max-height: 25px;
-  background-color: red;
-  padding: 3px;
-}
-
-ul {
-  justify-content: center;
-  text-align: center;
-  text-align: center;
-}
-
-li {
-  display: flex;
-  text-align: center;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-  width: auto;
-  padding: 8px;
-}
-
-.active-card {
-  border: 4px solid green;
-  border-radius: 12px;
-  box-shadow: 3px 4px 5px black;
-  width: 100%;
-}
-
-.on-break {
-  border: 1px solid red;
+@media (max-width: 480px) {
+  .active-card { grid-template-columns: minmax(0, 1fr); }
+  .break-buttons { justify-content: flex-start; }
+  .stop-btn { grid-column: 1; justify-self: stretch; }
 }

@@ -49,8 +49,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       alert("Need to filter an employee and customer first.");
       return;
     }
-    const ee = store.employees.find((e) => e.id === eValue);
-    const cc = store.customers.find((c) => c.id === cValue);
+    const ee = store.employees.get(eValue);
+    const cc = store.customers.get(cValue);
     
     const addedShift = new WorkShift(ee,cc);
     showViewModal(addedShift);

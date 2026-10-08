@@ -316,19 +316,18 @@ export class Ledger {
 }
 
 export class PlannedJob {
-  constructor(description, scheduledDate, customer = null,  isComplete = false, id = null) {
-    this.description = description;
-    this.scheduledDate = scheduledDate;
+  constructor(description, scheduledDate, customer = null, isComplete = false, id = null) {
+    this.description = String(description || '').trim();
+    const date = scheduledDate instanceof Date ? scheduledDate : new Date(scheduledDate || Date.now());
+    this.scheduledDate = Number.isNaN(date.getTime()) ? new Date() : date;
     this.customer = customer;
-    this.isComplete = isComplete;
-    this.id = id || cryplo.randomUUID();
+    this.isComplete = Boolean(isComplete);
+    this.id = id || crypto.randomUUID();
   }
-  
+
   getDate() {
-    return this.scheduledDate.toL
+    return this.scheduledDate;
   }
-  
-  
 }
 
 
@@ -750,25 +749,51 @@ export class AppDataStore {
       const querySnapshot = await getDocs(collection(db, "planned"));
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        const customer = (this.customers && this.customers.get(data.custId)) || new Customer(data.custId, 'Unknown Site');
-        
-        const planned = new PlannedJob(data.description, data.scheduledDate, customer, data.isComplete, docSnap.id);
-        
+        const customer = (data.custId && this.customers.get(data.custId)) ||
+          (data.custId ? new Customer(data.custId, 'Unknown Site') : null);
+        const storedDate = data.scheduledDate?.toDate?.() || data.scheduledDate || new Date();
+        const planned = new PlannedJob(data.description, storedDate, customer, data.isComplete, docSnap.id);
         this.plannedJobs.push(planned);
       });
+      this.plannedJobs.sort((a, b) => a.scheduledDate - b.scheduledDate);
     } catch (e) {
       console.error("Error loading planned jobs from Firestore:", e);
     }
   }
   
   async savePlanned(planned) {
+    const scheduledDate = planned.scheduledDate instanceof Date
+      ? planned.scheduledDate
+      : new Date(planned.scheduledDate);
+    if (Number.isNaN(scheduledDate.getTime())) {
+      throw new Error("Planned job needs a valid scheduled date.");
+    }
     await setDoc(doc(db, "planned", planned.id), {
       custId: planned.customer ? planned.customer.id : null,
-      description: planned.description || null,
-      isComplete: planned.isComplete || false,
-      scheduledDate: planned.scheduledDate || new Date()
+      description: planned.description || '',
+      isComplete: Boolean(planned.isComplete),
+      scheduledDate
     });
-    console.log(`Job ID:${planned.id} saved`);
+    return planned;
+  }
+
+  async setPlannedComplete(plannedId, isComplete) {
+    const planned = this.plannedJobs.find(job => job.id === plannedId);
+    if (!planned) throw new Error("Planned job not found.");
+    const previousValue = planned.isComplete;
+    planned.isComplete = Boolean(isComplete);
+    try {
+      await this.savePlanned(planned);
+      return planned;
+    } catch (error) {
+      planned.isComplete = previousValue;
+      throw error;
+    }
+  }
+
+  async deletePlanned(plannedId) {
+    await deleteDoc(doc(db, "planned", plannedId));
+    this.plannedJobs = this.plannedJobs.filter(job => job.id !== plannedId);
   }
   
 }

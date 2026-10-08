@@ -1,79 +1,40 @@
-.invoice-header {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  min-width: 100%;
-  border: 2px solid linear-gradient(to right, #095910, #82b382);
-}
+@import url("./ui.css");
 
-.inv-dropdowns {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  margin-top: 0;
-  border: 2px solid #199e23;
-}
+body { padding: clamp(14px, 3vw, 26px); }
+.invoice-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: start; width: min(100%, 1000px); margin: 0 auto 16px; padding: 17px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-soft); }
+.inv-dropdowns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; border: 0; }
+.select-div { display: grid; gap: 5px; min-width: 0; margin: 0; text-align: left; }
+.select-div select { width: 100%; min-height: 38px; padding: 7px 9px; font-size: 11px; }
+.invoice-actions, .item-btns { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.invoice-actions { grid-column: 1 / -1; }
+.invoice-actions button, .item-btns button, #mark-paid-btn, #submit-btn { min-height: 34px; padding: 0 11px; color: #fff; background: var(--green); font-size: 10px; font-weight: 700; }
+.invoice-actions button:hover, .item-btns button:hover, #mark-paid-btn:hover, #submit-btn:hover { background: var(--green-deep); }
+#delete-inv-btn, #remove-item-btn { color: #a4443f; background: var(--red-soft); }
+#delete-inv-btn:hover, #remove-item-btn:hover { color: #fff; background: #b84e4e; }
+.open-div { grid-column: 1 / -1; color: var(--muted); font-size: 10px; }
+.open-div p { margin: 0; }
+body > main { width: min(100%, 1000px); margin: 0 auto; }
+.table-box { display: block; overflow-x: auto; background: #fff; border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-soft); }
+#inv-table { width: 100%; min-width: 420px; border: 0; border-collapse: collapse; text-align: left; transition: border-color 160ms ease; }
+#inv-table th, #inv-table td { padding: 11px 13px; border: 0; border-bottom: 1px solid #edf1ee; font-size: 11px; }
+#inv-table th { color: #738179; background: #f8faf8; font-size: 9px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+#inv-table thead tr:first-child th { color: var(--ink-soft); background: #fff; font-size: 12px; letter-spacing: 0; }
+#inv-table tbody tr[data-item-index] { cursor: pointer; }
+#inv-table tbody tr:hover { background: #f8fbf9; }
+#invoice-table-body tr.selected-item { background: var(--green-soft); outline: 2px solid var(--green-line); outline-offset: -2px; }
+#inv-table tfoot td { color: var(--ink-soft); font-weight: 700; }
+#inv-table.is-paid { box-shadow: inset 0 0 0 2px #d99484; }
+.paid-notice { color: #a4443f; }
+.modal { width: min(100% - 24px, 400px); max-width: 400px; margin: auto; padding: 20px; background: #fff; border: 1px solid var(--border); border-radius: 17px; box-shadow: 0 24px 80px rgba(16, 38, 25, .23); }
+.modal::backdrop { background: rgba(19, 35, 27, .4); backdrop-filter: blur(3px); }
+#add-item-form { display: grid; gap: 10px; }
+#add-item-form input { min-height: 40px; padding: 8px 10px; font-size: 11px; }
+.modal-btns { display: flex; justify-content: flex-end; gap: 7px; }
+#cancel-btn { min-height: 34px; padding: 0 11px; color: var(--ink-soft); background: #f0f4f1; font-size: 10px; }
 
-.select-div {
-  display: flex;
-  flex-direction: row;
-  width: fill;
-  justify-content: space-between;
-  text-align: center;
-  margin: 3px;
-}
-
-.invoice-actions,
-.item-btns {
-  display: flex;
-  gap: 6px;
-  margin: 6px;
-}
-
-#delete-inv-btn {
-  color: #8b0000;
-}
-
-#invoice-table-body tr[data-item-index] {
-  cursor: pointer;
-}
-
-#invoice-table-body tr.selected-item {
-  background-color: #d9f0dc;
-  outline: 2px solid #199e23;
-}
-
-tr, th, td {
-  border: 1px solid black;
-}
-
-#inv-table {
-  border: 2px solid black;
-  /*border-collapse: collapse;*/
-  transition: border-color 1.5s ease;
-}
-
-#inv-table.is-paid {
-  border-color: red;
-}
-
-.paid-notice {
-  color: red;
-}
-
-.table-box {
-  display: flex;
-  text-align: center;
-  justify-content: center;
-  align-items: center;
-}
-
-.open-div {
-  text-align: center;
-  justify-content: center;
-  align-items: center;
-  color: red;
+@media (max-width: 680px) {
+  .invoice-header { grid-template-columns: 1fr; }
+  .inv-dropdowns { grid-template-columns: 1fr; }
+  .invoice-actions { grid-column: auto; }
+  .open-div { grid-column: auto; }
 }

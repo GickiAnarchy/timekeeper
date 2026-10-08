@@ -1,52 +1,87 @@
-<!DOCTYPE html>
-
-<html>
+<!doctype html>
+<html lang="en">
   <head>
-    <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../styles/planned.css"/>
-    <link rel="stylesheet" href="../styles/style.css"/>
-    <title>Mosher Lawms</title>
+    <link rel="stylesheet" href="../styles/planned.css">
+    <title>Planned jobs · Mosher Lawns</title>
     <script type="module" src="../scripts/planned.js" defer></script>
   </head>
-
   <body class="planned-body">
-    <div class="planned-heading-div">
-      <h1>Upcoming Jobs</h1>
-    </div>
-    <div class="planned-control">
-      <button id="add-button" class="control-button" type="button">Add Job</button>
-    </div>
-    <div class="planned-list-div">
-      <ul id="planned-list" class="planned-list">
-        
-      </ul>
-    </div>
-    <dialog class="add-job-modal" id="add-modal">
-      <h3>Add a Job</h3>
-      <form class="add-form">
-        <div class="top-section">
-          <div class="cust-menu">
-            <label for="planned-cust">Customer:</label>
-            <select id="planned-cust"></select>
+    <main class="planned-page">
+      <section class="page-intro" aria-labelledby="planned-title">
+        <div>
+          <p class="eyebrow">FIELD SCHEDULE</p>
+          <h1 id="planned-title">Planned jobs</h1>
+          <p class="page-subtitle">A clear view of the work ahead and what’s already done.</p>
+        </div>
+        <button id="add-button" class="button button-primary" type="button">
+          <span aria-hidden="true">＋</span> Add a job
+        </button>
+      </section>
+
+      <section class="job-summary" aria-label="Job summary">
+        <article class="summary-card summary-open">
+          <span class="summary-icon" aria-hidden="true">↗</span>
+          <div><p>Open jobs</p><strong id="open-count">0</strong></div>
+        </article>
+        <article class="summary-card summary-today">
+          <span class="summary-icon" aria-hidden="true">◷</span>
+          <div><p>Due today</p><strong id="today-count">0</strong></div>
+        </article>
+        <article class="summary-card summary-complete">
+          <span class="summary-icon" aria-hidden="true">✓</span>
+          <div><p>Completed</p><strong id="completed-count">0</strong></div>
+        </article>
+      </section>
+
+      <section class="schedule-panel" aria-labelledby="schedule-heading">
+        <div class="schedule-heading">
+          <div>
+            <h2 id="schedule-heading">Your schedule</h2>
+            <p id="job-count" class="muted-copy">Loading jobs…</p>
           </div>
-          <div class="top-section">
-            <label for="planned-date">Planned Date:</label>
-            <input type="date" id="planned-date" />
+          <div class="job-filters" role="group" aria-label="Filter jobs">
+            <button type="button" class="filter-button is-active" data-filter="open" aria-pressed="true">Open</button>
+            <button type="button" class="filter-button" data-filter="completed" aria-pressed="false">Completed</button>
+            <button type="button" class="filter-button" data-filter="all" aria-pressed="false">All jobs</button>
           </div>
         </div>
-        <div class="description-section">
-          <label for="planned-description">Description:</label>
-          <textarea id="planned-description"></textarea>
+        <ul id="planned-list" class="planned-list" aria-live="polite"></ul>
+      </section>
+    </main>
+
+    <dialog class="add-job-modal" id="add-modal" aria-labelledby="add-job-title">
+      <form id="add-form" class="add-form">
+        <div class="modal-heading">
+          <div>
+            <p class="eyebrow">NEW SCHEDULE ITEM</p>
+            <h2 id="add-job-title">Plan a job</h2>
+          </div>
+          <button type="button" class="modal-close" id="modal-cancel-button" aria-label="Close">×</button>
         </div>
-        <div class="modal-buttons">
-          <button type="submit" id="modal-add-button">Add</button> 
-          <button type="click" id="modal-cancel-button">Cancel</button> 
+        <p class="modal-copy">Add a customer, target date, and a short description.</p>
+        <div class="form-field">
+          <label for="planned-cust">Customer</label>
+          <select id="planned-cust" name="customer" required>
+            <option value="">Choose a customer</option>
+          </select>
+          <small id="customer-help" class="field-hint"></small>
+        </div>
+        <div class="form-field">
+          <label for="planned-date">Planned date</label>
+          <input type="date" id="planned-date" name="scheduledDate" required>
+        </div>
+        <div class="form-field">
+          <label for="planned-description">Job description</label>
+          <textarea id="planned-description" name="description" rows="3" maxlength="300" placeholder="e.g. Front and back lawn mowing" required></textarea>
+        </div>
+        <p id="planned-form-error" class="form-error" role="alert" aria-live="polite"></p>
+        <div class="modal-actions">
+          <button type="button" class="button button-secondary" id="modal-cancel-action">Cancel</button>
+          <button type="submit" class="button button-primary" id="modal-add-button">Save job</button>
         </div>
       </form>
     </dialog>
-    
-
   </body>
-  
 </html>
