@@ -324,6 +324,9 @@ export class PlannedJob {
     this.id = id || cryplo.randomUUID();
   }
   
+  getDate() {
+    return this.scheduledDate.toL
+  }
   
   
 }
@@ -763,10 +766,9 @@ export class AppDataStore {
       custId: planned.customer ? planned.customer.id : null,
       description: planned.description || null,
       isComplete: planned.isComplete || false,
-      scheduledDate = planned.scheduledDate;
+      scheduledDate: planned.scheduledDate || new Date()
     }); 
   }
-
   
 }
 

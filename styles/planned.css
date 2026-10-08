@@ -1,0 +1,14 @@
+
+.planned-list {
+  display: flexbox;
+  flex-direction: column;
+}
+
+.job-card {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
