@@ -9,8 +9,8 @@
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 39px; padding: 0 14px; font-size: 11px; font-weight: 700; }
 .button-primary { color: #fff; background: var(--green); box-shadow: 0 4px 11px rgba(36, 118, 79, .14); }
 .button-primary:hover { background: var(--green-deep); box-shadow: 0 7px 16px rgba(36, 118, 79, .2); transform: translateY(-1px); }
-.button-secondary { color: var(--ink-soft); background: #fff; border: 1px solid var(--border); }
-.button-secondary:hover, .button-quiet:hover { color: var(--green-deep); background: #f5faf7; }
+.button-secondary { color: var(--ink-soft); background: var(--surface); border: 1px solid var(--border); }
+.button-secondary:hover, .button-quiet:hover { color: var(--green-deep); background: var(--surface-hover); }
 .button-small { min-height: 33px; padding: 0 11px; font-size: 10px; }
 .button-quiet { color: #68766e; background: transparent; border: 1px solid transparent; }
 
@@ -18,52 +18,52 @@
 .summary-card { display: flex; align-items: center; gap: 12px; min-height: 84px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 15px; box-shadow: 0 4px 14px rgba(28, 52, 40, .035); }
 .summary-icon { display: grid; place-items: center; width: 37px; height: 37px; flex: 0 0 37px; color: var(--green); background: var(--green-soft); border-radius: 12px; font-size: 18px; font-weight: 750; }
 .summary-today .summary-icon { color: var(--amber); background: var(--amber-soft); }
-.summary-complete .summary-icon { color: #4c7960; background: #eff5f0; }
+.summary-complete .summary-icon { color: var(--green); background: var(--green-soft); }
 .summary-card p { margin: 0 0 1px; color: var(--muted); font-size: 10px; font-weight: 600; }
 .summary-card strong { color: var(--ink); font-size: 21px; line-height: 1.2; letter-spacing: -.04em; }
 
 .schedule-panel { overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 17px; box-shadow: var(--shadow-soft); }
-.schedule-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 19px 20px 15px; border-bottom: 1px solid #edf1ee; }
+.schedule-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 19px 20px 15px; border-bottom: 1px solid var(--border-soft); }
 .schedule-heading h2 { margin: 0 0 3px; font-size: 15px; }
 .schedule-heading p { margin: 0; font-size: 10px; }
-.job-filters { display: flex; align-items: center; gap: 3px; padding: 3px; background: #f3f6f4; border: 1px solid #edf1ee; border-radius: 10px; }
-.filter-button { min-height: 29px; padding: 0 10px; color: #75827a; background: transparent; font-size: 10px; font-weight: 650; white-space: nowrap; }
+.job-filters { display: flex; align-items: center; gap: 3px; padding: 3px; background: var(--canvas); border: 1px solid var(--border-soft); border-radius: 10px; }
+.filter-button { min-height: 29px; padding: 0 10px; color: var(--muted); background: transparent; font-size: 10px; font-weight: 650; white-space: nowrap; }
 .filter-button:hover { color: var(--green-deep); }
-.filter-button.is-active { color: var(--green-deep); background: #fff; box-shadow: 0 1px 4px rgba(25, 54, 39, .1); }
+.filter-button.is-active { color: var(--green-deep); background: var(--surface); box-shadow: 0 1px 4px rgba(25, 54, 39, .1); }
 .planned-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
-.job-card { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; align-items: center; gap: 15px; padding: 15px 20px; border-bottom: 1px solid #edf1ee; }
+.job-card { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; align-items: center; gap: 15px; padding: 15px 20px; border-bottom: 1px solid var(--border-soft); }
 .job-card:last-child { border-bottom: 0; }
-.job-card:hover { background: #fcfdfc; }
-.date-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 50px; min-height: 56px; padding: 5px 3px; color: var(--green-deep); background: #f1f7f3; border: 1px solid #e2eee6; border-radius: 12px; line-height: 1.15; }
-.date-weekday, .date-month { color: #6d8375; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.job-card:hover { background: var(--surface-hover); }
+.date-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 50px; min-height: 56px; padding: 5px 3px; color: var(--green-deep); background: var(--green-soft); border: 1px solid var(--border); border-radius: 12px; line-height: 1.15; }
+.date-weekday, .date-month { color: var(--muted); font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
 .date-day { margin: 1px 0; font-size: 20px; letter-spacing: -.05em; }
 .job-content { min-width: 0; }
 .job-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 2px; }
 .job-description { overflow: hidden; max-width: 100%; margin: 0; font-size: 13px; font-weight: 700; letter-spacing: -.02em; text-overflow: ellipsis; }
-.status-pill { display: inline-flex; align-items: center; min-height: 20px; padding: 0 7px; color: #537562; background: var(--green-soft); border-radius: 999px; font-size: 8px; font-weight: 750; white-space: nowrap; }
-.status-today { color: #916013; background: var(--amber-soft); }
-.status-overdue { color: #a7443f; background: var(--red-soft); }
-.status-complete { color: #6d7a72; background: #eef2ef; }
+.status-pill { display: inline-flex; align-items: center; min-height: 20px; padding: 0 7px; color: var(--green-deep); background: var(--green-soft); border-radius: 999px; font-size: 8px; font-weight: 750; white-space: nowrap; }
+.status-today { color: var(--amber); background: var(--amber-soft); }
+.status-overdue { color: var(--red); background: var(--red-soft); }
+.status-complete { color: var(--muted); background: var(--surface-muted); }
 .job-customer, .job-date { margin: 0; color: var(--muted); font-size: 10px; }
 .job-customer { color: var(--ink-soft); font-weight: 600; }
 .job-actions { display: flex; align-items: center; gap: 5px; }
-.is-complete .date-tile { color: #718078; background: #f3f5f3; border-color: #e9eeea; }
-.is-complete .date-weekday, .is-complete .date-month { color: #89968e; }
-.is-complete .job-description { color: #748078; }
+.is-complete .date-tile { color: var(--muted); background: var(--surface-muted); border-color: var(--border); }
+.is-complete .date-weekday, .is-complete .date-month { color: var(--muted); }
+.is-complete .job-description { color: var(--muted); }
 .empty-state { display: grid; justify-items: center; padding: 40px 20px; text-align: center; }
 .empty-state-icon { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 12px; color: var(--green); background: var(--green-soft); border-radius: 14px; font-size: 20px; font-weight: 700; }
 .empty-state h3 { margin: 0 0 5px; font-size: 14px; }
 .empty-state p { margin: 0; color: var(--muted); font-size: 11px; }
 
-.add-job-modal { width: min(100% - 28px, 450px); max-width: 450px; margin: auto; padding: 0; color: var(--ink); background: #fff; border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 24px 80px rgba(16, 38, 25, .23); }
+.add-job-modal { width: min(100% - 28px, 450px); max-width: 450px; margin: auto; padding: 0; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 24px 80px rgba(16, 38, 25, .23); }
 .add-job-modal::backdrop { background: rgba(19, 35, 27, .42); backdrop-filter: blur(3px); }
 .add-form { display: grid; gap: 15px; padding: 22px; }
 .modal-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .modal-heading .eyebrow { margin-bottom: 5px; }
 .modal-heading h2 { margin: 0; font-size: 21px; }
 .modal-copy { margin: -7px 0 0; color: var(--muted); font-size: 11px; }
-.modal-close { display: grid; place-items: center; width: 31px; height: 31px; color: #728078; background: #f3f6f4; border-radius: 10px; font-size: 20px; line-height: 1; }
-.modal-close:hover { color: var(--ink); background: #eaf0ec; }
+.modal-close { display: grid; place-items: center; width: 31px; height: 31px; color: var(--muted); background: var(--canvas); border-radius: 10px; font-size: 20px; line-height: 1; }
+.modal-close:hover { color: var(--ink); background: var(--surface-hover); }
 .form-field { display: grid; gap: 6px; }
 .form-field select, .form-field input, .form-field textarea { width: 100%; min-height: 40px; padding: 9px 11px; font-size: 12px; }
 .form-field textarea { min-height: 84px; resize: vertical; }

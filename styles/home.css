@@ -1,0 +1,78 @@
+@import url("./ui.css");
+
+.home-body { min-height: 100vh; padding: 0; }
+.home-dashboard { width: min(100%, 1080px); margin: 0 auto; padding: clamp(18px, 3vw, 30px); }
+.dashboard-hero {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  overflow: hidden;
+  padding: clamp(22px, 4vw, 38px);
+  background: linear-gradient(140deg, var(--surface) 0%, var(--surface-muted) 100%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-soft);
+}
+.dashboard-hero::after { position: absolute; top: -95px; right: -85px; width: 270px; height: 270px; content: ""; background: radial-gradient(circle, color-mix(in srgb, var(--green) 16%, transparent), transparent 69%); pointer-events: none; }
+.hero-copy, .home-actions { position: relative; z-index: 1; }
+.hero-copy { max-width: 570px; }
+.home-kicker, .panel-eyebrow { margin: 0 0 8px; color: var(--green); font-size: 9px; font-weight: 780; letter-spacing: .14em; }
+.hero-copy h1 { margin: 0 0 9px; font-size: clamp(27px, 4vw, 36px); line-height: 1.12; letter-spacing: -.055em; }
+.hero-copy > p:last-child { max-width: 490px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+.home-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.home-action { display: inline-flex; align-items: center; justify-content: center; min-height: 39px; padding: 0 13px; color: #fff; text-decoration: none; background: var(--green); border-radius: 10px; font-size: 10px; font-weight: 740; white-space: nowrap; transition: background 160ms ease, transform 160ms ease; }
+.home-action:hover { background: var(--green-deep); transform: translateY(-1px); }
+.home-action-secondary { color: var(--ink-soft); background: var(--surface); border: 1px solid var(--border); }
+.home-action-secondary:hover { color: var(--green-deep); background: var(--surface-hover); }
+.hours-overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
+.hours-card { display: flex; align-items: center; gap: 12px; min-width: 0; min-height: 92px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 15px; box-shadow: 0 4px 14px rgba(28, 52, 40, .035); }
+.metric-icon { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 38px; color: var(--green); background: var(--green-soft); border-radius: 12px; font-size: 19px; font-weight: 700; }
+.metric-icon-week { font-size: 17px; }
+.metric-icon-active { font-size: 12px; }
+.hours-card p { margin: 0 0 2px; color: var(--muted); font-size: 10px; font-weight: 650; }
+.hours-card strong { display: block; color: var(--ink); font-size: 22px; line-height: 1.15; letter-spacing: -.04em; }
+.hours-card small { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; line-height: 1.35; }
+.dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 14px; }
+.dashboard-panel { min-width: 0; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-soft); }
+.panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 67px; padding: 14px 17px; border-bottom: 1px solid var(--border-soft); }
+.panel-heading h2 { margin: 0; font-size: 15px; letter-spacing: -.035em; }
+.panel-eyebrow { margin-bottom: 2px; font-size: 8px; }
+.panel-link { color: var(--green); text-decoration: none; font-size: 9px; font-weight: 720; white-space: nowrap; }
+.panel-link:hover { color: var(--green-deep); text-decoration: underline; }
+.dashboard-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.active-shift-item, .planned-job-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 67px; padding: 12px 17px; border-bottom: 1px solid var(--border-soft); }
+.active-shift-item:last-child, .planned-job-item:last-child { border-bottom: 0; }
+.shift-copy, .job-copy { display: grid; gap: 3px; min-width: 0; }
+.shift-title, .job-title { overflow: hidden; color: var(--ink-soft); font-size: 10px; font-weight: 730; text-overflow: ellipsis; white-space: nowrap; }
+.shift-meta, .job-meta { overflow: hidden; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.shift-status, .job-timing { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; min-height: 23px; padding: 0 8px; color: var(--green-deep); background: var(--green-soft); border-radius: 999px; font-size: 8px; font-weight: 750; white-space: nowrap; }
+.shift-status::before { width: 6px; height: 6px; margin-right: 5px; content: ""; background: var(--green); border-radius: 50%; }
+.shift-status.is-on-break { color: var(--amber); background: var(--amber-soft); }
+.shift-status.is-on-break::before { background: var(--amber); }
+.planned-job-item { justify-content: flex-start; }
+.job-date-tile { flex: 0 0 66px; color: var(--ink-soft); font-size: 9px; font-weight: 660; }
+.job-copy { flex: 1 1 auto; }
+.job-timing { min-height: 21px; padding: 0 7px; color: var(--muted); background: var(--surface-muted); font-size: 8px; }
+.job-timing.is-overdue { color: var(--amber); background: var(--amber-soft); }
+.dashboard-empty { display: grid; justify-items: start; gap: 7px; min-height: 74px; padding: 17px; color: var(--muted); font-size: 10px; }
+.empty-state-link { color: var(--green); font-size: 9px; font-weight: 700; text-decoration: none; }
+.empty-state-link:hover { color: var(--green-deep); text-decoration: underline; }
+.dashboard-footnote { margin: 12px 2px 0; color: var(--muted); font-size: 9px; }
+
+@media (max-width: 760px) {
+  .dashboard-hero { align-items: flex-start; flex-direction: column; gap: 18px; }
+  .hours-card { align-items: flex-start; flex-direction: column; gap: 9px; min-height: 122px; }
+  .dashboard-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .home-dashboard { padding: 14px; }
+  .dashboard-hero { padding: 21px; border-radius: 16px; }
+  .hours-overview { grid-template-columns: 1fr; gap: 8px; }
+  .hours-card { align-items: center; flex-direction: row; min-height: 80px; padding: 12px; }
+  .hours-card strong { font-size: 19px; }
+  .panel-heading { align-items: flex-start; flex-direction: column; gap: 7px; }
+  .active-shift-item, .planned-job-item { padding-right: 12px; padding-left: 12px; }
+  .job-date-tile { flex-basis: 56px; }
+}

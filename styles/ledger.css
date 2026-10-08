@@ -4,16 +4,16 @@ body { display: flex; flex-direction: column; align-items: stretch; gap: 15px; p
 .ledger-section, .table-div, .form-container { width: min(100%, 1060px); margin: 0 auto; }
 .ledger-section { padding: 0 2px; }
 .ledger-section h3 { margin: 0; color: var(--ink); font-size: 18px; letter-spacing: -.04em; }
-.table-div { overflow-x: auto; background: #fff; border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-soft); }
+.table-div { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-soft); }
 table { width: 100%; min-width: 700px; border-collapse: collapse; text-align: left; }
-thead { color: #65736b; background: #f7faf8; }
-th, td { padding: 11px 12px; border-bottom: 1px solid #edf1ee; font-size: 10px; }
+thead { color: var(--muted); background: var(--surface-muted); }
+th, td { padding: 11px 12px; border-bottom: 1px solid var(--border-soft); font-size: 10px; }
 th { font-size: 9px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
-tbody tr:hover { background: #f8fbf9; }
-tfoot td { color: var(--ink-soft); background: #fbfcfb; font-weight: 700; }
-.delete-btn { min-height: 28px; padding: 0 9px; color: #a4443f; background: var(--red-soft); font-size: 9px; font-weight: 650; }
+tbody tr:hover { background: var(--surface-hover); }
+tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight: 700; }
+.delete-btn { min-height: 28px; padding: 0 9px; color: var(--red); background: var(--red-soft); font-size: 9px; font-weight: 650; }
 .delete-btn:hover { color: #fff; background: #b84e4e; }
-.form-container { padding: 17px; background: #fff; border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-soft); }
+.form-container { padding: 17px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-soft); }
 #ledger-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; align-items: end; }
 #ledger-form label { display: grid; gap: 5px; }
 #ledger-form input, #ledger-form select { width: 100%; min-height: 38px; padding: 7px 9px; font-size: 10px; }

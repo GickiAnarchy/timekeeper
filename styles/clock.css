@@ -18,17 +18,17 @@ body { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(0, 1.2fr
 .shift-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .shift-list > li { list-style: none; }
 .shift-list .empty-msg { padding: 26px 12px; color: var(--muted); text-align: center; background: var(--surface-muted); border: 1px dashed var(--border); border-radius: 12px; }
-.active-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px; background: #fff; border: 1px solid var(--green-line); border-radius: 13px; box-shadow: 0 3px 10px rgba(28, 52, 40, .04); }
+.active-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px; background: var(--surface); border: 1px solid var(--green-line); border-radius: 13px; box-shadow: 0 3px 10px rgba(28, 52, 40, .04); }
 .active-info { color: var(--ink-soft); font-size: 12px; line-height: 1.65; }
 .active-info strong { color: var(--ink); font-size: 13px; }
 .active-info small { color: var(--muted); font-size: 10px; }
 .break-buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
 .break-buttons button, .stop-btn { min-height: 31px; padding: 0 9px; color: var(--green-deep); background: var(--green-soft); font-size: 9px; font-weight: 650; }
-.break-buttons button:hover { background: #dceee2; }
+.break-buttons button:hover { background: var(--green-line); }
 .break-buttons button:disabled { opacity: .45; }
-.stop-btn { grid-column: 2; justify-self: end; color: #a33f3f; background: var(--red-soft); }
+.stop-btn { grid-column: 2; justify-self: end; color: var(--red); background: var(--red-soft); }
 .stop-btn:hover { color: #fff; background: #b84e4e; }
-.on-break .active-card { border-color: #edc9c2; background: #fffafa; }
+.on-break .active-card { border-color: var(--amber); background: var(--amber-soft); }
 
 @media (max-width: 760px) {
   body { grid-template-columns: minmax(0, 1fr); }
