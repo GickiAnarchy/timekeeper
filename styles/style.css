@@ -1,6 +1,7 @@
 :root {
   --bg-gold: radial-gradient(circle, #3d2b1f 0%, #170d07 100%);
   --mosher-green: #00853B;
+  --mosher-bg-color: #17171720;
 }
 
 html, body {
@@ -20,7 +21,7 @@ html, body {
   gap: 12px;
   padding: 12px;
   box-sizing: border-box;
-  background-color: #cdcfcf;
+  background-color: var(--mosher-bg-color);
 }
 
 /* LOGO CONTAINER & ANIMATED BORDER */
@@ -179,11 +180,13 @@ body.home-body {
   align-items: center;
   gap: 6px;
   font-size: 10px;
+  background-color: var(--mosher-bg-color);
   line-height: 1;
   padding: 4px 12px;
   border-top: 1px solid black;
   white-space: nowrap;
 }
+
 .welcome-message {
   font-size: 18px;
   font-weight: bold;

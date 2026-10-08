@@ -1,13 +1,22 @@
-body {
+.planned-body {
   display: flex;
   flex-direction: column  ;
   text-align: center;
-  justify-content: center;
+  justify-content: flex-start;
+  align-items: center ;
+}
+
+.planned-heading-div {
+  
 }
 
 .planned-list {
   display: flexbox;
   flex-direction: column;
+}
+
+.planned-control {
+  margin-top: 0;
 }
 
 .job-card {
