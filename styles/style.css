@@ -12,12 +12,11 @@ html, body {
 .layout-container {
   display: grid;
   grid-template-columns: 105px 1fr;
-  grid-template-rows: 105px 1fr;
+  grid-template-rows: 105px minmax(0, 1fr);
   grid-template-areas:
     "logo    banner"
-    "content content"
-    "footer footer";
-  height: 100vh;
+    "content content";
+  height: calc(100vh - 28px);
   gap: 12px;
   padding: 12px;
   box-sizing: border-box;
@@ -116,6 +115,7 @@ select {
   border: 4px solid #000;
   width: 100%;
   height: auto;
+  box-sizing: border-box;
   min-height: 0;
   background-color: #0000001a;
 }
@@ -169,27 +169,21 @@ body.home-body {
   margin: 4px 0;
 }
 
-.main-footer {
-  grid-area: footer;
+.site-footer {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  height: 28px;
+  width: 100%;
+  box-sizing: border-box;
   justify-content: center;
   align-items: center;
+  gap: 6px;
   font-size: 10px;
-  padding: 4px;
-  border: 2px solid black;
-  margin-top: auto;
-  width: 100%;
+  line-height: 1;
+  padding: 4px 12px;
+  border-top: 1px solid black;
+  white-space: nowrap;
 }
-
-.main-footer p {
-  margin: 2px;
-}
-
-.main-footer p {
-  margin: 2px;
-}
-
 .welcome-message {
   font-size: 18px;
   font-weight: bold;

@@ -18,10 +18,6 @@ body {
   text-align: center;
 }
 
-body > footer {
-  margin-top: auto;
-}
-
 .add-job-modal {
   justify-content: center;
   align-items: center;
