@@ -33,8 +33,7 @@ html, body {
   width: 105px;
   height: 105px;
   box-sizing: border-box;
-  
-  animation: fadeOutPop 15s ease-in infinite alternate;
+  /*animation: fadeOutPop 15s ease-in infinite alternate;*/
 }
 
 /* Wrapper handling circular clip & pulsing border thickness */
@@ -48,9 +47,8 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  
   /* Animates the border thickness between 2px and 6px */
-  animation: pulse-padding 1.5s ease-in-out infinite alternate;
+  animation: pulse-padding 6s ease-in-out infinite alternate;
 }
 
 /* Pseudo-element handling the continuous spinning multi-color gradient */
@@ -143,7 +141,6 @@ body.home-body {
   display: absolute;
   justify-content: center;
   margin-bottom: 12px;
-  
 }
 
 .home-img {
@@ -165,8 +162,7 @@ body.home-body {
   margin-bottom: 12px;
   flex: 1;
   color: #BD0404;
-  animation: disappearSlow 4s linear 10s 1 normal both;
-
+  /*animation: disappearSlow 4s linear 10s 1 normal both;*/
 }
 
 .updates p {
@@ -194,6 +190,13 @@ body.home-body {
   margin: 2px;
 }
 
+.welcome-message {
+  font-size: 18px;
+  font-weight: bold;
+  text-shadow: 3px 3px 2px #0D880000;
+  animation: shadowChange 30s ease-in-out 12s infinite alternate both;
+}
+
 .welcome-div.hidden {
   display: none;
 }
@@ -203,8 +206,7 @@ body.home-body {
   text-align: center;
   justify-content: center;
   align-items: center;
-
-  animation: specialIn 4.5s cubic-bezier(0.25, 0.1, 0.25, 1) 1 normal both;
+  animation: specialIn 4.5s cubic-bezier(0.25, 0.1, 0.25, 1) normal both;
 }
 
 /*
@@ -239,11 +241,14 @@ animation: name duration timing delay count direction fill-mode play-state
 }
 
 @keyframes pulse-padding {
-  0% {
-    padding: 2px;
+  0%, 15% {
+    padding: 0px;
   }
-  100% {
-    padding: 6px;
+  50% {
+    padding: 7px;
+  }
+  85%, 100% {
+    padding: 0px;
   }
 }
 
@@ -279,5 +284,26 @@ animation: name duration timing delay count direction fill-mode play-state
   }
   100% {
     color: var(--mosher-green);
+  }
+}
+
+@keyframes shadowChange {
+  0% {
+    text-shadow: 10px 3px 2px #0D880000;
+  }
+  20% {
+    text-shadow: 6px 4px 4px #AE3E0B53;
+  }
+  40% {
+    text-shadow: 1px 3px 2px #0D880000;
+  }
+  60% {
+    text-shadow: -3px 4px 4px #0C00C253;
+  }
+  80%{
+    text-shadow: -6px 3px 2px #0D880000;
+  }
+  100% {
+    text-shadow: -10px 4px 4px #AEAA0B53;
   }
 }
