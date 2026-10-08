@@ -1,69 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../styles/ledger.css"/>
+    <link rel="stylesheet" href="../styles/ledger.css">
     <script type="module" src="../scripts/ledger.js" defer></script>
-    <title>Mosher Lawns</title>
+    <title>Employee Ledger · Timekeeper</title>
   </head>
   <body>
-    <div class="ledger-section">
-      <h3><u>Employee Ledger</u></h3>
-    </div>
+    <section class="ledger-section">
+      <div class="ledger-heading">
+        <div>
+          <h1>Employee Ledger</h1>
+          <p id="ledger-owner" class="ledger-owner">Choose an employee to view their ledger.</p>
+        </div>
+        <label class="ledger-filter" for="ledger-employee-filter">
+          Ledger for
+          <select id="ledger-employee-filter">
+            <option value="">Choose an employee</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
     <div class="table-div">
       <table>
         <thead>
           <tr>
-            <th>Index</th>
+            <th>Entry</th>
             <th>Date</th>
             <th>Type</th>
             <th>Hours</th>
             <th>Amount</th>
-            <th colspan="2">Notes</th>
+            <th>Notes</th>
             <th>Action</th>
           </tr>
         </thead>
-        <tbody id="ledger-body">
-          <!-- Rows will be added dynamically -->
-        </tbody>
+        <tbody id="ledger-body" aria-live="polite"></tbody>
         <tfoot>
           <tr>
-            <td colspan="8" id="ledger-total">
-              <strong>Total: $0.00</strong>
-            </td>
+            <td colspan="7" id="ledger-total"><strong>Total: $0.00</strong></td>
           </tr>
         </tfoot>
       </table>
     </div>
 
-    <!-- Form to add new ledger entry -->
     <div class="form-container">
       <form id="ledger-form">
-        <label for="employee-select">Employee:</label>
-        <select id="employee-select">
-          <option value="">--Employee--</option>
-        </select>
-
-        <label for="date">Date:</label>
-        <input type="date" id="date" required>
-
-        <label for="type">Type:</label>
-        <select id="type" required>
-          <option value="normal">Normal</option>
-          <option value="advance">Advance</option>
-          <option value="general">General</option>
-        </select>
-
-        <label for="hours">Hours:</label>
-        <input type="number" id="hours" min="0" step="0.1" value="0">
-
-        <label for="amount">Amount ($):</label>
-        <input type="number" id="amount" min="0" step="0.01" value="0" disabled>
-
-        <label for="notes">Notes:</label>
-        <input type="text" id="notes" placeholder="Optional notes">
-
+        <label for="employee-select">Employee
+          <select id="employee-select" required>
+            <option value="">Choose an employee</option>
+          </select>
+        </label>
+        <label for="date">Date
+          <input type="date" id="date" required>
+        </label>
+        <label for="type">Type
+          <select id="type" required>
+            <option value="normal">Normal pay</option>
+            <option value="advance">Advance</option>
+            <option value="general">Other credit</option>
+          </select>
+        </label>
+        <label for="hours">Hours
+          <input type="number" id="hours" min="0" step="0.1" value="0">
+        </label>
+        <label for="amount">Amount ($)
+          <input type="number" id="amount" min="0" step="0.01" value="0" disabled>
+        </label>
+        <label for="notes">Notes
+          <input type="text" id="notes" placeholder="Optional notes">
+        </label>
         <button type="submit">Add Entry</button>
       </form>
     </div>

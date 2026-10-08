@@ -3,7 +3,11 @@
 body { display: flex; flex-direction: column; align-items: stretch; gap: 15px; padding: clamp(14px, 3vw, 26px); }
 .ledger-section, .table-div, .form-container { width: min(100%, 1060px); margin: 0 auto; }
 .ledger-section { padding: 0 2px; }
-.ledger-section h3 { margin: 0; color: var(--ink); font-size: 18px; letter-spacing: -.04em; }
+.ledger-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.ledger-heading h1 { margin: 0 0 4px; color: var(--ink); font-size: 20px; letter-spacing: -.04em; }
+.ledger-owner { margin: 0; color: var(--muted); font-size: 11px; }
+.ledger-filter { display: grid; min-width: min(260px, 45%); gap: 5px; color: var(--ink-soft); font-size: 10px; font-weight: 650; }
+.ledger-filter select { width: 100%; min-height: 38px; padding: 7px 9px; font-size: 10px; }
 .table-div { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-soft); }
 table { width: 100%; min-width: 700px; border-collapse: collapse; text-align: left; }
 thead { color: var(--muted); background: var(--surface-muted); }
@@ -15,12 +19,15 @@ tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight
 .delete-btn:hover { color: #fff; background: #b84e4e; }
 .form-container { padding: 17px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-soft); }
 #ledger-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; align-items: end; }
-#ledger-form label { display: grid; gap: 5px; }
+#ledger-form label { display: grid; gap: 5px; color: var(--ink-soft); font-size: 10px; font-weight: 650; }
 #ledger-form input, #ledger-form select { width: 100%; min-height: 38px; padding: 7px 9px; font-size: 10px; }
 #ledger-form button[type="submit"] { min-height: 38px; padding: 0 13px; color: #fff; background: var(--green); font-size: 10px; font-weight: 700; }
 #ledger-form button[type="submit"]:hover { background: var(--green-deep); }
+#ledger-form button:disabled { opacity: .6; cursor: wait; }
 
 @media (max-width: 760px) {
+  .ledger-heading { align-items: stretch; flex-direction: column; }
+  .ledger-filter { min-width: 0; }
   #ledger-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 480px) {

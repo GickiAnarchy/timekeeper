@@ -46,7 +46,7 @@
 .status-complete { color: var(--muted); background: var(--surface-muted); }
 .job-customer, .job-date { margin: 0; color: var(--muted); font-size: 10px; }
 .job-customer { color: var(--ink-soft); font-weight: 600; }
-.job-actions { display: flex; align-items: center; gap: 5px; }
+.job-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 5px; }
 .is-complete .date-tile { color: var(--muted); background: var(--surface-muted); border-color: var(--border); }
 .is-complete .date-weekday, .is-complete .date-month { color: var(--muted); }
 .is-complete .job-description { color: var(--muted); }

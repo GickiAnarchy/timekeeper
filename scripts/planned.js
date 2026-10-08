@@ -22,6 +22,10 @@ function calendarDayNumber(date) {
   return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000;
 }
 
+function dateInputValue(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 function makeElement(tag, className, text) {
   const element = document.createElement(tag);
   if (className) element.className = className;
@@ -40,9 +44,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const formError = document.getElementById('planned-form-error');
   const customerHelp = document.getElementById('customer-help');
   const submitButton = document.getElementById('modal-add-button');
+  const modalTitle = document.getElementById('add-job-title');
+  const modalEyebrow = modal.querySelector('.eyebrow');
   const jobCount = document.getElementById('job-count');
   const filterButtons = [...document.querySelectorAll('.filter-button')];
   let activeFilter = 'open';
+  let editingJobId = null;
 
   await store.init();
   populateCustomerDropdowns(customerSelect);
@@ -55,8 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function updateSummary() {
-    const today = new Date();
-    const todayNumber = calendarDayNumber(today);
+    const todayNumber = calendarDayNumber(new Date());
     const openJobs = store.plannedJobs.filter(job => !job.isComplete);
     const dueToday = openJobs.filter(job => {
       const date = asDate(job.scheduledDate);
@@ -105,12 +111,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     titleRow.appendChild(makeElement('span', statusClass, statusText));
 
-    const customerName = job.customer?.name || 'Customer not available';
-    const customerLine = makeElement('p', 'job-customer', customerName);
-    const dateLine = makeElement('p', 'job-date', date ? formatJobDate.format(date) : 'Date not set');
-    content.append(titleRow, customerLine, dateLine);
+    content.append(
+      titleRow,
+      makeElement('p', 'job-customer', job.customer?.name || 'Customer not available'),
+      makeElement('p', 'job-date', date ? formatJobDate.format(date) : 'Date not set')
+    );
 
     const actions = makeElement('div', 'job-actions');
+    const editButton = makeElement('button', 'button button-small button-secondary', 'Edit');
+    editButton.type = 'button';
+    editButton.dataset.action = 'edit';
+    editButton.dataset.id = job.id;
+    editButton.setAttribute('aria-label', `Edit ${job.description || 'scheduled job'}`);
+
     const completeButton = makeElement('button', 'button button-small button-primary', job.isComplete ? 'Reopen' : 'Complete');
     completeButton.type = 'button';
     completeButton.dataset.action = 'toggle-complete';
@@ -122,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     deleteButton.dataset.action = 'delete';
     deleteButton.dataset.id = job.id;
     deleteButton.setAttribute('aria-label', `Remove ${job.description || 'scheduled job'}`);
-    actions.append(completeButton, deleteButton);
+    actions.append(editButton, completeButton, deleteButton);
     item.append(dateTile, content, actions);
     return item;
   }
@@ -154,28 +167,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     visibleJobs.forEach(job => plannedList.appendChild(createJobCard(job)));
   }
 
+  function setActiveFilter(filter) {
+    activeFilter = filter;
+    filterButtons.forEach(button => {
+      const selected = button.dataset.filter === activeFilter;
+      button.classList.toggle('is-active', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    });
+  }
+
   filterButtons.forEach(button => {
     button.addEventListener('click', () => {
-      activeFilter = button.dataset.filter;
-      filterButtons.forEach(filterButton => {
-        const selected = filterButton === button;
-        filterButton.classList.toggle('is-active', selected);
-        filterButton.setAttribute('aria-pressed', String(selected));
-      });
+      setActiveFilter(button.dataset.filter);
       renderJobs();
     });
   });
 
-  addButton.addEventListener('click', () => {
+  function openJobModal(job = null) {
     form.reset();
     formError.textContent = '';
+    editingJobId = job?.id || null;
     const today = new Date();
-    dateInput.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    dateInput.value = job ? dateInputValue(asDate(job.scheduledDate) || today) : dateInputValue(today);
+    customerSelect.value = job?.customer?.id || '';
+    descriptionInput.value = job?.description || '';
+    modalTitle.textContent = job ? 'Edit planned job' : 'Plan a job';
+    modalEyebrow.textContent = job ? 'UPDATE SCHEDULE ITEM' : 'NEW SCHEDULE ITEM';
+    submitButton.textContent = job ? 'Save changes' : 'Save job';
     const hasCustomers = store.customers.size > 0;
     customerHelp.textContent = hasCustomers ? '' : 'Add a customer in People Data before planning a job.';
     submitButton.disabled = !hasCustomers;
     modal.showModal();
-  });
+  }
+
+  addButton.addEventListener('click', () => openJobModal());
 
   form.addEventListener('submit', async event => {
     event.preventDefault();
@@ -195,31 +220,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const [year, month, day] = dateValue.split('-').map(Number);
     const scheduledDate = new Date(year, month - 1, day, 12, 0, 0, 0);
-    const newJob = new PlannedJob(description, scheduledDate, customer);
+    const wasEditing = Boolean(editingJobId);
+    const targetJobId = editingJobId;
 
     submitButton.disabled = true;
     submitButton.textContent = 'Saving…';
     try {
-      await store.savePlanned(newJob);
-      store.plannedJobs.push(newJob);
-      activeFilter = 'open';
-      filterButtons.forEach(button => {
-        const selected = button.dataset.filter === activeFilter;
-        button.classList.toggle('is-active', selected);
-        button.setAttribute('aria-pressed', String(selected));
-      });
+      if (wasEditing) {
+        await store.updatePlanned(targetJobId, description, scheduledDate, customer);
+      } else {
+        const newJob = new PlannedJob(description, scheduledDate, customer);
+        await store.savePlanned(newJob);
+        store.plannedJobs.push(newJob);
+        setActiveFilter('open');
+      }
       modal.close();
+      editingJobId = null;
       renderJobs();
     } catch (error) {
       console.error('Unable to save planned job:', error);
-      formError.textContent = 'This job could not be saved. Check your connection and try again.';
+      formError.textContent = error.message || 'This job could not be saved. Check your connection and try again.';
     } finally {
       submitButton.disabled = false;
-      submitButton.textContent = 'Save job';
+      submitButton.textContent = editingJobId ? 'Save changes' : 'Save job';
     }
   });
 
   function closeModal() {
+    editingJobId = null;
     form.reset();
     formError.textContent = '';
     modal.close();
@@ -236,6 +264,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!button) return;
     const job = store.plannedJobs.find(candidate => candidate.id === button.dataset.id);
     if (!job) return;
+
+    if (button.dataset.action === 'edit') {
+      openJobModal(job);
+      return;
+    }
 
     if (button.dataset.action === 'toggle-complete') {
       button.disabled = true;

@@ -4,6 +4,19 @@ import {
   enableAutoScrollOnFocus
 } from './models.js';
 
+function localDateInputValue(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function makeCell(text) {
+  const cell = document.createElement('td');
+  cell.textContent = text ?? '';
+  return cell;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
   enableAutoScrollOnFocus();
@@ -13,129 +26,174 @@ document.addEventListener('DOMContentLoaded', async () => {
   const typeSelect = document.getElementById('type');
   const hoursInput = document.getElementById('hours');
   const amountInput = document.getElementById('amount');
-  const empSelect = document.getElementById('employee-select');
+  const employeeSelect = document.getElementById('employee-select');
+  const ledgerFilter = document.getElementById('ledger-employee-filter');
+  const ledgerOwner = document.getElementById('ledger-owner');
   const tableBody = document.getElementById('ledger-body');
   const totalRow = document.getElementById('ledger-total');
 
-  // Populate employee dropdown if present in the HTML
-  if (empSelect) {
-    populateEmployeeDropdowns(empSelect);
+  populateEmployeeDropdowns(employeeSelect);
+  ledgerFilter.replaceChildren(new Option('Choose an employee', ''));
+  for (const employee of store.employees.values()) {
+    ledgerFilter.add(new Option(employee.name, employee.id));
+  }
+  const hasUnassignedEntries = store.ledger.entries.some(entry => !entry.employeeId);
+  if (hasUnassignedEntries) ledgerFilter.add(new Option('Unassigned legacy entries', 'unassigned'));
+
+  dateInput.value = localDateInputValue();
+
+  function updateTypeInputs() {
+    const isHourlyPay = typeSelect.value === 'normal';
+    hoursInput.disabled = !isHourlyPay;
+    amountInput.disabled = isHourlyPay;
+    if (isHourlyPay) amountInput.value = '0';
+    else hoursInput.value = '0';
+  }
+  typeSelect.addEventListener('change', updateTypeInputs);
+
+  function selectedEmployeeId() {
+    return ledgerFilter.value === 'unassigned' ? null : ledgerFilter.value;
   }
 
-  // Set default date to today (YYYY-MM-DD)
-  const today = new Date().toISOString().split('T')[0];
-  dateInput.value = today;
+  function filteredEntries() {
+    if (!ledgerFilter.value) return [];
+    const employeeId = selectedEmployeeId();
+    return store.ledger.entries
+      .filter(entry => employeeId ? entry.employeeId === employeeId : !entry.employeeId)
+      .sort((a, b) => Number(a.index || 0) - Number(b.index || 0));
+  }
 
-  // Toggle input availability based on type selected
-  typeSelect.addEventListener('change', () => {
-    if (typeSelect.value === 'normal') {
-      hoursInput.disabled = false;
-      amountInput.disabled = true;
-      amountInput.value = '0';
-    } else {
-      hoursInput.disabled = true;
-      hoursInput.value = '0';
-      amountInput.disabled = false;
-    }
-  });
-
-  // Render all entries stored in the Ledger instance
-  const renderLedger = () => {
-    tableBody.innerHTML = '';
-
-    store.ledger.entries.forEach((entry) => {
-      const type = (entry.type || '').toLowerCase();
-      const amount = Number(entry.amount || 0);
-
+  function renderLedger() {
+    tableBody.replaceChildren();
+    const filterValue = ledgerFilter.value;
+    if (!filterValue) {
       const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${entry.index}</td>
-        <td>${entry.date || ''}</td>
-        <td>${type ? type.charAt(0).toUpperCase() + type.slice(1) : ''}</td>
-        <td>${entry.hours || 0}</td>
-        <td>$${amount.toFixed(2)}</td>
-        <td colspan="2">${entry.notes || ''}</td>
-        <td><button type="button" class="delete-btn" data-id="${entry.id}">Delete</button></td>
-      `;
+      const message = makeCell('Choose an employee to view their ledger.');
+      message.colSpan = 7;
+      row.appendChild(message);
       tableBody.appendChild(row);
-    });
-
-    if (totalRow) {
-      const total = store.ledger.getTotal();
-      totalRow.innerHTML = `<strong>Total: $${total.toFixed(2)}</strong>`;
+      ledgerOwner.textContent = 'Choose an employee to view their ledger.';
+      totalRow.innerHTML = '<strong>Total: $0.00</strong>';
+      return;
     }
-  };
 
-  // Initial render of saved entries
+    const employee = store.employees.get(filterValue);
+    ledgerOwner.textContent = filterValue === 'unassigned'
+      ? 'Legacy entries without an employee assignment'
+      : `Ledger for ${employee?.name || 'this employee'}`;
+
+    const entries = filteredEntries();
+    if (entries.length === 0) {
+      const row = document.createElement('tr');
+      const message = makeCell('No entries for this employee yet.');
+      message.colSpan = 7;
+      row.appendChild(message);
+      tableBody.appendChild(row);
+    } else {
+      entries.forEach(entry => {
+        const row = document.createElement('tr');
+        const type = String(entry.type || '').toLowerCase();
+        const amount = Number(entry.amount || 0);
+        const typeLabel = type ? type.charAt(0).toUpperCase() + type.slice(1) : '';
+        row.append(
+          makeCell(entry.index),
+          makeCell(entry.date || ''),
+          makeCell(typeLabel),
+          makeCell(Number(entry.hours || 0).toFixed(2)),
+          makeCell(`$${amount.toFixed(2)}`),
+          makeCell(entry.notes || '')
+        );
+        const actionCell = document.createElement('td');
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.className = 'delete-btn';
+        deleteButton.dataset.id = entry.id;
+        deleteButton.textContent = 'Delete';
+        actionCell.appendChild(deleteButton);
+        row.appendChild(actionCell);
+        tableBody.appendChild(row);
+      });
+    }
+
+    const total = entries.reduce((sum, entry) => {
+      const amount = Number(entry.amount || 0);
+      return sum + (String(entry.type || '').toLowerCase() === 'advance' ? -amount : amount);
+    }, 0);
+    totalRow.innerHTML = `<strong>Balance: $${total.toFixed(2)}</strong>`;
+  }
+
+  ledgerFilter.addEventListener('change', () => {
+    if (store.employees.has(ledgerFilter.value)) employeeSelect.value = ledgerFilter.value;
+    renderLedger();
+  });
   renderLedger();
+  updateTypeInputs();
 
-  // Handle Form Submission
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const employeeId = employeeSelect.value;
+    const employee = store.employees.get(employeeId);
+    if (!employee) {
+      window.alert('Choose an employee before adding a ledger entry.');
+      return;
+    }
 
-    const date = dateInput.value;
     const type = typeSelect.value;
-    const notes = document.getElementById('notes').value;
-
+    const notes = document.getElementById('notes').value.trim();
     let hours = 0;
     let amount = 0;
-
     if (type === 'normal') {
-      hours = parseFloat(hoursInput.value) || 0;
-      
-      // Use selected employee wage if available, fallback to 15
-      let wage = 15;
-      if (empSelect && empSelect.value) {
-        const emp = store.employees.get(empSelect.value);
-        if (emp) wage = emp.wage;
+      hours = Number(hoursInput.value) || 0;
+      if (hours < 0) {
+        window.alert('Hours must be zero or more.');
+        return;
       }
-      
-      amount = hours * wage;
-    } else if (type === 'advance') {
-      hours = 0;
-      amount = parseFloat(amountInput.value) || 0;
-    } else if (type === 'general') {
-      const amountSpot = document.getElementById('amount');
-      const userInput = prompt("Please enter an amount:", "$0.00");
-
-      if (userInput !== null) {
-        console.log("User entered:", userInput);
-        amount = Number(userInput);
-        amountSpot.textContent = amount;
-      } else {
-        console.log("User cancelled the prompt.");
+      amount = employee.getPay(hours);
+    } else {
+      amount = Number(amountInput.value) || 0;
+      if (amount < 0) {
+        window.alert('Amount must be zero or more.');
+        return;
       }
-
-      hours = 0;
     }
 
-    // Save to Firestore & Store
-    await store.saveLedgerEntry({
-      date,
-      type,
-      hours,
-      amount,
-      notes
-    });
-
-    // Reset form fields
-    form.reset();
-
-    // Re-render UI table
-    renderLedger();
-
-    dateInput.value = today;
-    typeSelect.dispatchEvent(new Event('change'));
+    const submitButton = form.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    try {
+      await store.saveLedgerEntry({
+        employeeId,
+        date: dateInput.value,
+        type,
+        hours,
+        amount,
+        notes
+      });
+      if (ledgerFilter.value !== employeeId) ledgerFilter.value = employeeId;
+      renderLedger();
+      form.reset();
+      dateInput.value = localDateInputValue();
+      typeSelect.value = 'normal';
+      updateTypeInputs();
+      employeeSelect.value = employeeId;
+    } catch (error) {
+      console.error('Unable to save ledger entry:', error);
+      window.alert(error.message || 'Unable to save this ledger entry. Please try again.');
+    } finally {
+      submitButton.disabled = false;
+    }
   });
 
-  // Handle Deletions
-  tableBody.addEventListener('click', async (e) => {
-    if (e.target.classList.contains('delete-btn')) {
-      const id = e.target.getAttribute('data-id');
-      if (id) {
-        await store.deleteLedgerEntry(id);
-        renderLedger();
-      }
+  tableBody.addEventListener('click', async event => {
+    const button = event.target.closest('.delete-btn[data-id]');
+    if (!button) return;
+    button.disabled = true;
+    try {
+      await store.deleteLedgerEntry(button.dataset.id);
+      renderLedger();
+    } catch (error) {
+      console.error('Unable to delete ledger entry:', error);
+      button.disabled = false;
+      window.alert('This ledger entry could not be deleted. Please try again.');
     }
   });
 });

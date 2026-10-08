@@ -135,7 +135,7 @@ export class Customer {
 }
 
 export class WorkShift {
-  constructor(employee, customer, id = null, note = null, isPaid = false, breaks = []) {
+  constructor(employee, customer, id = null, note = null, isPaid = false, breaks = [], paidHours = null) {
     this.id = id || crypto.randomUUID();
     this.employee = employee;
     this.customer = customer;
@@ -144,6 +144,9 @@ export class WorkShift {
     this.breaks = breaks;
     this.note = note;
     this.isPaid = isPaid;
+    this.paidHours = paidHours === null || paidHours === undefined || paidHours === ''
+      ? null
+      : Number(paidHours);
   }
   
   startBreak() {
@@ -208,9 +211,13 @@ export class WorkShift {
     return Number((Math.max(0, netMs) / (1000 * 60 * 60)).toFixed(2));
   }
 
+  getPaidHours() {
+    return Number.isFinite(this.paidHours) ? this.paidHours : this.getHoursWorked();
+  }
+
   getShiftPay() {
     if (this.isPaid) return 0;
-    return this.employee ? this.employee.getPay(this.getHoursWorked()) : 0;
+    return this.employee ? this.employee.getPay(this.getPaidHours()) : 0;
   }
 }
 
@@ -256,9 +263,12 @@ export class Ledger {
   }
 
   addEntry(data = {}) {
+    const employeeId = data.employeeId || null;
+    const nextIndex = this.entries.filter(entry => entry.employeeId === employeeId).length + 1;
     const entry = {
       id: data.id || crypto.randomUUID(),
-      index: this.entries.length + 1,
+      index: Number(data.index) > 0 ? Number(data.index) : nextIndex,
+      employeeId,
       date: data.date ?? null,
       type: data.type ?? null,
       hours: data.hours ?? null,
@@ -280,10 +290,11 @@ export class Ledger {
 
   deleteEntry(id) {
     const initialLength = this.entries.length;
+    const entry = this.getEntry(id);
     this.entries = this.entries.filter(entry => entry.id !== id);
     
     if (this.entries.length !== initialLength) {
-      this.reindex();
+      this.reindex(entry?.employeeId ?? null);
       return true;
     }
     return false;
@@ -293,10 +304,11 @@ export class Ledger {
     return this.entries.find(entry => entry.id === id) || null;
   }
 
-  reindex() {
-    this.entries.forEach((entry, i) => {
-      entry.index = i + 1;
-    });
+  reindex(employeeId = undefined) {
+    const entries = employeeId === undefined
+      ? this.entries
+      : this.entries.filter(entry => entry.employeeId === employeeId);
+    entries.forEach((entry, i) => { entry.index = i + 1; });
   }
 
   getTotal() {
@@ -380,8 +392,17 @@ export class AppDataStore {
   }
 
   async saveLedgerEntry(data) {
-    const entry = this.ledger.addEntry(data);
-    await setDoc(doc(db, "ledgerRows", entry.id), entry);
+    const employeeId = data.employeeId || null;
+    if (!employeeId || !this.employees.has(employeeId)) {
+      throw new Error("Choose an employee for this ledger entry.");
+    }
+    const entry = this.ledger.addEntry({ ...data, employeeId });
+    try {
+      await setDoc(doc(db, "ledgerRows", entry.id), entry);
+    } catch (error) {
+      this.ledger.deleteEntry(entry.id);
+      throw error;
+    }
     return entry;
   }
 
@@ -394,6 +415,8 @@ export class AppDataStore {
   }
 
   async deleteLedgerEntry(entryId) {
+    const entry = this.ledger.getEntry(entryId);
+    if (!entry) return;
     const isDeleted = this.ledger.deleteEntry(entryId);
     if (!isDeleted) return;
 
@@ -401,11 +424,12 @@ export class AppDataStore {
 
     // Batch update updated index numbers in Firestore efficiently
     const batch = writeBatch(db);
-    this.ledger.entries.forEach((entry) => {
-      const ref = doc(db, "ledgerRows", entry.id);
-      batch.update(ref, { index: entry.index });
+    const affectedEntries = this.ledger.entries.filter(candidate => candidate.employeeId === (entry.employeeId || null));
+    affectedEntries.forEach((candidate) => {
+      const ref = doc(db, "ledgerRows", candidate.id);
+      batch.update(ref, { index: candidate.index });
     });
-    await batch.commit();
+    if (affectedEntries.length) await batch.commit();
   }
 
   // INVOICE --
@@ -553,7 +577,7 @@ export class AppDataStore {
         const site = (this.customers && this.customers.get(data.custId)) || new Customer(data.custId, 'Unknown Site');
         const parsedBreaks = (data.breaks || []).map(b => ({start: b.start ? new Date(b.start) : null, end: b.end ? new Date(b.end) : null}));
 
-        const shift = new WorkShift(emp, site, docSnap.id, data.note || null, data.isPaid, parsedBreaks);
+        const shift = new WorkShift(emp, site, docSnap.id, data.note || null, data.isPaid, parsedBreaks, data.paidHours);
 
         shift.clockInTime = data.clockInTime ? new Date(data.clockInTime) : null;
         shift.clockOutTime = data.clockOutTime ? new Date(data.clockOutTime) : null;
@@ -578,7 +602,8 @@ export class AppDataStore {
       clockOutTime: shift.clockOutTime ? shift.clockOutTime.toISOString() : null,
       note: shift.note || null,
       isPaid: shift.isPaid || false,
-      breaks: formattedBreaks
+      breaks: formattedBreaks,
+      paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null
     }); 
   }
   
@@ -587,22 +612,55 @@ export class AppDataStore {
     this.shifts = this.shifts.filter(s => s.id !== shiftId);
   }
 
-  async updateShift(shiftId, employee, customer, clockInTime, clockOutTime, note = null, isPaid = false) {
+  async updateShift(shiftId, employee, customer, clockInTime, clockOutTime, note = null, isPaid = false, breaks = null, paidHours = undefined) {
     const shift = this.shifts.find(s => s.id === shiftId);
     if (!shift) throw new Error("Shift could not be found.");
     if (!employee || !customer) throw new Error("Please select an employee and customer.");
 
     const start = clockInTime instanceof Date ? clockInTime : new Date(clockInTime);
     const end = clockOutTime instanceof Date ? clockOutTime : new Date(clockOutTime);
-    const formattedBreaks = shift.breaks.map(b => ({
-      start: b.start instanceof Date ? b.start.toISOString() : b.start, 
-      end: b.end instanceof Date ? b.end.toISOString() : b.end
-    }));
+    const sourceBreaks = Array.isArray(breaks) ? breaks : shift.breaks;
     
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
       throw new Error("Please provide valid start and end times.");
     }
     if (end <= start) throw new Error("End time must be after start time.");
+
+    const normalizedBreaks = sourceBreaks.map((breakItem, index) => {
+      const breakStart = breakItem.start instanceof Date ? breakItem.start : new Date(breakItem.start);
+      const breakEnd = breakItem.end instanceof Date ? breakItem.end : new Date(breakItem.end);
+      if (Number.isNaN(breakStart.getTime()) || Number.isNaN(breakEnd.getTime())) {
+        throw new Error(`Break ${index + 1} needs both a valid start and end time.`);
+      }
+      if (breakEnd <= breakStart) throw new Error(`Break ${index + 1} must end after it starts.`);
+      if (breakStart < start || breakEnd > end) {
+        throw new Error(`Break ${index + 1} must fall within the shift.`);
+      }
+      return { start: breakStart, end: breakEnd };
+    }).sort((a, b) => a.start - b.start);
+
+    for (let index = 1; index < normalizedBreaks.length; index += 1) {
+      if (normalizedBreaks[index].start < normalizedBreaks[index - 1].end) {
+        throw new Error("Break times cannot overlap.");
+      }
+    }
+
+    const nextPaidHours = paidHours === undefined ? shift.paidHours :
+      (paidHours === null || paidHours === '' ? null : Number(paidHours));
+    if (nextPaidHours !== null && (!Number.isFinite(nextPaidHours) || nextPaidHours < 0)) {
+      throw new Error("Paid hours must be a valid non-negative number, or left blank to use worked hours.");
+    }
+
+    await updateDoc(doc(db, "shifts", shiftId), {
+      employeeId: employee.id,
+      custId: customer.id,
+      clockInTime: start.toISOString(),
+      clockOutTime: end.toISOString(),
+      note: note ? String(note).trim() : null,
+      isPaid: Boolean(isPaid),
+      breaks: normalizedBreaks.map(b => ({ start: b.start.toISOString(), end: b.end.toISOString() })),
+      paidHours: nextPaidHours
+    });
 
     shift.employee = employee;
     shift.customer = customer;
@@ -610,16 +668,8 @@ export class AppDataStore {
     shift.clockOutTime = end;
     shift.note = note ? String(note).trim() : null;
     shift.isPaid = Boolean(isPaid);
-
-    await updateDoc(doc(db, "shifts", shiftId), {
-      employeeId: employee.id,
-      custId: customer.id,
-      clockInTime: start.toISOString(),
-      clockOutTime: end.toISOString(),
-      note: shift.note,
-      isPaid: shift.isPaid,
-      breaks: formattedBreaks
-    });
+    shift.breaks = normalizedBreaks;
+    shift.paidHours = nextPaidHours;
     return shift;
   }
 
@@ -718,7 +768,12 @@ export class AppDataStore {
       clockInTime: s.clockInTime ? s.clockInTime.toISOString() : null,
       clockOutTime: s.clockOutTime ? s.clockOutTime.toISOString() : null,
       note: s.note || null,
-      isPaid: s.isPaid || null
+      isPaid: s.isPaid || null,
+      breaks: s.breaks.map(b => ({
+        start: b.start ? new Date(b.start).toISOString() : null,
+        end: b.end ? new Date(b.end).toISOString() : null
+      })),
+      paidHours: Number.isFinite(s.paidHours) ? s.paidHours : null
     }));
   }
 
@@ -735,7 +790,9 @@ export class AppDataStore {
         clockInTime: shiftData.clockInTime,
         clockOutTime: shiftData.clockOutTime,
         note: shiftData.note || null,
-        isPaid: shiftData.isPaid
+        isPaid: shiftData.isPaid,
+        breaks: shiftData.breaks || [],
+        paidHours: shiftData.paidHours ?? null
       });
     }
     await this.loadShifts();
@@ -787,6 +844,32 @@ export class AppDataStore {
       return planned;
     } catch (error) {
       planned.isComplete = previousValue;
+      throw error;
+    }
+  }
+
+  async updatePlanned(plannedId, description, scheduledDate, customer) {
+    const planned = this.plannedJobs.find(job => job.id === plannedId);
+    if (!planned) throw new Error("Planned job not found.");
+    const cleanDescription = String(description || '').trim();
+    const nextDate = scheduledDate instanceof Date ? scheduledDate : new Date(scheduledDate);
+    if (!cleanDescription) throw new Error("Add a job description before saving.");
+    if (Number.isNaN(nextDate.getTime())) throw new Error("Planned job needs a valid scheduled date.");
+    if (!customer) throw new Error("Choose a customer before saving this job.");
+
+    const previous = {
+      description: planned.description,
+      scheduledDate: planned.scheduledDate,
+      customer: planned.customer
+    };
+    planned.description = cleanDescription;
+    planned.scheduledDate = nextDate;
+    planned.customer = customer;
+    try {
+      await this.savePlanned(planned);
+      return planned;
+    } catch (error) {
+      Object.assign(planned, previous);
       throw error;
     }
   }
