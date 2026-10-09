@@ -1,7 +1,7 @@
 const THEME_KEY = 'timekeeper-theme';
 const FONT_SCALE_KEY = 'timekeeper-font-scale';
-const THEMES = new Set(['forest', 'coastal', 'harvest', 'midnight']);
-const FONT_SCALES = new Set([1, 1.15, 1.3]);
+const THEMES = new Set(['forest', 'coastal', 'harvest', 'midnight', 'lavender', 'rose', 'slate']);
+const FONT_SCALES = new Set([1, 1.15, 1.3, 1.5]);
 
 function readSavedTheme() {
   try {

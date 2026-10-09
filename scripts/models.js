@@ -231,12 +231,21 @@ export class Payment {
   }
 }
 
+function todayDateString() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export class Invoice {
-  constructor(cust, items = [], id = null, isPaid = false) {
+  constructor(cust, items = [], id = null, isPaid = false, date = todayDateString()) {
     this.id = id || crypto.randomUUID();
     this.customer = cust;
     this.items = items;
     this.isPaid = Boolean(isPaid);
+    this.date = date || null;
   }
   
   addItem(name, value) {
@@ -443,7 +452,7 @@ export class AppDataStore {
         const items = data.items || [];
         const isPaid = data.isPaid || false;
         
-        const inv = new Invoice(customer, items, docSnap.id, isPaid);
+        const inv = new Invoice(customer, items, docSnap.id, isPaid, data.date || null);
         
         this.invoices.push(inv);
       });
@@ -456,7 +465,8 @@ export class AppDataStore {
     await setDoc(doc(db, "invoices", invoice.id), {
       custId: invoice.customer ? invoice.customer.id : null,
       items: invoice.items,
-      isPaid: Boolean(invoice.isPaid)
+      isPaid: Boolean(invoice.isPaid),
+      date: invoice.date || null
     });
   }
   
@@ -883,10 +893,20 @@ export class AppDataStore {
 
 export const store = new AppDataStore();
 
+const nameCollator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
+
+export function compareByFirstName(a, b) {
+  const nameA = String(a?.name || '').trim();
+  const nameB = String(b?.name || '').trim();
+  const firstA = nameA.split(/\s+/)[0] || '';
+  const firstB = nameB.split(/\s+/)[0] || '';
+  return nameCollator.compare(firstA, firstB) || nameCollator.compare(nameA, nameB);
+}
+
 export function populateEmployeeDropdowns(empDropdownElement) {
   if (!empDropdownElement) return;
   empDropdownElement.innerHTML = '<option value="">--Employee--</option>';
-  store.employees.forEach((emp) => {
+  [...store.employees.values()].sort(compareByFirstName).forEach((emp) => {
     const opt = document.createElement('option');
     opt.value = emp.id;
     opt.textContent = `${emp.name} -- ($${emp.wage}/hr)`;
@@ -897,7 +917,7 @@ export function populateEmployeeDropdowns(empDropdownElement) {
 export function populateCustomerDropdowns(custDropdownElement) {
   if (!custDropdownElement) return;
   custDropdownElement.innerHTML = '<option value="">--Customer--</option>';
-  store.customers.forEach((cust) => {
+  [...store.customers.values()].sort(compareByFirstName).forEach((cust) => {
     const opt = document.createElement('option');
     opt.value = cust.id;
     opt.textContent = cust.customInfo();

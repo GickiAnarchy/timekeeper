@@ -11,6 +11,7 @@ body { padding: clamp(14px, 3vw, 26px); }
 .invoice-actions button:hover, .item-btns button:hover, #mark-paid-btn:hover, #submit-btn:hover { background: var(--green-deep); }
 #delete-inv-btn, #remove-item-btn { color: var(--red); background: var(--red-soft); }
 #delete-inv-btn:hover, #remove-item-btn:hover { color: #fff; background: #b84e4e; }
+#edit-item-btn:disabled, #remove-item-btn:disabled { opacity: .58; cursor: not-allowed; }
 .open-div { grid-column: 1 / -1; color: var(--muted); font-size: 10px; }
 .open-div p { margin: 0; }
 body > main { width: min(100%, 1000px); margin: 0 auto; }
@@ -19,6 +20,9 @@ body > main { width: min(100%, 1000px); margin: 0 auto; }
 #inv-table th, #inv-table td { padding: 11px 13px; border: 0; border-bottom: 1px solid var(--border-soft); font-size: 11px; }
 #inv-table th { color: var(--muted); background: var(--surface-muted); font-size: 9px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
 #inv-table thead tr:first-child th { color: var(--ink-soft); background: var(--surface); font-size: 12px; letter-spacing: 0; }
+#date-head label { margin-right: 10px; font-size: 10px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+#invoice-date { min-height: 34px; padding: 6px 9px; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 9px; font: inherit; font-size: 12px; letter-spacing: 0; text-transform: none; }
+#invoice-date:disabled { opacity: .6; cursor: not-allowed; }
 #inv-table tbody tr[data-item-index] { cursor: pointer; }
 #inv-table tbody tr:hover { background: var(--surface-hover); }
 #invoice-table-body tr.selected-item { background: var(--green-soft); outline: 2px solid var(--green-line); outline-offset: -2px; }
@@ -28,7 +32,10 @@ body > main { width: min(100%, 1000px); margin: 0 auto; }
 .modal { width: min(100% - 24px, 400px); max-width: 400px; margin: auto; padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 17px; box-shadow: 0 24px 80px rgba(16, 38, 25, .23); }
 .modal::backdrop { background: rgba(19, 35, 27, .4); backdrop-filter: blur(3px); }
 #add-item-form { display: grid; gap: 10px; }
+#item-modal-title { margin: 0 0 3px; font-size: 18px; }
+#add-item-form label { margin-bottom: -7px; }
 #add-item-form input { min-height: 40px; padding: 8px 10px; font-size: 11px; }
+.form-error { margin: 0; color: var(--red); font-size: 11px; }
 .modal-btns { display: flex; justify-content: flex-end; gap: 7px; }
 #cancel-btn { min-height: 34px; padding: 0 11px; color: var(--ink-soft); background: var(--surface-muted); font-size: 10px; }
 

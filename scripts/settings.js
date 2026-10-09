@@ -1,11 +1,13 @@
 const themeSelect = document.getElementById('theme-select');
 const fontScaleInputs = [...document.querySelectorAll('input[name="font-scale"]')];
+const themes = new Set(['forest', 'coastal', 'harvest', 'midnight', 'lavender', 'rose', 'slate']);
+const fontScales = new Set([1, 1.15, 1.3, 1.5]);
 
 function applySettingsState(theme, fontScale) {
-  if (themeSelect && ['forest', 'coastal', 'harvest', 'midnight'].includes(theme)) {
+  if (themeSelect && themes.has(theme)) {
     themeSelect.value = theme;
   }
-  if ([1, 1.15, 1.3].includes(Number(fontScale))) {
+  if (fontScales.has(Number(fontScale))) {
     const selected = String(Number(fontScale));
     fontScaleInputs.forEach(input => { input.checked = input.value === selected; });
   }

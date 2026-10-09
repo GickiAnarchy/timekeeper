@@ -7,6 +7,13 @@ import {
   populateCustomerDropdowns 
 } from './models.js';
 
+function formatBreakDuration(milliseconds) {
+  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return [hours, minutes, seconds].map(value => String(value).padStart(2, '0')).join(':');
+}
 
 /*
   DOM CONTROLLER
@@ -21,7 +28,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   const activeShiftsList = document.getElementById('activeShiftsList');
   const shiftError = document.getElementById('shift-error');
 
-  
+  function updateBreakTimers() {
+    const now = Date.now();
+    activeShiftsList.querySelectorAll('.break-timer').forEach(timer => {
+      const startedAt = Number(timer.dataset.startedAt);
+      if (!Number.isFinite(startedAt)) return;
+      timer.textContent = `Break ${formatBreakDuration(now - startedAt)}`;
+    });
+  }
+
   function renderActiveShifts() {
     if (!activeShiftsList) return;
     const activeShifts = store.shifts.filter(s => !s.isComplete);
@@ -39,6 +54,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         hour: '2-digit',
         minute: '2-digit'
       }) : 'Unknown';
+      const activeBreak = shift.breaks.find(breakItem => breakItem.start && !breakItem.end);
+      const breakStartedAt = activeBreak ? new Date(activeBreak.start).getTime() : NaN;
+      const breakTimer = shift.isOnBreak && Number.isFinite(breakStartedAt)
+        ? `<span class="break-timer" role="timer" aria-label="Break duration" data-started-at="${breakStartedAt}">Break ${formatBreakDuration(Date.now() - breakStartedAt)}</span>`
+        : '';
 
       li.innerHTML = `
       <div class="active-card">
@@ -46,6 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <strong>${shift.employee ? shift.employee.name : 'Unknown'}</strong> @ ${shift.customer ? shift.customer.name : 'Unknown'}<br>
           <small>Started: ${timeStr}</small>
         </div>
+        ${breakTimer}
         <div class="break-buttons">
         <button type="button" id="start-break-btn" class="start-break-btn" data-id="${shift.id}">Start Break</button>
         <button type="button" id="stop-break-btn" class="stop-break-btn" data-id="${shift.id}" disabled="true">Stop Break</button>
@@ -159,6 +180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }); //active shift list slistener
     
     renderActiveShifts();
+    window.setInterval(updateBreakTimers, 1000);
   } // active shifts list if statement
 
 });

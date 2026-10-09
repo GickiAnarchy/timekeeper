@@ -29,6 +29,7 @@ body { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(0, 1.2fr
 .stop-btn { grid-column: 2; justify-self: end; color: var(--red); background: var(--red-soft); }
 .stop-btn:hover { color: #fff; background: #b84e4e; }
 .on-break .active-card { border-color: var(--amber); background: var(--amber-soft); }
+.break-timer { justify-self: end; padding: 5px 9px; color: var(--amber); background: var(--amber-soft); border: 1px solid var(--amber); border-radius: 999px; font-size: 11px; font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
 
 @media (max-width: 760px) {
   body { grid-template-columns: minmax(0, 1fr); }

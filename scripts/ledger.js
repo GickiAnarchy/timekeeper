@@ -1,6 +1,7 @@
 import {
   store,
   populateEmployeeDropdowns,
+  compareByFirstName,
   enableAutoScrollOnFocus
 } from './models.js';
 
@@ -34,7 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   populateEmployeeDropdowns(employeeSelect);
   ledgerFilter.replaceChildren(new Option('Choose an employee', ''));
-  for (const employee of store.employees.values()) {
+  for (const employee of [...store.employees.values()].sort(compareByFirstName)) {
     ledgerFilter.add(new Option(employee.name, employee.id));
   }
   const hasUnassignedEntries = store.ledger.entries.some(entry => !entry.employeeId);
