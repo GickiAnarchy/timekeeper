@@ -4,6 +4,12 @@ import {
   Invoice,
   enableAutoScrollOnFocus
 } from './models.js';
+import {
+  invoiceShiftIds as getInvoiceShiftIds,
+  makeShiftInvoiceLine,
+  shiftInvoiceLineStatus,
+  shiftIsAttachedElsewhere
+} from './domain.mjs';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
@@ -20,9 +26,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const paidLabel = document.getElementById('paid-notice');
   const openDiv = document.getElementById('open-div');
   const invoiceDateInput = document.getElementById('invoice-date');
+  const shiftLinkList = document.getElementById('shift-link-list');
+  const shiftLinkError = document.getElementById('shift-link-error');
+  const saveShiftLinksBtn = document.getElementById('save-shift-links-btn');
 
   if (!custSelect || !invList || !addItemBtn || !editItemBtn || !removeItemBtn ||
-      !addInvBtn || !deleteInvBtn || !invoiceBody || !invoiceDateInput) return;
+      !addInvBtn || !deleteInvBtn || !invoiceBody || !invoiceDateInput || !openDiv ||
+      !shiftLinkList || !shiftLinkError || !saveShiftLinksBtn) return;
 
   let selectedItemIndex = null;
 
@@ -32,6 +42,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   custSelect.addEventListener('change', () => renderInvoiceList());
   invList.addEventListener('change', renderSelectedInvoice);
   invoiceBody.addEventListener('click', selectItemRow);
+  openDiv.addEventListener('click', event => {
+    const button = event.target.closest('button[data-invoice-id]');
+    if (!button) return;
+    const invoice = store.invoices.find(candidate => String(candidate.id) === button.dataset.invoiceId);
+    if (!invoice?.customer?.id) return;
+    custSelect.value = String(invoice.customer.id);
+    renderInvoiceList(invoice.id);
+  });
+  saveShiftLinksBtn.addEventListener('click', saveShiftLinks);
   invoiceDateInput.addEventListener('change', async () => {
     const invoice = getSelectedInvoice();
     if (!invoice) return;
@@ -99,6 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const item = invoice.items[selectedItemIndex];
     if (!item) return;
+    if (item.shiftId) return;
 
     if (!window.confirm(`Remove “${item.name}” from this invoice?`)) return;
 
@@ -106,6 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await store.saveInvoice(invoice);
     selectedItemIndex = null;
     populateInvoiceDetails(invoice);
+    renderOpenInvoices();
   });
 
   renderInvoiceList();
@@ -127,16 +148,193 @@ document.addEventListener('DOMContentLoaded', async () => {
     return parsed.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
-  function renderInvoiceList(preferredInvoiceId = null) {
-    const openInvoices = store.invoices.filter(invoice => !invoice.isPaid);
-    openDiv.innerHTML = "";
+  function makeElement(tag, className = '', text = undefined) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (text !== undefined) element.textContent = text;
+    return element;
+  }
 
-    if (openInvoices.length !== 0) {
-      openDiv.innerHTML = `<p>${openInvoices.length} open invoices</p>`;
-    } else {
-      openDiv.innerHTML = "";
+  function renderOpenInvoices() {
+    openDiv.replaceChildren();
+    const openInvoices = (store.invoices || []).filter(invoice => !invoice.isPaid);
+    const heading = makeElement('p', '', `${openInvoices.length} open ${openInvoices.length === 1 ? 'invoice' : 'invoices'}`);
+    openDiv.appendChild(heading);
+    if (openInvoices.length === 0) {
+      openDiv.appendChild(makeElement('p', 'muted-copy', 'No open invoices.'));
+      return;
     }
 
+    openInvoices.sort((a, b) => {
+      const dateA = /^\d{4}-\d{2}-\d{2}$/.test(a.date || '') ? a.date : '9999-99-99';
+      const dateB = /^\d{4}-\d{2}-\d{2}$/.test(b.date || '') ? b.date : '9999-99-99';
+      return dateA.localeCompare(dateB) || String(a.customer?.name || '').localeCompare(String(b.customer?.name || ''));
+    });
+    const list = makeElement('ul', 'open-invoice-list');
+    openInvoices.forEach(invoice => {
+      const item = document.createElement('li');
+      const total = Number(invoice.totalBill()).toFixed(2);
+      const button = makeElement('button', 'open-invoice-button',
+        `#${shortInvoiceId(invoice.id)} · ${invoice.customer?.name || 'Customer'} · ${formatInvoiceDate(invoice.date)} · $${total}`);
+      button.type = 'button';
+      button.dataset.invoiceId = invoice.id;
+      button.setAttribute('aria-label', `Open invoice ${shortInvoiceId(invoice.id)} for ${invoice.customer?.name || 'customer'}, dated ${formatInvoiceDate(invoice.date)}, total $${total}`);
+      if (String(getSelectedInvoice()?.id) === String(invoice.id)) button.setAttribute('aria-current', 'true');
+      item.appendChild(button);
+      list.appendChild(item);
+    });
+    openDiv.appendChild(list);
+  }
+
+  function invoiceShiftIds(invoice) {
+    return getInvoiceShiftIds(invoice);
+  }
+
+  function shiftIsLinkedElsewhere(shiftId, invoiceId) {
+    return shiftIsAttachedElsewhere(store.invoices, shiftId, invoiceId);
+  }
+
+  function updateShiftLinkSaveState(invoice) {
+    const currentIds = invoiceShiftIds(invoice);
+    const selectedIds = new Set([...shiftLinkList.querySelectorAll('input[data-shift-id]:checked')].map(input => input.dataset.shiftId));
+    const changed = currentIds.size !== selectedIds.size || [...currentIds].some(id => !selectedIds.has(id));
+    saveShiftLinksBtn.disabled = !invoice || invoice.isPaid || !changed;
+  }
+
+  function renderShiftLinks(invoice) {
+    shiftLinkList.replaceChildren();
+    shiftLinkError.textContent = '';
+    if (!invoice) {
+      shiftLinkList.appendChild(makeElement('p', 'shift-link-empty', 'Select an invoice to view eligible shifts.'));
+      saveShiftLinksBtn.disabled = true;
+      return;
+    }
+    if (!invoice.customer?.id) {
+      shiftLinkList.appendChild(makeElement('p', 'shift-link-empty', 'This invoice has no customer attached.'));
+      saveShiftLinksBtn.disabled = true;
+      return;
+    }
+
+    const linkedIds = invoiceShiftIds(invoice);
+    const customerId = String(invoice.customer.id);
+    const candidates = store.shifts.filter(shift =>
+      shift.isComplete && String(shift.customer?.id) === customerId &&
+      (linkedIds.has(String(shift.id)) || !shiftIsLinkedElsewhere(shift.id, invoice.id))
+    ).sort((a, b) => (b.clockInTime?.getTime() || 0) - (a.clockInTime?.getTime() || 0));
+    const visibleIds = new Set();
+    const rateIsSet = invoice.customer.billingRate !== null && invoice.customer.billingRate !== undefined &&
+      Number.isFinite(Number(invoice.customer.billingRate)) && Number(invoice.customer.billingRate) >= 0;
+    if (!rateIsSet) {
+      shiftLinkList.appendChild(makeElement('p', 'shift-link-empty', 'Set this customer’s hourly billing rate in People Data before attaching new shifts.'));
+    }
+
+    candidates.forEach(shift => {
+      const shiftId = String(shift.id);
+      visibleIds.add(shiftId);
+      const hours = Number(shift.getHoursWorked());
+      const rate = rateIsSet ? Number(invoice.customer.billingRate) : null;
+      const amountText = rate === null ? 'rate not set' : `$${(rate * hours).toFixed(2)} at $${rate.toFixed(2)}/h`;
+      const workDate = shift.clockInTime instanceof Date && !Number.isNaN(shift.clockInTime.getTime())
+        ? shift.clockInTime.toLocaleDateString()
+        : 'Date not set';
+      const label = makeElement('label', 'shift-link-option');
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.dataset.shiftId = shiftId;
+      checkbox.checked = linkedIds.has(shiftId);
+      checkbox.disabled = Boolean(invoice.isPaid);
+      checkbox.addEventListener('change', () => updateShiftLinkSaveState(invoice));
+      const description = makeElement('span', '',
+        `${workDate} · ${shift.employee?.name || 'Employee'} · ${hours.toFixed(2)} actual h · ${amountText}`);
+      label.append(checkbox, description);
+      shiftLinkList.appendChild(label);
+    });
+
+    linkedIds.forEach(shiftId => {
+      if (visibleIds.has(shiftId)) return;
+      const label = makeElement('label', 'shift-link-option');
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.dataset.shiftId = shiftId;
+      checkbox.checked = true;
+      checkbox.disabled = Boolean(invoice.isPaid);
+      checkbox.addEventListener('change', () => updateShiftLinkSaveState(invoice));
+      label.append(checkbox, makeElement('span', '', `Previously linked shift not found · ${shiftId}`));
+      shiftLinkList.appendChild(label);
+    });
+
+    if (candidates.length === 0 && linkedIds.size === 0) {
+      shiftLinkList.appendChild(makeElement('p', 'shift-link-empty', 'No unbilled completed shifts are available for this customer.'));
+    }
+    if (invoice.isPaid) {
+      shiftLinkList.appendChild(makeElement('p', 'shift-link-empty', 'This invoice is paid; linked shifts are read-only.'));
+    }
+    updateShiftLinkSaveState(invoice);
+  }
+
+  async function saveShiftLinks() {
+    const invoice = getSelectedInvoice();
+    if (!invoice || invoice.isPaid) return;
+    shiftLinkError.textContent = '';
+    const previousItems = invoice.items;
+    const previousShiftIds = invoice.shiftIds;
+    const existingIds = invoiceShiftIds(invoice);
+    const selectedIds = new Set([...shiftLinkList.querySelectorAll('input[data-shift-id]:checked')].map(input => input.dataset.shiftId));
+    const additions = [...selectedIds].filter(id => !existingIds.has(id));
+    const rate = invoice.customer?.billingRate;
+
+    if (additions.length && (rate === null || rate === undefined || !Number.isFinite(Number(rate)) || Number(rate) < 0)) {
+      shiftLinkError.textContent = 'Set a valid customer hourly billing rate before adding shifts.';
+      return;
+    }
+
+    const newLaborItems = [];
+    for (const shiftId of additions) {
+      const shift = store.shifts.find(candidate => String(candidate.id) === shiftId);
+      if (!shift || !shift.isComplete || String(shift.customer?.id) !== String(invoice.customer?.id) ||
+          shiftIsLinkedElsewhere(shiftId, invoice.id)) {
+        shiftLinkError.textContent = 'One of the selected shifts is no longer available. Refresh the invoice and try again.';
+        return;
+      }
+      const hours = Number(shift.getHoursWorked());
+      if (!Number.isFinite(hours) || hours < 0) {
+        shiftLinkError.textContent = 'A selected shift has invalid actual hours and cannot be billed.';
+        return;
+      }
+      const hourlyRate = Number(rate);
+      const dateLabel = shift.clockInTime instanceof Date && !Number.isNaN(shift.clockInTime.getTime())
+        ? shift.clockInTime.toLocaleDateString()
+        : 'date not set';
+      let line;
+      try {
+        line = makeShiftInvoiceLine(shift, hourlyRate);
+      } catch (error) {
+        shiftLinkError.textContent = error.message || 'This shift cannot be attached to the invoice.';
+        return;
+      }
+      line.name = `Labor · ${dateLabel} · ${shift.employee?.name || 'Employee'} (${line.billedHours.toFixed(2)} h × $${line.billingRate.toFixed(2)}/h)`;
+      newLaborItems.push(line);
+    }
+
+    saveShiftLinksBtn.disabled = true;
+    saveShiftLinksBtn.textContent = 'Saving…';
+    try {
+      invoice.items = previousItems.filter(item => !item.shiftId || selectedIds.has(String(item.shiftId))).concat(newLaborItems);
+      invoice.shiftIds = [...selectedIds];
+      await store.saveInvoice(invoice);
+      renderInvoiceList(invoice.id);
+    } catch (error) {
+      invoice.items = previousItems;
+      invoice.shiftIds = previousShiftIds;
+      console.error('Unable to save linked shifts:', error);
+      shiftLinkError.textContent = 'Unable to update linked shifts. Please try again.';
+      updateShiftLinkSaveState(invoice);
+    } finally {
+      saveShiftLinksBtn.textContent = 'Update linked shifts';
+    }
+  }
+
+  function renderInvoiceList(preferredInvoiceId = null) {
     const customerId = custSelect.value;
     const customerInvoices = (store.invoices || []).filter(
       invoice => invoice.customer && String(invoice.customer.id) === String(customerId)
@@ -148,6 +346,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!customerId || customerInvoices.length === 0) {
       invList.innerHTML = '<option value="">No invoices found</option>';
       populateInvoiceDetails(null);
+      renderOpenInvoices();
       return;
     }
 
@@ -161,11 +360,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const selectedInvoice = customerInvoices.find(invoice => String(invoice.id) === String(preferredInvoiceId)) || customerInvoices[0];
     invList.value = selectedInvoice.id;
     populateInvoiceDetails(selectedInvoice);
+    renderOpenInvoices();
   }
 
   function renderSelectedInvoice() {
     selectedItemIndex = null;
     populateInvoiceDetails(getSelectedInvoice());
+    renderOpenInvoices();
   }
 
   function selectItemRow(event) {
@@ -181,12 +382,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function updateItemActionButtons() {
-    const hasSelectedItem = Boolean(getSelectedInvoice()?.items?.[selectedItemIndex]);
+    const selectedItem = getSelectedInvoice()?.items?.[selectedItemIndex];
+    const hasSelectedItem = Boolean(selectedItem && !selectedItem.shiftId);
     editItemBtn.disabled = !hasSelectedItem;
     removeItemBtn.disabled = !hasSelectedItem;
   }
 
   function populateInvoiceDetails(invoice) {
+      renderShiftLinks(invoice);
       try {
         const totalCell = document.querySelector('tfoot strong');
         const invTable = document.getElementById('inv-table');
@@ -224,7 +427,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               markPaidBtn.addEventListener('click', async () => {
                 invoice.isPaid = true;
                 await store.saveInvoice(invoice);
-                populateInvoiceDetails(invoice);
+                renderInvoiceList(invoice.id);
               }, { once: true });
             }
             if (invTable) {
@@ -242,11 +445,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       invoice.items.forEach((item, index) => {
         const row = document.createElement('tr');
         row.dataset.itemIndex = index;
-        row.title = 'Click to select this item for editing or removal';
-        row.innerHTML = `
-          <td colspan="2">${item.name}</td>
-          <td>$${Number(item.value || 0).toFixed(2)}</td>
-        `;
+        row.title = item.shiftId
+          ? 'This labor line is generated from a linked work shift; edit it in the Work shifts and labor section.'
+          : 'Click to select this item for editing or removal';
+        const nameCell = document.createElement('td');
+        nameCell.colSpan = 2;
+        nameCell.textContent = item.name || '';
+        if (item.shiftId) {
+          const sourceShift = store.shifts.find(shift => String(shift.id) === String(item.shiftId));
+          const status = shiftInvoiceLineStatus(item, sourceShift);
+          if (status !== 'current') {
+            const warning = document.createElement('small');
+            warning.className = `invoice-line-warning is-${status}`;
+            warning.textContent = status === 'changed'
+              ? `Source shift changed after billing. Saved snapshot remains ${Number(item.billedHours ?? item.actualHours ?? 0).toFixed(2)} h × $${Number(item.billingRate ?? 0).toFixed(2)}/h.`
+              : status === 'missing'
+                ? `Source shift ${item.shiftId} is missing. Saved billed hours and rate are retained.`
+                : 'This older labor line has no shift snapshot, so source changes cannot be verified.';
+            nameCell.appendChild(document.createElement('br'));
+            nameCell.appendChild(warning);
+          }
+        }
+        const valueCell = document.createElement('td');
+        valueCell.textContent = `$${Number(item.value || 0).toFixed(2)}`;
+        row.append(nameCell, valueCell);
         invoiceBody.appendChild(row);
       });
     }
@@ -265,7 +487,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const isEditing = Number.isInteger(itemIndex);
     const originalItem = isEditing ? invoice.items[itemIndex] : null;
-    if (isEditing && !originalItem) return;
+    if (isEditing && (!originalItem || originalItem.shiftId)) return;
     const originalItemSnapshot = originalItem ? { name: originalItem.name, value: originalItem.value } : null;
     modalTitle.textContent = isEditing ? 'Edit invoice item' : 'Add invoice item';
     submitButton.textContent = isEditing ? 'Save changes' : 'Add';
@@ -318,6 +540,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         closeModal();
         selectedItemIndex = null;
         populateInvoiceDetails(invoice);
+        renderOpenInvoices();
       } catch (error) {
         if (isEditing) {
           originalItem.name = originalItemSnapshot.name;

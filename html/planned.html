@@ -60,7 +60,7 @@
           </div>
           <button type="button" class="modal-close" id="modal-cancel-button" aria-label="Close">×</button>
         </div>
-        <p class="modal-copy">Add a customer, target date, and a short description.</p>
+        <p class="modal-copy">Add a customer, an optional target date, and a short description.</p>
         <div class="form-field">
           <label for="planned-cust">Customer</label>
           <select id="planned-cust" name="customer" required>
@@ -68,9 +68,14 @@
           </select>
           <small id="customer-help" class="field-hint"></small>
         </div>
-        <div class="form-field">
+        <div class="form-field planned-date-field">
           <label for="planned-date">Planned date</label>
           <input type="date" id="planned-date" name="scheduledDate" required>
+          <label class="tbd-choice" for="planned-date-tbd">
+            <input type="checkbox" id="planned-date-tbd">
+            Date is TBD
+          </label>
+          <small class="field-hint">Choose this when the job has no set date yet.</small>
         </div>
         <div class="form-field">
           <label for="planned-description">Job description</label>

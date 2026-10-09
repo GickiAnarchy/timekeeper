@@ -125,6 +125,16 @@ body {
   width: 100%;
 }
 
+.cust-item { align-items: flex-start; flex-direction: column; gap: 8px; }
+.cust-copy p { margin: 0 0 3px; overflow-wrap: anywhere; }
+.customer-actions { display: flex; align-items: flex-end; gap: 8px; width: 100%; }
+.customer-rate-form { display: flex; flex: 1 1 auto; align-items: flex-end; flex-wrap: wrap; gap: 7px; }
+.customer-rate-form label { display: grid; flex: 1 1 155px; gap: 3px; color: var(--ink-soft); font-weight: 650; }
+.customer-rate-form input { width: 100%; min-height: 34px; padding: 6px 8px; }
+.rate-status { align-self: center; color: var(--muted); font-size: 10px; }
+.customer-rate-form .btn { min-height: 34px; padding: 6px 10px; }
+.customer-actions > .del-btn { min-height: 34px; padding: 6px 10px; }
+
 .del-btn {
   background-color: var(--red);
   color: #ffffff;

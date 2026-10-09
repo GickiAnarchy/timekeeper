@@ -119,8 +119,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     upcomingList.replaceChildren();
     const todayNumber = calendarDayNumber(new Date());
     const jobs = store.plannedJobs
-      .filter(job => !job.isComplete && validDate(job.scheduledDate))
-      .sort((a, b) => validDate(a.scheduledDate) - validDate(b.scheduledDate))
+      .filter(job => !job.isComplete)
+      .sort((a, b) => {
+        const dateA = validDate(a.scheduledDate)?.getTime() ?? null;
+        const dateB = validDate(b.scheduledDate)?.getTime() ?? null;
+        if (dateA === null && dateB !== null) return 1;
+        if (dateA !== null && dateB === null) return -1;
+        return (dateA ?? 0) - (dateB ?? 0);
+      })
       .slice(0, 3);
 
     if (jobs.length === 0) {
@@ -132,16 +138,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     jobs.forEach(job => {
       const date = validDate(job.scheduledDate);
-      const daysAway = calendarDayNumber(date) - todayNumber;
+      const daysAway = date ? calendarDayNumber(date) - todayNumber : null;
       const item = makeElement('li', 'planned-job-item');
-      const dateTile = makeElement('span', 'job-date-tile', jobDateFormat.format(date));
+      const dateTile = makeElement('span', 'job-date-tile', date ? jobDateFormat.format(date) : 'Date TBD');
       const copy = makeElement('div', 'job-copy');
       copy.append(
         makeElement('strong', 'job-title', job.description || 'Scheduled job'),
         makeElement('small', 'job-meta', job.customer?.name || 'Customer not available')
       );
-      const timing = daysAway < 0 ? 'Overdue' : daysAway === 0 ? 'Today' : daysAway === 1 ? 'Tomorrow' : `In ${daysAway} days`;
-      item.append(dateTile, copy, makeElement('span', `job-timing${daysAway < 0 ? ' is-overdue' : ''}`, timing));
+      const timing = daysAway === null ? 'Unscheduled' : daysAway < 0 ? 'Overdue' : daysAway === 0 ? 'Today' : daysAway === 1 ? 'Tomorrow' : `In ${daysAway} days`;
+      item.append(dateTile, copy, makeElement('span', `job-timing${daysAway !== null && daysAway < 0 ? ' is-overdue' : ''}`, timing));
       upcomingList.appendChild(item);
     });
   }

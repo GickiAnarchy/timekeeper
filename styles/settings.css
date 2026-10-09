@@ -23,6 +23,15 @@
 .size-option-copy strong { font-size: 12px; }
 .size-option-copy small { color: var(--muted); font-size: 10px; }
 .settings-help { margin: 12px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.backup-button { min-height: 40px; padding: 0 14px; color: #fff; background: var(--green); font-size: 12px; font-weight: 750; }
+.backup-button:hover { background: var(--green-deep); }
+.backup-file-field { margin-top: 17px; }
+.backup-file-field input { min-height: 42px; padding: 8px; }
+.backup-preview { margin-top: 12px; padding: 12px; color: var(--ink-soft); background: var(--surface-muted); border: 1px solid var(--border); border-radius: 10px; font-size: 12px; line-height: 1.55; white-space: pre-wrap; }
+.settings-warning { margin: 12px 0; padding: 10px 12px; color: var(--amber); background: var(--amber-soft); border-radius: 9px; font-size: 11px; font-weight: 650; line-height: 1.5; }
+.backup-restore-button { background: var(--red); }
+.backup-restore-button:hover { background: #8f302b; }
+.backup-restore-button:disabled { background: var(--muted); }
 
 @media (max-width: 480px) {
   .settings-body { padding: 17px 13px; }

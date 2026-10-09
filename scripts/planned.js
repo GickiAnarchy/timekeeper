@@ -3,6 +3,7 @@ import {
   PlannedJob,
   populateCustomerDropdowns
 } from './models.js';
+import { asValidDate, plannedDateStatus } from './domain.mjs';
 
 const formatJobDate = new Intl.DateTimeFormat(undefined, {
   weekday: 'long',
@@ -14,12 +15,7 @@ const formatMonth = new Intl.DateTimeFormat(undefined, { month: 'short' });
 const formatWeekday = new Intl.DateTimeFormat(undefined, { weekday: 'short' });
 
 function asDate(value) {
-  const date = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function calendarDayNumber(date) {
-  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000;
+  return asValidDate(value);
 }
 
 function dateInputValue(date) {
@@ -40,6 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const form = document.getElementById('add-form');
   const customerSelect = document.getElementById('planned-cust');
   const dateInput = document.getElementById('planned-date');
+  const dateTbdCheckbox = document.getElementById('planned-date-tbd');
   const descriptionInput = document.getElementById('planned-description');
   const formError = document.getElementById('planned-form-error');
   const customerHelp = document.getElementById('customer-help');
@@ -57,17 +54,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   function sortedJobs() {
     return [...store.plannedJobs].sort((a, b) => {
       if (a.isComplete !== b.isComplete) return Number(a.isComplete) - Number(b.isComplete);
-      return (asDate(a.scheduledDate)?.getTime() ?? 0) - (asDate(b.scheduledDate)?.getTime() ?? 0);
+      const dateA = asDate(a.scheduledDate)?.getTime() ?? null;
+      const dateB = asDate(b.scheduledDate)?.getTime() ?? null;
+      if (dateA === null && dateB !== null) return 1;
+      if (dateA !== null && dateB === null) return -1;
+      return (dateA ?? 0) - (dateB ?? 0);
     });
   }
 
   function updateSummary() {
-    const todayNumber = calendarDayNumber(new Date());
     const openJobs = store.plannedJobs.filter(job => !job.isComplete);
-    const dueToday = openJobs.filter(job => {
-      const date = asDate(job.scheduledDate);
-      return date && calendarDayNumber(date) === todayNumber;
-    });
+    const dueToday = openJobs.filter(job => plannedDateStatus(job.scheduledDate) === 'due-today');
     const completedJobs = store.plannedJobs.filter(job => job.isComplete);
     document.getElementById('open-count').textContent = openJobs.length;
     document.getElementById('today-count').textContent = dueToday.length;
@@ -77,13 +74,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   function createJobCard(job) {
     const item = makeElement('li', `job-card${job.isComplete ? ' is-complete' : ''}`);
     const date = asDate(job.scheduledDate);
-    const dayNumber = date ? calendarDayNumber(date) : null;
-    const daysAway = dayNumber === null ? null : dayNumber - calendarDayNumber(new Date());
 
     const dateTile = makeElement('div', 'date-tile');
     dateTile.append(
-      makeElement('span', 'date-weekday', date ? formatWeekday.format(date) : '—'),
-      makeElement('strong', 'date-day', date ? String(date.getDate()) : '—'),
+      makeElement('span', 'date-weekday', date ? formatWeekday.format(date) : ''),
+      makeElement('strong', 'date-day', date ? String(date.getDate()) : 'TBD'),
       makeElement('span', 'date-month', date ? formatMonth.format(date) : '')
     );
 
@@ -91,18 +86,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const titleRow = makeElement('div', 'job-title-row');
     titleRow.appendChild(makeElement('h3', 'job-description', job.description || 'Scheduled job'));
 
-    let statusText = 'Date not set';
+    let statusText = 'Upcoming';
     let statusClass = 'status-pill';
     if (job.isComplete) {
       statusText = 'Completed';
       statusClass += ' status-complete';
-    } else if (daysAway === 0) {
+    } else if (plannedDateStatus(job.scheduledDate) === 'tbd') {
+      statusText = 'Date TBD';
+      statusClass += ' status-upcoming';
+    } else if (plannedDateStatus(job.scheduledDate) === 'due-today') {
       statusText = 'Due today';
       statusClass += ' status-today';
-    } else if (daysAway === 1) {
+    } else if (plannedDateStatus(job.scheduledDate) === 'tomorrow') {
       statusText = 'Tomorrow';
       statusClass += ' status-upcoming';
-    } else if (daysAway < 0) {
+    } else if (plannedDateStatus(job.scheduledDate) === 'overdue') {
       statusText = 'Overdue';
       statusClass += ' status-overdue';
     } else {
@@ -114,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     content.append(
       titleRow,
       makeElement('p', 'job-customer', job.customer?.name || 'Customer not available'),
-      makeElement('p', 'job-date', date ? formatJobDate.format(date) : 'Date not set')
+      makeElement('p', 'job-date', date ? formatJobDate.format(date) : 'Date TBD')
     );
 
     const actions = makeElement('div', 'job-actions');
@@ -188,7 +186,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     formError.textContent = '';
     editingJobId = job?.id || null;
     const today = new Date();
-    dateInput.value = job ? dateInputValue(asDate(job.scheduledDate) || today) : dateInputValue(today);
+    dateTbdCheckbox.checked = Boolean(job && !asDate(job.scheduledDate));
+    dateInput.disabled = dateTbdCheckbox.checked;
+    dateInput.required = !dateTbdCheckbox.checked;
+    dateInput.value = job ? (asDate(job.scheduledDate) ? dateInputValue(asDate(job.scheduledDate)) : '') : dateInputValue(today);
     customerSelect.value = job?.customer?.id || '';
     descriptionInput.value = job?.description || '';
     modalTitle.textContent = job ? 'Edit planned job' : 'Plan a job';
@@ -202,6 +203,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   addButton.addEventListener('click', () => openJobModal());
 
+  dateTbdCheckbox.addEventListener('change', () => {
+    dateInput.disabled = dateTbdCheckbox.checked;
+    dateInput.required = !dateTbdCheckbox.checked;
+    if (dateTbdCheckbox.checked) dateInput.value = '';
+    else if (!dateInput.value) dateInput.value = dateInputValue(new Date());
+  });
+
   form.addEventListener('submit', async event => {
     event.preventDefault();
     formError.textContent = '';
@@ -213,13 +221,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       formError.textContent = 'Choose a customer before saving this job.';
       return;
     }
-    if (!dateValue || !description) {
-      formError.textContent = 'Add a planned date and job description.';
+    if ((!dateValue && !dateTbdCheckbox.checked) || !description) {
+      formError.textContent = 'Choose a planned date or mark it TBD, and add a job description.';
       return;
     }
 
-    const [year, month, day] = dateValue.split('-').map(Number);
-    const scheduledDate = new Date(year, month - 1, day, 12, 0, 0, 0);
+    let scheduledDate = null;
+    if (dateValue && !dateTbdCheckbox.checked) {
+      const [year, month, day] = dateValue.split('-').map(Number);
+      scheduledDate = new Date(year, month - 1, day, 12, 0, 0, 0);
+    }
     const wasEditing = Boolean(editingJobId);
     const targetJobId = editingJobId;
 

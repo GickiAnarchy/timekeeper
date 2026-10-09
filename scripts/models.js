@@ -1,3 +1,12 @@
+import {
+  actualShiftHours,
+  invoiceShiftIds,
+  roundDown15Minutes,
+  roundTo15Minutes,
+  roundUp15Minutes,
+  shiftIsAttachedElsewhere
+} from './domain.mjs';
+
 /*
   Firebase Setup
 */
@@ -7,11 +16,11 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { 
   getFirestore, 
   collection, 
-  setDoc, 
-  getDocs, 
+  setDoc as firestoreSetDoc,
+  getDocs as firestoreGetDocs,
   doc, 
-  updateDoc, 
-  deleteDoc,
+  updateDoc as firestoreUpdateDoc,
+  deleteDoc as firestoreDeleteDoc,
   writeBatch
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -29,6 +38,71 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+function showFirestoreError(message, retryOperation) {
+  if (!globalThis.document?.body) return;
+  let banner = document.getElementById('firestore-error-banner');
+  if (!banner) {
+    banner = document.createElement('section');
+    banner.id = 'firestore-error-banner';
+    banner.setAttribute('role', 'alert');
+    banner.setAttribute('aria-live', 'assertive');
+    Object.assign(banner.style, {
+      position: 'fixed', inset: '12px 12px auto', zIndex: '2147483647',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+      padding: '12px 16px', color: '#521b1b', background: '#fff0ee',
+      border: '1px solid #d98b83', borderRadius: '10px',
+      boxShadow: '0 8px 24px rgba(0,0,0,.18)', font: '600 14px/1.4 system-ui, sans-serif'
+    });
+    const text = document.createElement('span');
+    text.dataset.errorMessage = 'true';
+    const retry = document.createElement('button');
+    retry.type = 'button';
+    retry.textContent = 'Retry';
+    Object.assign(retry.style, {
+      padding: '8px 13px', color: '#fff', background: '#8f302b',
+      border: '0', borderRadius: '7px', font: 'inherit', cursor: 'pointer'
+    });
+    retry.addEventListener('click', async () => {
+      retry.disabled = true;
+      retry.textContent = 'Retrying…';
+      try {
+        for (const operation of retry._retryOperations || []) await operation();
+        banner.remove();
+        globalThis.location?.reload();
+      } catch (error) {
+        console.error('Firestore retry failed:', error);
+        text.textContent = `A retry did not succeed. Check your connection, then retry the failed Firestore operations again.`;
+        retry.disabled = false;
+        retry.textContent = 'Retry';
+      }
+    });
+    banner.append(text, retry);
+    document.body.appendChild(banner);
+  }
+  const text = banner.querySelector('[data-error-message]');
+  const retry = banner.querySelector('button');
+  retry._retryOperations ||= new Set();
+  retry._messages ||= new Set();
+  retry._retryOperations.add(retryOperation);
+  retry._messages.add(message);
+  text.textContent = `${[...retry._messages].join(' ')} Press Retry to repeat the failed operations and reload if they succeed.`;
+}
+
+function firestoreRequest(message, operation) {
+  return operation().catch(error => {
+    console.error(message, error);
+    showFirestoreError(message, operation);
+    throw error;
+  });
+}
+
+const setDoc = (...args) => firestoreRequest('Saving data to Firestore failed.', () => firestoreSetDoc(...args));
+const getDocs = (...args) => firestoreRequest('Loading data from Firestore failed.', () => firestoreGetDocs(...args));
+const updateDoc = (...args) => firestoreRequest('Updating data in Firestore failed.', () => firestoreUpdateDoc(...args));
+const deleteDoc = (...args) => firestoreRequest('Deleting data from Firestore failed.', () => firestoreDeleteDoc(...args));
+const commitBatch = (batch, message = 'Saving this group of changes to Firestore failed.') =>
+  firestoreRequest(message, () => batch.commit());
+
 
 /*
   HELPER FUNCTIONS
@@ -41,24 +115,7 @@ function changeHeader(text = '') {
   }
 }
 
-// Rounds a Date object to the nearest 15-minute mark (00, 15, 30, 45)
-export const roundTo15Minutes = (date = new Date()) => {
-  const rounded = new Date(date);
-  const ms = 1000 * 60 * 15; // 15 minutes in milliseconds
-  return new Date(Math.round(rounded.getTime() / ms) * ms);
-};
-
-// Round DOWN to previous 15-minute mark (e.g., 9:14 -> 9:00)
-export const roundDown15Minutes = (date = new Date()) => {
-  const ms = 1000 * 60 * 15;
-  return new Date(Math.floor(date.getTime() / ms) * ms);
-};
-
-// Round UP to next 15-minute mark (e.g., 9:01 -> 9:15)
-export const roundUp15Minutes = (date = new Date()) => {
-  const ms = 1000 * 60 * 15;
-  return new Date(Math.ceil(date.getTime() / ms) * ms);
-};
+export { roundTo15Minutes, roundDown15Minutes, roundUp15Minutes };
 
 // Normalizes the name string
 const normalize = (str) => (str ? str.trim().toLowerCase() : '');
@@ -120,11 +177,13 @@ export class Employee {
 }
 
 export class Customer {
-  constructor(id, name, location, note = null) {
+  constructor(id, name, location, note = null, billingRate = null) {
     this.id = id || crypto.randomUUID();
     this.name = name;
     this.location = location;
     this.note = note;
+    const rate = billingRate === null || billingRate === undefined || billingRate === '' ? null : Number(billingRate);
+    this.billingRate = Number.isFinite(rate) && rate >= 0 ? rate : null;
   }
 
   customInfo() {
@@ -206,9 +265,7 @@ export class WorkShift {
 
   getHoursWorked() {
     if (!this.isComplete) return 0;
-    const diffInMs = this.clockOutTime - this.clockInTime;
-    const netMs = diffInMs - this.getTotalBreakTimeMs();
-    return Number((Math.max(0, netMs) / (1000 * 60 * 60)).toFixed(2));
+    return actualShiftHours(this.clockInTime, this.clockOutTime, this.breaks);
   }
 
   getPaidHours() {
@@ -240,12 +297,13 @@ function todayDateString() {
 }
 
 export class Invoice {
-  constructor(cust, items = [], id = null, isPaid = false, date = todayDateString()) {
+  constructor(cust, items = [], id = null, isPaid = false, date = todayDateString(), shiftIds = []) {
     this.id = id || crypto.randomUUID();
     this.customer = cust;
     this.items = items;
     this.isPaid = Boolean(isPaid);
     this.date = date || null;
+    this.shiftIds = Array.isArray(shiftIds) ? [...new Set(shiftIds.map(String))] : [];
   }
   
   addItem(name, value) {
@@ -339,8 +397,10 @@ export class Ledger {
 export class PlannedJob {
   constructor(description, scheduledDate, customer = null, isComplete = false, id = null) {
     this.description = String(description || '').trim();
-    const date = scheduledDate instanceof Date ? scheduledDate : new Date(scheduledDate || Date.now());
-    this.scheduledDate = Number.isNaN(date.getTime()) ? new Date() : date;
+    const date = scheduledDate === null || scheduledDate === undefined || scheduledDate === ''
+      ? null
+      : scheduledDate instanceof Date ? scheduledDate : new Date(scheduledDate);
+    this.scheduledDate = date && !Number.isNaN(date.getTime()) ? date : null;
     this.customer = customer;
     this.isComplete = Boolean(isComplete);
     this.id = id || crypto.randomUUID();
@@ -365,11 +425,13 @@ export class AppDataStore {
     this.invoices = [];
     this.ledger = new Ledger();
     this.plannedJobs = [];
+    this.loadFailures = [];
     this.isAdmin = null;
   }
 
   async init() {
     changeHeader("Loading");
+    this.loadFailures = [];
     await this.loadEmployees();
     await this.loadCustomers();
     await this.loadShifts();
@@ -397,6 +459,7 @@ export class AppDataStore {
 
     } catch (e) {
       console.error("Error loading Ledger from Firestore:", e);
+      this.loadFailures.push(e);
     }
   }
 
@@ -438,7 +501,7 @@ export class AppDataStore {
       const ref = doc(db, "ledgerRows", candidate.id);
       batch.update(ref, { index: candidate.index });
     });
-    if (affectedEntries.length) await batch.commit();
+    if (affectedEntries.length) await commitBatch(batch);
   }
 
   // INVOICE --
@@ -452,21 +515,35 @@ export class AppDataStore {
         const items = data.items || [];
         const isPaid = data.isPaid || false;
         
-        const inv = new Invoice(customer, items, docSnap.id, isPaid, data.date || null);
+        const inv = new Invoice(customer, items, docSnap.id, isPaid, data.date || null, data.shiftIds || []);
         
         this.invoices.push(inv);
       });
     } catch (e) {
       console.error("Error loading invoices from Firestore:", e);
+      this.loadFailures.push(e);
     }
   }
   
   async saveInvoice(invoice) {
+    const linkedShiftIds = invoiceShiftIds(invoice);
+    const linkedLineIds = (invoice.items || []).filter(item => item?.shiftId).map(item => String(item.shiftId));
+    if (new Set(linkedLineIds).size !== linkedLineIds.length) {
+      throw new Error('This invoice contains the same work shift more than once. Remove the duplicate before saving.');
+    }
+    const duplicateShiftId = [...linkedShiftIds].find(shiftId =>
+      shiftIsAttachedElsewhere(this.invoices, shiftId, invoice.id)
+    );
+    if (duplicateShiftId) {
+      throw new Error(`Shift ${duplicateShiftId} is already attached to another invoice.`);
+    }
+    invoice.shiftIds = [...linkedShiftIds];
     await setDoc(doc(db, "invoices", invoice.id), {
       custId: invoice.customer ? invoice.customer.id : null,
       items: invoice.items,
       isPaid: Boolean(invoice.isPaid),
-      date: invoice.date || null
+      date: invoice.date || null,
+      shiftIds: Array.isArray(invoice.shiftIds) ? invoice.shiftIds : []
     });
   }
   
@@ -486,6 +563,7 @@ export class AppDataStore {
       });
     } catch (e) {
       console.error("Error loading employees from Firestore:", e);
+      this.loadFailures.push(e);
     }
   }
 
@@ -523,28 +601,34 @@ export class AppDataStore {
       const querySnapshot = await getDocs(collection(db, "customers"));
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        this.customers.set(docSnap.id, new Customer(docSnap.id, data.name, data.location, data.note));
+        this.customers.set(docSnap.id, new Customer(docSnap.id, data.name, data.location, data.note, data.billingRate));
       });
     } catch (e) {
       console.error("Error loading customers from Firestore:", e);
+      this.loadFailures.push(e);
     }
   }
   
-  async addCustomer(name, location, note = null) {
+  async addCustomer(name, location, note = null, billingRate = null) {
     const cleanName = normalize(name);
     const cleanLocation = normalize(location);
     if (!cleanName) throw new Error("Customer name cannot be empty.");
+    const rate = billingRate === null || billingRate === undefined || billingRate === '' ? null : Number(billingRate);
+    if (rate !== null && (!Number.isFinite(rate) || rate < 0)) {
+      throw new Error("Hourly billing rate must be a non-negative number.");
+    }
 
     const isDuplicate = Array.from(this.customers.values()).some(
       (site) => normalize(site.name) === cleanName && normalize(site.location) === cleanLocation
     );
     if (isDuplicate) return null;
 
-    const site = new Customer(null, name.trim(), location ? location.trim() : null, note);
+    const site = new Customer(null, name.trim(), location ? location.trim() : null, note, rate);
     await setDoc(doc(db, "customers", site.id), {
       name: site.name,
       location: site.location,
-      note: site.note
+      note: site.note,
+      billingRate: site.billingRate
     });
     this.customers.set(site.id, site);
     return site;
@@ -560,11 +644,30 @@ export class AppDataStore {
       await updateDoc(doc(db, "customers", id), {
         name: customer.name,
         location: customer.location,
-        note: customer.note
+        note: customer.note,
+        billingRate: customer.billingRate
       });
       return true;
     }
     return false;
+  }
+
+  async updateCustomerBillingRate(id, billingRate) {
+    const customer = this.customers.get(id);
+    if (!customer) throw new Error("Customer not found.");
+    const rate = billingRate === null || billingRate === undefined || billingRate === '' ? null : Number(billingRate);
+    if (rate !== null && (!Number.isFinite(rate) || rate < 0)) {
+      throw new Error("Hourly billing rate must be a non-negative number.");
+    }
+    const previousRate = customer.billingRate;
+    customer.billingRate = rate;
+    try {
+      await updateDoc(doc(db, "customers", id), { billingRate: rate });
+    } catch (error) {
+      customer.billingRate = previousRate;
+      throw error;
+    }
+    return customer;
   }
 
   async deleteCustomer(id) {
@@ -596,6 +699,7 @@ export class AppDataStore {
       });
     } catch (e) {
       console.error("Error loading shifts from Firestore:", e);
+      this.loadFailures.push(e);
     }
   }
 
@@ -615,6 +719,31 @@ export class AppDataStore {
       breaks: formattedBreaks,
       paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null
     }); 
+  }
+
+  async saveShifts(shifts) {
+    if (!Array.isArray(shifts) || shifts.length === 0) return;
+    if (shifts.length > 500) throw new Error("A single clock-in batch cannot contain more than 500 shifts.");
+    const ids = shifts.map(shift => String(shift.id));
+    if (new Set(ids).size !== ids.length) throw new Error("A shift appears more than once in this clock-in batch.");
+    const batch = writeBatch(db);
+    shifts.forEach(shift => {
+      const formattedBreaks = (shift.breaks || []).map(b => ({
+        start: b.start instanceof Date ? b.start.toISOString() : b.start,
+        end: b.end instanceof Date ? b.end.toISOString() : b.end
+      }));
+      batch.set(doc(db, "shifts", shift.id), {
+        employeeId: shift.employee ? shift.employee.id : null,
+        custId: shift.customer ? shift.customer.id : null,
+        clockInTime: shift.clockInTime ? shift.clockInTime.toISOString() : null,
+        clockOutTime: shift.clockOutTime ? shift.clockOutTime.toISOString() : null,
+        note: shift.note || null,
+        isPaid: Boolean(shift.isPaid),
+        breaks: formattedBreaks,
+        paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null
+      });
+    });
+    await commitBatch(batch, 'Clocking in the selected employees failed.');
   }
   
   async deleteShift(shiftId) {
@@ -706,6 +835,7 @@ export class AppDataStore {
       });
     } catch (e) {
       console.error("Error loading payments from Firestore:", e);
+      this.loadFailures.push(e);
     }
   }
 
@@ -765,7 +895,15 @@ export class AppDataStore {
       await setDoc(doc(db, "employees", id), { name: emp.name, wage: emp.wage });
     }
     for (const [id, cust] of Object.entries(parsed.customers)) {
-      await setDoc(doc(db, "customers", id), { name: cust.name, location: cust.location, note: cust.note });
+      const billingRate = Object.prototype.hasOwnProperty.call(cust, 'billingRate')
+        ? cust.billingRate
+        : this.customers.get(id)?.billingRate ?? null;
+      await setDoc(doc(db, "customers", id), {
+        name: cust.name,
+        location: cust.location,
+        note: cust.note,
+        billingRate
+      });
     }
     await this.init();
   }
@@ -808,7 +946,177 @@ export class AppDataStore {
     await this.loadShifts();
   }
 
-  
+  exportFullBackup() {
+    const copy = value => JSON.parse(JSON.stringify(value));
+    return {
+      format: 'timekeeper-full-backup',
+      schemaVersion: 1,
+      exportedAt: new Date().toISOString(),
+      data: {
+        employees: [...this.employees.values()].map(employee => ({
+          id: employee.id, name: employee.name, wage: employee.wage
+        })),
+        customers: [...this.customers.values()].map(customer => ({
+          id: customer.id, name: customer.name, location: customer.location || null,
+          note: customer.note || null, billingRate: customer.billingRate ?? null
+        })),
+        shifts: this.shifts.map(shift => ({
+          id: shift.id,
+          employeeId: shift.employee?.id || null,
+          custId: shift.customer?.id || null,
+          clockInTime: shift.clockInTime?.toISOString?.() || null,
+          clockOutTime: shift.clockOutTime?.toISOString?.() || null,
+          note: shift.note || null,
+          isPaid: Boolean(shift.isPaid),
+          breaks: (shift.breaks || []).map(item => ({
+            start: item.start?.toISOString?.() || item.start || null,
+            end: item.end?.toISOString?.() || item.end || null
+          })),
+          paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null
+        })),
+        invoices: this.invoices.map(invoice => ({
+          id: invoice.id,
+          custId: invoice.customer?.id || null,
+          items: copy(invoice.items || []),
+          isPaid: Boolean(invoice.isPaid),
+          date: invoice.date || null,
+          shiftIds: [...invoiceShiftIds(invoice)]
+        })),
+        payments: this.payments.map(payment => ({
+          id: payment.id,
+          employeeId: payment.employeeId || null,
+          amount: payment.amount,
+          date: payment.date?.toISOString?.() || null,
+          note: payment.note || ''
+        })),
+        plannedJobs: this.plannedJobs.map(job => ({
+          id: job.id,
+          custId: job.customer?.id || null,
+          description: job.description || '',
+          isComplete: Boolean(job.isComplete),
+          scheduledDate: job.scheduledDate?.toISOString?.() || null
+        })),
+        ledger: this.ledger.entries.map(entry => ({ ...entry }))
+      }
+    };
+  }
+
+  previewFullBackup(backup) {
+    const keys = ['employees', 'customers', 'shifts', 'invoices', 'payments', 'plannedJobs', 'ledger'];
+    if (!backup || typeof backup !== 'object' || backup.format !== 'timekeeper-full-backup' || backup.schemaVersion !== 1) {
+      throw new Error('This is not a supported Timekeeper backup (expected schema version 1).');
+    }
+    if (!backup.data || typeof backup.data !== 'object' || keys.some(key => !Array.isArray(backup.data[key]))) {
+      throw new Error('The backup is incomplete. It must contain employees, customers, shifts, invoices, payments, planned jobs, and ledger records.');
+    }
+    for (const key of keys) {
+      const ids = new Set();
+      for (const [index, record] of backup.data[key].entries()) {
+        if (!record || typeof record !== 'object' || typeof record.id !== 'string' || !record.id.trim() || record.id.includes('/')) {
+          throw new Error(`The ${key} list has an invalid record at row ${index + 1}.`);
+        }
+        if (ids.has(record.id)) throw new Error(`The ${key} list contains duplicate ID ${record.id}.`);
+        ids.add(record.id);
+      }
+    }
+
+    const validDateOrNull = value => value === null || value === undefined ||
+      (typeof value === 'string' && value.length > 0 && !Number.isNaN(Date.parse(value)));
+    const finiteOrNull = value => value === null || value === undefined || Number.isFinite(Number(value));
+    for (const employee of backup.data.employees) {
+      if (typeof employee.name !== 'string' || typeof employee.wage !== 'number' || !Number.isFinite(employee.wage) || employee.wage < 0) {
+        throw new Error(`Employee ${employee.id} needs a name and a non-negative wage.`);
+      }
+    }
+    for (const customer of backup.data.customers) {
+      if (typeof customer.name !== 'string' || !finiteOrNull(customer.billingRate) ||
+          (customer.billingRate !== null && customer.billingRate !== undefined &&
+            (typeof customer.billingRate !== 'number' || customer.billingRate < 0))) {
+        throw new Error(`Customer ${customer.id} has invalid name or billing-rate data.`);
+      }
+    }
+    for (const shift of backup.data.shifts) {
+      if (!validDateOrNull(shift.clockInTime) || !validDateOrNull(shift.clockOutTime) ||
+          !Array.isArray(shift.breaks || []) || !finiteOrNull(shift.paidHours) || typeof shift.isPaid !== 'boolean' ||
+          (shift.paidHours !== null && shift.paidHours !== undefined && typeof shift.paidHours !== 'number') ||
+          (shift.breaks || []).some(item => !item || typeof item !== 'object' ||
+            !validDateOrNull(item.start) || !validDateOrNull(item.end))) {
+        throw new Error(`Shift ${shift.id} has invalid date, break, or paid-hours data.`);
+      }
+    }
+    for (const invoice of backup.data.invoices) {
+      if (!Array.isArray(invoice.items) || !validDateOrNull(invoice.date) || typeof invoice.isPaid !== 'boolean' ||
+          invoice.items.some(item => !item || typeof item.name !== 'string' || typeof item.value !== 'number' || !Number.isFinite(item.value))) {
+        throw new Error(`Invoice ${invoice.id} has invalid item or date data.`);
+      }
+      const laborShiftIds = invoice.items.filter(item => item.shiftId).map(item => String(item.shiftId));
+      if (new Set(laborShiftIds).size !== laborShiftIds.length) {
+        throw new Error(`Invoice ${invoice.id} attaches the same shift more than once.`);
+      }
+    }
+    const shiftOwners = new Map();
+    for (const invoice of backup.data.invoices) {
+      const linkedIds = new Set([...(Array.isArray(invoice.shiftIds) ? invoice.shiftIds : []),
+        ...invoice.items.filter(item => item.shiftId).map(item => String(item.shiftId))].map(String));
+      for (const shiftId of linkedIds) {
+        const owner = shiftOwners.get(shiftId);
+        if (owner && owner !== invoice.id) throw new Error(`Shift ${shiftId} is attached to more than one invoice in this backup.`);
+        shiftOwners.set(shiftId, invoice.id);
+      }
+    }
+    for (const payment of backup.data.payments) {
+      if (typeof payment.amount !== 'number' || !Number.isFinite(payment.amount) || !validDateOrNull(payment.date)) {
+        throw new Error(`Payment ${payment.id} has invalid amount or date data.`);
+      }
+    }
+    for (const job of backup.data.plannedJobs) {
+      if (typeof job.description !== 'string' || !validDateOrNull(job.scheduledDate) || typeof job.isComplete !== 'boolean') {
+        throw new Error(`Planned job ${job.id} has invalid description or date data.`);
+      }
+    }
+
+    return {
+      format: backup.format,
+      schemaVersion: backup.schemaVersion,
+      exportedAt: validDateOrNull(backup.exportedAt) ? backup.exportedAt : null,
+      counts: Object.fromEntries(keys.map(key => [key, backup.data[key].length]))
+    };
+  }
+
+  async restoreFullBackup(backup) {
+    this.previewFullBackup(backup);
+    const collectionByKey = {
+      employees: 'employees', customers: 'customers', shifts: 'shifts',
+      invoices: 'invoices', payments: 'payments', plannedJobs: 'planned', ledger: 'ledgerRows'
+    };
+    const snapshots = await Promise.all(Object.values(collectionByKey).map(name => getDocs(collection(db, name))));
+    const batch = writeBatch(db);
+    let operationCount = 0;
+
+    Object.entries(collectionByKey).forEach(([key, collectionName], index) => {
+      const savedRecords = backup.data[key];
+      const savedIds = new Set(savedRecords.map(record => record.id));
+      snapshots[index].forEach(docSnap => {
+        if (!savedIds.has(docSnap.id)) {
+          batch.delete(doc(db, collectionName, docSnap.id));
+          operationCount += 1;
+        }
+      });
+      savedRecords.forEach(record => {
+        const { id, ...documentData } = record;
+        batch.set(doc(db, collectionName, id), documentData);
+        operationCount += 1;
+      });
+    });
+
+    if (operationCount > 500) {
+      throw new Error(`This restore needs ${operationCount} Firestore writes; one atomic restore is limited to 500. No data was changed.`);
+    }
+    if (operationCount) await commitBatch(batch, 'Restoring the selected backup failed.');
+    await this.init();
+  }
+
+
   // PLANNED JOBS
   async loadPlanned() {
     this.plannedJobs = [];
@@ -818,22 +1126,30 @@ export class AppDataStore {
         const data = docSnap.data();
         const customer = (data.custId && this.customers.get(data.custId)) ||
           (data.custId ? new Customer(data.custId, 'Unknown Site') : null);
-        const storedDate = data.scheduledDate?.toDate?.() || data.scheduledDate || new Date();
+        const storedDate = data.scheduledDate?.toDate?.() || data.scheduledDate || null;
         const planned = new PlannedJob(data.description, storedDate, customer, data.isComplete, docSnap.id);
         this.plannedJobs.push(planned);
       });
-      this.plannedJobs.sort((a, b) => a.scheduledDate - b.scheduledDate);
+      this.plannedJobs.sort((a, b) => {
+        const dateA = a.scheduledDate?.getTime() ?? null;
+        const dateB = b.scheduledDate?.getTime() ?? null;
+        if (dateA === null && dateB !== null) return 1;
+        if (dateA !== null && dateB === null) return -1;
+        return (dateA ?? 0) - (dateB ?? 0);
+      });
     } catch (e) {
       console.error("Error loading planned jobs from Firestore:", e);
+      this.loadFailures.push(e);
     }
   }
   
   async savePlanned(planned) {
-    const scheduledDate = planned.scheduledDate instanceof Date
-      ? planned.scheduledDate
-      : new Date(planned.scheduledDate);
-    if (Number.isNaN(scheduledDate.getTime())) {
-      throw new Error("Planned job needs a valid scheduled date.");
+    let scheduledDate = null;
+    if (planned.scheduledDate !== null && planned.scheduledDate !== undefined && planned.scheduledDate !== '') {
+      scheduledDate = planned.scheduledDate instanceof Date ? planned.scheduledDate : new Date(planned.scheduledDate);
+      if (Number.isNaN(scheduledDate.getTime())) {
+        throw new Error("Planned job needs a valid scheduled date or no date.");
+      }
     }
     await setDoc(doc(db, "planned", planned.id), {
       custId: planned.customer ? planned.customer.id : null,
@@ -862,9 +1178,11 @@ export class AppDataStore {
     const planned = this.plannedJobs.find(job => job.id === plannedId);
     if (!planned) throw new Error("Planned job not found.");
     const cleanDescription = String(description || '').trim();
-    const nextDate = scheduledDate instanceof Date ? scheduledDate : new Date(scheduledDate);
+    const nextDate = scheduledDate === null || scheduledDate === undefined || scheduledDate === ''
+      ? null
+      : scheduledDate instanceof Date ? scheduledDate : new Date(scheduledDate);
     if (!cleanDescription) throw new Error("Add a job description before saving.");
-    if (Number.isNaN(nextDate.getTime())) throw new Error("Planned job needs a valid scheduled date.");
+    if (nextDate && Number.isNaN(nextDate.getTime())) throw new Error("Planned job needs a valid scheduled date or no date.");
     if (!customer) throw new Error("Choose a customer before saving this job.");
 
     const previous = {

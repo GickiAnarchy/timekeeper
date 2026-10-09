@@ -15,6 +15,13 @@ function formatBreakDuration(milliseconds) {
   return [hours, minutes, seconds].map(value => String(value).padStart(2, '0')).join(':');
 }
 
+function makeElement(tag, className = '', text = undefined) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = text;
+  return element;
+}
+
 /*
   DOM CONTROLLER
 */
@@ -42,10 +49,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const activeShifts = store.shifts.filter(s => !s.isComplete);
 
     if (activeShifts.length === 0) {
-      activeShiftsList.innerHTML = '<li class="empty-msg">No active shifts right now.</li>';
+      activeShiftsList.replaceChildren(makeElement('li', 'empty-msg', 'No active shifts right now.'));
       return;
     }
-    activeShiftsList.innerHTML = '';
+    activeShiftsList.replaceChildren();
 
     activeShifts.forEach((shift) => {
       const li = document.createElement('li');
@@ -56,27 +63,37 @@ document.addEventListener('DOMContentLoaded', async () => {
       }) : 'Unknown';
       const activeBreak = shift.breaks.find(breakItem => breakItem.start && !breakItem.end);
       const breakStartedAt = activeBreak ? new Date(activeBreak.start).getTime() : NaN;
-      const breakTimer = shift.isOnBreak && Number.isFinite(breakStartedAt)
-        ? `<span class="break-timer" role="timer" aria-label="Break duration" data-started-at="${breakStartedAt}">Break ${formatBreakDuration(Date.now() - breakStartedAt)}</span>`
-        : '';
-
-      li.innerHTML = `
-      <div class="active-card">
-        <div class="active-info">
-          <strong>${shift.employee ? shift.employee.name : 'Unknown'}</strong> @ ${shift.customer ? shift.customer.name : 'Unknown'}<br>
-          <small>Started: ${timeStr}</small>
-        </div>
-        ${breakTimer}
-        <div class="break-buttons">
-        <button type="button" id="start-break-btn" class="start-break-btn" data-id="${shift.id}">Start Break</button>
-        <button type="button" id="stop-break-btn" class="stop-break-btn" data-id="${shift.id}" disabled="true">Stop Break</button>
-        </div>
-        <button type="button" class="stop-btn" data-id="${shift.id}">Clock Out</button>
-      </div>
-      `;
+      const card = makeElement('div', 'active-card');
+      const info = makeElement('div', 'active-info');
+      info.append(
+        makeElement('strong', '', shift.employee?.name || 'Unknown'),
+        makeElement('span', '', ` @ ${shift.customer?.name || 'Unknown'}`),
+        document.createElement('br'),
+        makeElement('small', '', `Started: ${timeStr}`)
+      );
+      card.appendChild(info);
+      if (shift.isOnBreak && Number.isFinite(breakStartedAt)) {
+        const breakTimer = makeElement('span', 'break-timer', `Break ${formatBreakDuration(Date.now() - breakStartedAt)}`);
+        breakTimer.setAttribute('role', 'timer');
+        breakTimer.setAttribute('aria-label', 'Break duration');
+        breakTimer.dataset.startedAt = String(breakStartedAt);
+        card.appendChild(breakTimer);
+      }
+      const breakButtons = makeElement('div', 'break-buttons');
+      const breakInBtn = makeElement('button', 'start-break-btn', 'Start Break');
+      breakInBtn.type = 'button';
+      breakInBtn.dataset.id = shift.id;
+      const breakOutBtn = makeElement('button', 'stop-break-btn', 'Stop Break');
+      breakOutBtn.type = 'button';
+      breakOutBtn.dataset.id = shift.id;
+      breakOutBtn.disabled = true;
+      breakButtons.append(breakInBtn, breakOutBtn);
+      const clockOutButton = makeElement('button', 'stop-btn', 'Clock Out');
+      clockOutButton.type = 'button';
+      clockOutButton.dataset.id = shift.id;
+      card.append(breakButtons, clockOutButton);
+      li.appendChild(card);
       
-      const breakInBtn = li.querySelector('.start-break-btn');
-      const breakOutBtn = li.querySelector('.stop-break-btn');
       if (shift.isOnBreak) {
         breakInBtn.disabled = true;
         breakOutBtn.disabled = false;
@@ -129,7 +146,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           return shift;
         });
 
-        await Promise.all(shifts.map(shift => store.saveShift(shift)));
+        await store.saveShifts(shifts);
         store.shifts.push(...shifts);
         renderActiveShifts();
       } catch (error) {
