@@ -5,6 +5,7 @@ import {
   enableAutoScrollOnFocus,
   WorkShift
 } from './models.js';
+import { resetShiftDialogViewport, syncShiftDialogViewport } from './shift-dialog-viewport.mjs';
 
 function formatForDateTimeLocal(date) {
   if (!date || !(date instanceof Date) || Number.isNaN(date.getTime())) return '';
@@ -48,6 +49,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const addBreakButton = document.getElementById('add-break-button');
   let activeShift = null;
   let isNewShift = false;
+  const syncModalViewport = () => syncShiftDialogViewport(modal, window);
+
+  modal.addEventListener('focusin', syncModalViewport);
+  window.addEventListener('resize', syncModalViewport);
+  window.visualViewport?.addEventListener('resize', syncModalViewport);
+  window.visualViewport?.addEventListener('scroll', syncModalViewport);
 
   populateEmployeeDropdowns(empFilter);
   populateCustomerDropdowns(custFilter);
@@ -168,6 +175,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     shift.breaks.forEach(breakItem => addBreakRow(breakItem));
     updateActualHours();
     modal.showModal();
+    syncModalViewport();
   }
 
   okBtn.addEventListener('click', async () => {
@@ -258,7 +266,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     activeShift = null;
     modal.close();
   });
-  modal.addEventListener('close', () => { activeShift = null; });
+  modal.addEventListener('close', () => {
+    resetShiftDialogViewport(modal);
+    activeShift = null;
+  });
 
   function renderList() {
     if (!shiftList) return;

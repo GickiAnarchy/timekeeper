@@ -1,9 +1,9 @@
-# Focused domain and viewport tests
+# Domain and keyboard-visibility tests
 
-Run the domain and keyboard-visibility tests with Node.js 18 or newer:
+Run the full Node.js test suite with Node.js 18 or newer:
 
 ```sh
-node --test tests/domain.test.mjs tests/keyboard.test.mjs
+node --test
 ```
 
-These tests exercise shared pure helpers used by the browser app. They do not connect to Firebase.
+The suite tests the shared keyboard and dialog viewport helpers, Shift edit Notes behavior, domain logic, and project-wide page/footer coverage. It does not connect to Firebase.
