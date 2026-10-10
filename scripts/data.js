@@ -17,7 +17,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const editModal = document.getElementById('people-edit-modal');
   const editForm = document.getElementById('people-edit-form');
+  const editEyebrow = document.getElementById('people-edit-eyebrow');
   const editTitle = document.getElementById('people-edit-title');
+  const editHelp = document.getElementById('people-edit-help');
   const editError = document.getElementById('people-edit-error');
   const editSave = document.getElementById('people-edit-save');
   const editCancel = document.getElementById('people-edit-cancel');
@@ -137,11 +139,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     customerFields.disabled = isEmployee;
 
     if (isEmployee) {
+      editEyebrow.textContent = 'EMPLOYEE PROFILE';
       editTitle.textContent = 'Edit employee';
+      editHelp.textContent = 'Update this team member’s name and wage. Changes are saved to shared records.';
       editEmpName.value = record.name;
       editEmpWage.value = String(record.wage);
     } else {
+      editEyebrow.textContent = 'CUSTOMER PROFILE';
       editTitle.textContent = 'Edit customer';
+      editHelp.textContent = 'Update this customer’s details and billing information. Changes are saved to shared records.';
       editCustName.value = record.name;
       editCustLocation.value = record.location || '';
       editCustBillingRate.value = record.billingRate === null || record.billingRate === undefined
