@@ -266,32 +266,55 @@ body {
 
 /* Accessible native edit dialog */
 .people-edit-modal {
-  width: min(calc(100% - 24px), 480px);
-  max-width: 480px;
-  max-height: 92vh;
+  width: min(calc(100% - 24px), 560px);
+  max-width: 560px;
+  max-height: min(92vh, 760px);
+  max-height: min(92dvh, 760px);
   margin: auto;
-  padding: clamp(16px, 4vw, 24px);
+  padding: 0;
   overflow: auto;
   color: var(--ink);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 24px 80px rgba(16, 38, 25, .23);
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(16, 38, 25, .24);
 }
 
 .people-edit-modal::backdrop {
-  background: rgba(19, 35, 27, .46);
+  background: rgba(19, 35, 27, .52);
   backdrop-filter: blur(3px);
 }
 
 .people-edit-form {
   display: grid;
-  gap: 14px;
+  gap: 20px;
+  padding: clamp(20px, 4vw, 30px);
 }
 
-.people-edit-form h2 {
+.people-edit-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.people-edit-heading h2 {
   margin: 0;
-  font-size: 18px;
+  color: var(--ink);
+  font-size: 21px;
+  letter-spacing: -.035em;
+}
+
+.people-edit-heading > p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.people-edit-eyebrow {
+  margin: 0;
+  color: var(--green);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .1em;
 }
 
 .people-edit-fields {
@@ -302,7 +325,13 @@ body {
 
 .people-edit-fields:not([hidden]) {
   display: grid;
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+#employee-edit-fields .edit-field:first-of-type,
+.edit-field-wide {
+  grid-column: 1 / -1;
 }
 
 .edit-field {
@@ -319,8 +348,9 @@ body {
 .edit-field input,
 .edit-field textarea {
   width: 100%;
-  min-height: 40px;
-  padding: 9px 10px;
+  min-height: 42px;
+  padding: 9px 11px;
+  font-size: 14px;
 }
 
 .edit-field textarea {
@@ -359,7 +389,20 @@ body {
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 9px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.modal-actions .btn {
+  min-height: 40px;
+  padding-inline: 16px;
+  font-size: 12px;
+}
+
+.modal-actions .btn:disabled {
+  opacity: .6;
+  cursor: wait;
 }
 
 @media (max-width: 520px) {
@@ -369,6 +412,31 @@ body {
 
   .management-section {
     padding: 14px;
+  }
+
+  .people-edit-modal {
+    width: calc(100% - 16px);
+    max-height: calc(100dvh - 16px);
+    border-radius: 14px;
+  }
+
+  .people-edit-form {
+    gap: 16px;
+    padding: 20px 16px;
+  }
+
+  .people-edit-fields:not([hidden]) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  #employee-edit-fields .edit-field:first-of-type,
+  .edit-field-wide {
+    grid-column: auto;
+  }
+
+  .modal-actions .btn {
+    flex: 1;
   }
 
   .emp-item,

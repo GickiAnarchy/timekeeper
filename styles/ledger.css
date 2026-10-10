@@ -14,8 +14,13 @@ thead { color: var(--muted); background: var(--surface-muted); }
 th, td { padding: 11px 12px; border-bottom: 1px solid var(--border-soft); font-size: 10px; }
 th { font-size: 9px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
 tbody tr:hover { background: var(--surface-hover); }
+.advance-amount { color: var(--red); font-weight: 700; }
 tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight: 700; }
-.delete-btn { min-height: 28px; padding: 0 9px; color: var(--red); background: var(--red-soft); font-size: 9px; font-weight: 650; }
+.ledger-row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.edit-ledger-btn, .delete-btn { min-height: 32px; padding: 0 10px; font-size: 10px; font-weight: 650; }
+.edit-ledger-btn { color: var(--green-deep); background: var(--green-soft); }
+.edit-ledger-btn:hover { background: var(--surface-hover); }
+.delete-btn { color: var(--red); background: var(--red-soft); }
 .delete-btn:hover { color: #fff; background: #b84e4e; }
 .form-container { padding: 17px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-soft); }
 #ledger-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; align-items: end; }
@@ -25,6 +30,42 @@ tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight
 #ledger-form button[type="submit"]:hover { background: var(--green-deep); }
 #ledger-form button:disabled { opacity: .6; cursor: wait; }
 
+.ledger-edit-modal {
+  width: min(calc(100% - 24px), 560px);
+  max-width: 560px;
+  max-height: min(92vh, 760px);
+  max-height: min(92dvh, 760px);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(16, 38, 25, .24);
+}
+.ledger-edit-modal::backdrop { background: rgba(19, 35, 27, .52); backdrop-filter: blur(3px); }
+.ledger-edit-form { display: grid; gap: 20px; padding: clamp(20px, 4vw, 30px); }
+.ledger-edit-heading { display: grid; gap: 6px; }
+.ledger-edit-heading h2 { margin: 0; color: var(--ink); font-size: 21px; letter-spacing: -.035em; }
+.ledger-edit-heading > p:last-child { margin: 0; color: var(--muted); font-size: 13px; }
+.ledger-edit-eyebrow { margin: 0; color: var(--green); font-size: 10px; font-weight: 800; letter-spacing: .1em; }
+.ledger-edit-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.ledger-edit-fields label { display: grid; min-width: 0; gap: 6px; color: var(--ink-soft); font-size: 12px; font-weight: 700; }
+.ledger-edit-fields input, .ledger-edit-fields select, .ledger-edit-fields textarea { width: 100%; min-height: 42px; padding: 9px 11px; font-size: 14px; }
+.ledger-edit-fields textarea { min-height: 88px; resize: vertical; }
+.ledger-edit-notes { grid-column: 1 / -1; }
+.ledger-edit-fields :disabled { color: var(--muted); background: var(--surface-muted); }
+.ledger-edit-error { margin: 0; color: var(--red); font-size: 12px; }
+.ledger-edit-error:empty { display: none; }
+.ledger-edit-actions { display: flex; justify-content: flex-end; gap: 9px; padding-top: 14px; border-top: 1px solid var(--border-soft); }
+.ledger-edit-actions button { min-height: 40px; padding: 0 16px; font-size: 12px; font-weight: 700; }
+.ledger-cancel-btn { color: var(--ink); background: var(--surface-muted); }
+.ledger-cancel-btn:hover { background: var(--surface-hover); }
+.ledger-save-btn { color: #fff; background: var(--green); }
+.ledger-save-btn:hover { background: var(--green-deep); }
+.ledger-edit-actions button:disabled { opacity: .6; cursor: wait; }
+
 @media (max-width: 760px) {
   .ledger-heading { align-items: stretch; flex-direction: column; }
   .ledger-filter { min-width: 0; }
@@ -32,4 +73,9 @@ tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight
 }
 @media (max-width: 480px) {
   #ledger-form { grid-template-columns: 1fr; }
+  .ledger-edit-modal { width: calc(100% - 16px); max-height: calc(100dvh - 16px); border-radius: 14px; }
+  .ledger-edit-form { gap: 16px; padding: 20px 16px; }
+  .ledger-edit-fields { grid-template-columns: 1fr; gap: 12px; }
+  .ledger-edit-notes { grid-column: auto; }
+  .ledger-edit-actions button { flex: 1; }
 }

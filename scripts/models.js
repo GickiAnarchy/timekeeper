@@ -479,10 +479,17 @@ export class AppDataStore {
   }
 
   async updateLedgerEntry(entryId, updates) {
+    const current = this.ledger.getEntry(entryId);
+    if (!current) throw new Error("Ledger entry not found.");
+    const previous = { ...current };
     const entry = this.ledger.updateEntry(entryId, updates);
-    if (!entry) throw new Error("Ledger entry not found.");
-
-    await updateDoc(doc(db, "ledgerRows", entryId), entry);
+    try {
+      // Apply only the edited fields so any unrelated Firestore data remains untouched.
+      await updateDoc(doc(db, "ledgerRows", entryId), updates);
+    } catch (error) {
+      Object.assign(entry, previous);
+      throw error;
+    }
     return entry;
   }
 

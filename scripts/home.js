@@ -1,4 +1,5 @@
 import { store } from './models.js';
+import { selectDailyQuote } from './daily-quotes.mjs';
 
 const hourFormat = new Intl.NumberFormat(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const timeFormat = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
@@ -72,6 +73,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const activeCountNote = document.getElementById('active-count-note');
   const activeList = document.getElementById('active-shift-list');
   const upcomingList = document.getElementById('upcoming-job-list');
+  function renderDailyQuote() {
+    const dailyQuote = selectDailyQuote(new Date());
+    document.getElementById('daily-quote-text').textContent = dailyQuote.text;
+    document.getElementById('daily-quote-author').textContent = dailyQuote.author;
+    const quoteSource = document.getElementById('daily-quote-source');
+    quoteSource.textContent = dailyQuote.work;
+    quoteSource.href = dailyQuote.source;
+  }
+  renderDailyQuote();
+  window.setInterval(renderDailyQuote, 60_000);
 
   function renderOverview() {
     const now = new Date();

@@ -4,6 +4,7 @@ import {
   compareByFirstName,
   enableAutoScrollOnFocus
 } from './models.js';
+import { sortLedgerEntriesByDate } from './domain.mjs';
 
 function localDateInputValue(date = new Date()) {
   const year = date.getFullYear();
@@ -32,6 +33,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   const ledgerOwner = document.getElementById('ledger-owner');
   const tableBody = document.getElementById('ledger-body');
   const totalRow = document.getElementById('ledger-total');
+  const editDialog = document.getElementById('ledger-edit-modal');
+  const editForm = document.getElementById('ledger-edit-form');
+  const editTitle = document.getElementById('ledger-edit-title');
+  const editError = document.getElementById('ledger-edit-error');
+  const editSave = document.getElementById('ledger-edit-save');
+  const editCancel = document.getElementById('ledger-edit-cancel');
+  const editDate = document.getElementById('edit-ledger-date');
+  const editType = document.getElementById('edit-ledger-type');
+  const editHours = document.getElementById('edit-ledger-hours');
+  const editAmount = document.getElementById('edit-ledger-amount');
+  const editNotes = document.getElementById('edit-ledger-notes');
+  let editingEntryId = null;
+  let editTrigger = null;
 
   populateEmployeeDropdowns(employeeSelect);
   ledgerFilter.replaceChildren(new Option('Choose an employee', ''));
@@ -59,9 +73,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   function filteredEntries() {
     if (!ledgerFilter.value) return [];
     const employeeId = selectedEmployeeId();
-    return store.ledger.entries
-      .filter(entry => employeeId ? entry.employeeId === employeeId : !entry.employeeId)
-      .sort((a, b) => Number(a.index || 0) - Number(b.index || 0));
+    return sortLedgerEntriesByDate(store.ledger.entries
+      .filter(entry => employeeId ? entry.employeeId === employeeId : !entry.employeeId));
+  }
+
+  function updateEditTypeInputs() {
+    const isHourlyPay = editType.value === 'normal';
+    editHours.disabled = !isHourlyPay;
+    editAmount.disabled = isHourlyPay;
   }
 
   function renderLedger() {
@@ -96,21 +115,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         const type = String(entry.type || '').toLowerCase();
         const amount = Number(entry.amount || 0);
         const typeLabel = type ? type.charAt(0).toUpperCase() + type.slice(1) : '';
+        const amountCell = makeCell(type === 'advance'
+          ? `-$${Math.abs(amount).toFixed(2)}`
+          : `$${amount.toFixed(2)}`);
+        if (type === 'advance') amountCell.classList.add('advance-amount');
         row.append(
           makeCell(entry.index),
           makeCell(entry.date || ''),
           makeCell(typeLabel),
           makeCell(Number(entry.hours || 0).toFixed(2)),
-          makeCell(`$${amount.toFixed(2)}`),
+          amountCell,
           makeCell(entry.notes || '')
         );
         const actionCell = document.createElement('td');
+        const rowActions = document.createElement('div');
+        rowActions.className = 'ledger-row-actions';
+        const editButton = document.createElement('button');
+        editButton.type = 'button';
+        editButton.className = 'edit-ledger-btn';
+        editButton.dataset.id = entry.id;
+        editButton.setAttribute('aria-label', `Edit ledger entry ${entry.index}`);
+        editButton.textContent = 'Edit';
         const deleteButton = document.createElement('button');
         deleteButton.type = 'button';
         deleteButton.className = 'delete-btn';
         deleteButton.dataset.id = entry.id;
+        deleteButton.setAttribute('aria-label', `Delete ledger entry ${entry.index}`);
         deleteButton.textContent = 'Delete';
-        actionCell.appendChild(deleteButton);
+        rowActions.append(editButton, deleteButton);
+        actionCell.appendChild(rowActions);
         row.appendChild(actionCell);
         tableBody.appendChild(row);
       });
@@ -130,6 +163,90 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderLedger();
   updateTypeInputs();
 
+  function openEditDialog(entry, trigger) {
+    if (!editDialog || !editForm || !entry) return;
+    editingEntryId = entry.id;
+    editTrigger = trigger;
+    editError.textContent = '';
+    editTitle.textContent = `Edit ledger entry ${entry.index}`;
+    editDate.value = entry.date || '';
+    editType.value = String(entry.type || 'normal').toLowerCase();
+    editHours.value = String(Number(entry.hours || 0));
+    editAmount.value = String(Math.abs(Number(entry.amount || 0)));
+    editNotes.value = entry.notes || '';
+    updateEditTypeInputs();
+    editDialog.showModal();
+    editDate.focus();
+  }
+
+  editType.addEventListener('change', updateEditTypeInputs);
+  editCancel.addEventListener('click', () => editDialog.close());
+  editDialog.addEventListener('close', () => {
+    const entryId = editingEntryId;
+    const trigger = editTrigger;
+    editingEntryId = null;
+    editTrigger = null;
+    if (trigger?.isConnected) {
+      trigger.focus();
+      return;
+    }
+    [...tableBody.querySelectorAll('.edit-ledger-btn[data-id]')]
+      .find(button => button.dataset.id === entryId)?.focus();
+  });
+
+  editForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    editError.textContent = '';
+    if (!editForm.reportValidity() || !editingEntryId) return;
+
+    const entry = store.ledger.getEntry(editingEntryId);
+    if (!entry) {
+      editError.textContent = 'This ledger entry could not be found. Close the dialog and try again.';
+      return;
+    }
+
+    const type = editType.value;
+    const updates = {
+      date: editDate.value,
+      type,
+      notes: editNotes.value.trim()
+    };
+    if (type === 'normal') {
+      const hours = Number(editHours.value);
+      if (!Number.isFinite(hours) || hours < 0) {
+        editError.textContent = 'Hours must be a valid number of zero or more.';
+        editHours.focus();
+        return;
+      }
+      updates.hours = hours;
+      const employee = entry.employeeId ? store.employees.get(entry.employeeId) : null;
+      updates.amount = employee ? employee.getPay(hours) : Number(entry.amount || 0);
+    } else {
+      const amount = Number(editAmount.value);
+      if (!Number.isFinite(amount) || amount < 0) {
+        editError.textContent = 'Amount must be a valid number of zero or more.';
+        editAmount.focus();
+        return;
+      }
+      updates.amount = amount;
+      if (String(entry.type || '').toLowerCase() === 'normal') updates.hours = 0;
+    }
+
+    editSave.disabled = true;
+    editSave.textContent = 'Saving…';
+    try {
+      await store.updateLedgerEntry(editingEntryId, updates);
+      renderLedger();
+      editDialog.close();
+    } catch (error) {
+      console.error('Unable to update ledger entry:', error);
+      editError.textContent = error.message || 'Unable to save changes. Please try again.';
+    } finally {
+      editSave.disabled = false;
+      editSave.textContent = 'Save changes';
+    }
+  });
+
   form.addEventListener('submit', async event => {
     event.preventDefault();
     const employeeId = employeeSelect.value;
@@ -144,16 +261,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     let hours = 0;
     let amount = 0;
     if (type === 'normal') {
-      hours = Number(hoursInput.value) || 0;
-      if (hours < 0) {
-        window.alert('Hours must be zero or more.');
+      hours = Number(hoursInput.value);
+      if (!Number.isFinite(hours) || hours < 0) {
+        window.alert('Hours must be a valid number of zero or more.');
         return;
       }
       amount = employee.getPay(hours);
     } else {
-      amount = Number(amountInput.value) || 0;
-      if (amount < 0) {
-        window.alert('Amount must be zero or more.');
+      amount = Number(amountInput.value);
+      if (!Number.isFinite(amount) || amount < 0) {
+        window.alert('Amount must be a valid number of zero or more.');
         return;
       }
     }
@@ -185,6 +302,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   tableBody.addEventListener('click', async event => {
+    const editButton = event.target.closest('.edit-ledger-btn[data-id]');
+    if (editButton) {
+      const entry = store.ledger.getEntry(editButton.dataset.id);
+      openEditDialog(entry, editButton);
+      return;
+    }
     const button = event.target.closest('.delete-btn[data-id]');
     if (!button) return;
     button.disabled = true;

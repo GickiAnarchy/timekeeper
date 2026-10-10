@@ -24,7 +24,7 @@
     </section>
 
     <div class="table-div">
-      <table>
+      <table aria-label="Employee ledger entries">
         <thead>
           <tr>
             <th>Entry</th>
@@ -33,7 +33,7 @@
             <th>Hours</th>
             <th>Amount</th>
             <th>Notes</th>
-            <th>Action</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody id="ledger-body" aria-live="polite"></tbody>
@@ -63,10 +63,10 @@
           </select>
         </label>
         <label for="hours">Hours
-          <input type="number" id="hours" min="0" step="0.1" value="0">
+          <input type="number" id="hours" min="0" step="0.01" inputmode="decimal" value="0">
         </label>
         <label for="amount">Amount ($)
-          <input type="number" id="amount" min="0" step="0.01" value="0" disabled>
+          <input type="number" id="amount" min="0" step="0.01" inputmode="decimal" value="0" disabled>
         </label>
         <label for="notes">Notes
           <input type="text" id="notes" placeholder="Optional notes">
@@ -74,5 +74,41 @@
         <button type="submit">Add Entry</button>
       </form>
     </div>
+
+    <dialog class="ledger-edit-modal" id="ledger-edit-modal" aria-labelledby="ledger-edit-title" aria-describedby="ledger-edit-help ledger-edit-error">
+      <form class="ledger-edit-form" id="ledger-edit-form">
+        <div class="ledger-edit-heading">
+          <p class="ledger-edit-eyebrow">LEDGER ENTRY</p>
+          <h2 id="ledger-edit-title">Edit ledger entry</h2>
+          <p id="ledger-edit-help">Update the entry details. The employee assignment and entry number will stay unchanged.</p>
+        </div>
+        <div class="ledger-edit-fields">
+          <label for="edit-ledger-date">Date
+            <input type="date" id="edit-ledger-date" required>
+          </label>
+          <label for="edit-ledger-type">Type
+            <select id="edit-ledger-type" required>
+              <option value="normal">Normal pay</option>
+              <option value="advance">Advance</option>
+              <option value="general">Other credit</option>
+            </select>
+          </label>
+          <label for="edit-ledger-hours">Hours
+            <input type="number" id="edit-ledger-hours" min="0" step="0.01" inputmode="decimal" required>
+          </label>
+          <label for="edit-ledger-amount">Amount ($)
+            <input type="number" id="edit-ledger-amount" min="0" step="0.01" inputmode="decimal" required>
+          </label>
+          <label class="ledger-edit-notes" for="edit-ledger-notes">Notes
+            <textarea id="edit-ledger-notes" rows="3" placeholder="Optional notes"></textarea>
+          </label>
+        </div>
+        <p class="ledger-edit-error" id="ledger-edit-error" role="alert" aria-live="polite"></p>
+        <div class="ledger-edit-actions">
+          <button type="button" class="ledger-cancel-btn" id="ledger-edit-cancel">Cancel</button>
+          <button type="submit" class="ledger-save-btn" id="ledger-edit-save">Save changes</button>
+        </div>
+      </form>
+    </dialog>
   </body>
 </html>

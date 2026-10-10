@@ -5,6 +5,17 @@ export function asValidDate(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+export function sortLedgerEntriesByDate(entries = []) {
+  const dateValue = value => asValidDate(value)?.getTime() ?? Number.NEGATIVE_INFINITY;
+  return [...entries].sort((a, b) => {
+    const dateDifference = dateValue(b?.date) - dateValue(a?.date);
+    if (dateDifference) return dateDifference;
+    const indexDifference = Number(b?.index || 0) - Number(a?.index || 0);
+    if (indexDifference) return indexDifference;
+    return String(a?.id || '').localeCompare(String(b?.id || ''));
+  });
+}
+
 export function roundTo15Minutes(date = new Date()) {
   const source = asValidDate(date);
   if (!source) throw new TypeError('A valid date is required.');

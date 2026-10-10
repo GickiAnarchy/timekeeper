@@ -7,11 +7,26 @@ import {
   roundDown15Minutes,
   roundTo15Minutes,
   roundUp15Minutes,
+  sortLedgerEntriesByDate,
   shiftInvoiceLineStatus,
   shiftIsAttachedElsewhere
 } from '../scripts/domain.mjs';
 
 const date = value => new Date(value);
+
+test('ledger entries sort newest first, then by entry index, without mutating the source', () => {
+  const entries = [
+    { id: 'older', date: '2026-10-08', index: 4 },
+    { id: 'newer-first', date: '2026-10-09', index: 2 },
+    { id: 'newer-last', date: '2026-10-09', index: 5 },
+    { id: 'invalid-date', date: 'not-a-date', index: 99 }
+  ];
+
+  assert.deepEqual(sortLedgerEntriesByDate(entries).map(entry => entry.id), [
+    'newer-last', 'newer-first', 'older', 'invalid-date'
+  ]);
+  assert.equal(entries[0].id, 'older');
+});
 
 test('quarter-hour rounding preserves the nearest/down/up behavior at boundaries', () => {
   assert.equal(roundTo15Minutes(date('2026-10-09T09:07:00Z')).toISOString(), '2026-10-09T09:00:00.000Z');
