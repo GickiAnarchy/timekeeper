@@ -22,7 +22,8 @@ export const DAILY_QUOTES = Object.freeze([
   Object.freeze({ text: 'What I must do is all that concerns me, not what the people think.', author: 'Ralph Waldo Emerson', work: 'Essays: First Series', source: EMERSON_SOURCE }),
   Object.freeze({ text: 'The great man is he who in the midst of the crowd keeps with perfect sweetness the independence of solitude.', author: 'Ralph Waldo Emerson', work: 'Essays: First Series', source: EMERSON_SOURCE }),
   Object.freeze({ text: 'The present little sacrifice of your vanity will afterwards be amply repaid.', author: 'Benjamin Franklin', work: 'The Autobiography of Benjamin Franklin', source: FRANKLIN_SOURCE }),
-  Object.freeze({ text: 'Let us have faith that right makes might, and in that faith let us to the end dare to do our duty as we understand it.', author: 'Abraham Lincoln', work: 'Cooper Union Address', source: LINCOLN_SOURCE })
+  Object.freeze({ text: 'Let us have faith that right makes might, and in that faith let us to the end dare to do our duty as we understand it.', author: 'Abraham Lincoln', work: 'Cooper Union Address', source: LINCOLN_SOURCE }),
+  Object.freeze({ text: 'Drugs are fun. Especially when you are high.', author: 'Turpin Tine', work: 'Unemployed', source: MISC_SOURCE })
 ]);
 
 export function dateKeyInTimeZone(date, timeZone = DAILY_QUOTE_TIME_ZONE) {
