@@ -4,8 +4,9 @@ const WALDEN_SOURCE = 'https://www.gutenberg.org/files/205/205-h/205-h.htm';
 const EMERSON_SOURCE = 'https://www.gutenberg.org/files/16643/16643-h/16643-h.htm';
 const FRANKLIN_SOURCE = 'https://www.gutenberg.org/files/148/148-h/148-h.htm';
 const LINCOLN_SOURCE = 'https://www.gutenberg.org/files/3253/3253-h/3253-h.htm';
+const MISC_SOURCE = 'https://www.youtube.com/mindofmagick';
 
-// All entries below are drawn from pre-1929 public-domain works; sources are included for attribution checks.
+// Classic entries are from pre-1929 public-domain works; creator quote links use their supplied source URLs.
 export const DAILY_QUOTES = Object.freeze([
   Object.freeze({ text: 'I went to the woods because I wished to live deliberately.', author: 'Henry David Thoreau', work: 'Walden', source: WALDEN_SOURCE }),
   Object.freeze({ text: 'I know of no more encouraging fact than the unquestionable ability of man to elevate his life by a conscious endeavor.', author: 'Henry David Thoreau', work: 'Walden', source: WALDEN_SOURCE }),

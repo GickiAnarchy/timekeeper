@@ -2,6 +2,7 @@ const THEME_KEY = 'timekeeper-theme';
 const FONT_SCALE_KEY = 'timekeeper-font-scale';
 const THEMES = new Set(['forest', 'coastal', 'harvest', 'midnight', 'lavender', 'rose', 'slate']);
 const FONT_SCALES = new Set([1, 1.15, 1.3, 1.5]);
+const NON_TEXT_INPUT_TYPES = new Set(['button', 'checkbox', 'color', 'file', 'hidden', 'image', 'radio', 'range', 'reset', 'submit']);
 
 function readSavedTheme() {
   try {
@@ -86,6 +87,54 @@ document.addEventListener('DOMContentLoaded', () => {
   const mainIframe = document.querySelector('iframe[name="main-content"]');
   const title = document.getElementById('active-page-title');
   const dateLabel = document.getElementById('topbar-date');
+  let baselineViewportHeight = 0;
+
+  function isKeyboardInput(target) {
+    if (!target || target.disabled || target.readOnly) return false;
+    const tagName = String(target.tagName || '').toUpperCase();
+    if (tagName === 'TEXTAREA' || tagName === 'SELECT') return true;
+    if (tagName !== 'INPUT') return false;
+    return !NON_TEXT_INPUT_TYPES.has(String(target.type || 'text').toLowerCase());
+  }
+
+  function syncKeyboardLayout() {
+    const layoutHeight = window.innerHeight || document.documentElement.clientHeight;
+    const visualHeight = window.visualViewport?.height || layoutHeight;
+    const visibleHeight = Math.min(layoutHeight, visualHeight);
+    document.documentElement.style.setProperty('--app-visible-height', `${Math.round(visibleHeight)}px`);
+
+    let focusedControl = null;
+    try {
+      focusedControl = mainIframe?.contentDocument?.activeElement;
+    } catch (error) {
+      // The workspace pages are same-origin, but keep the shell usable if that ever changes.
+    }
+    const keyboardControlFocused = isKeyboardInput(focusedControl);
+    if (!keyboardControlFocused) baselineViewportHeight = Math.max(layoutHeight, visualHeight);
+
+    const resizeThreshold = Math.max(100, baselineViewportHeight * 0.15);
+    const keyboardIsVisible = keyboardControlFocused && baselineViewportHeight - visibleHeight > resizeThreshold;
+    document.body.classList.toggle('keyboard-open', keyboardIsVisible);
+  }
+
+  function watchFrameFocus() {
+    try {
+      const frameDocument = mainIframe?.contentDocument;
+      if (!frameDocument) return;
+
+      const refreshLayout = () => window.requestAnimationFrame(syncKeyboardLayout);
+      frameDocument.addEventListener('focusin', refreshLayout, true);
+      frameDocument.addEventListener('focusout', () => window.setTimeout(refreshLayout, 0), true);
+      syncKeyboardLayout();
+    } catch (error) {
+      console.warn('Unable to watch workspace form focus.', error);
+    }
+  }
+
+  window.addEventListener('resize', syncKeyboardLayout);
+  window.visualViewport?.addEventListener('resize', syncKeyboardLayout);
+  window.visualViewport?.addEventListener('scroll', syncKeyboardLayout);
+  syncKeyboardLayout();
 
   function activate(button) {
     if (!button) return;
@@ -143,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (mainIframe) {
     mainIframe.addEventListener('load', () => {
+      watchFrameFocus();
       try {
         const currentPath = new URL(mainIframe.src, window.location.href).pathname;
         const activeButton = navigation.find(button =>

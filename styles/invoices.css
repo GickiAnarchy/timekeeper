@@ -44,7 +44,7 @@ body > main { width: min(100%, 1000px); margin: 0 auto; }
 .shift-link-empty { margin: 0; color: var(--muted); font-size: 10px; }
 #save-shift-links-btn { justify-self: start; min-height: 36px; padding: 0 12px; color: #fff; background: var(--green); font-size: 10px; font-weight: 700; }
 #save-shift-links-btn:hover { background: var(--green-deep); }
-.modal { width: min(100% - 24px, 400px); max-width: 400px; margin: auto; padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 17px; box-shadow: 0 24px 80px rgba(16, 38, 25, .23); }
+.modal { width: min(100% - 24px, 400px); max-width: 400px; max-height: min(92vh, 760px); max-height: min(92dvh, 760px); margin: auto; padding: 20px; overflow-y: auto; overscroll-behavior: contain; background: var(--surface); border: 1px solid var(--border); border-radius: 17px; box-shadow: 0 24px 80px rgba(16, 38, 25, .23); }
 .modal::backdrop { background: rgba(19, 35, 27, .4); backdrop-filter: blur(3px); }
 #add-item-form { display: grid; gap: 10px; }
 #item-modal-title { margin: 0 0 3px; font-size: 18px; }

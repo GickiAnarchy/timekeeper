@@ -6,6 +6,9 @@ import {
   roundUp15Minutes,
   shiftIsAttachedElsewhere
 } from './domain.mjs';
+import { enableAutoScrollOnFocus } from './keyboard.mjs';
+
+export { enableAutoScrollOnFocus };
 
 /*
   Firebase Setup
@@ -146,18 +149,6 @@ const downloadJSON = (data, filename) => {
   a.click();
   URL.revokeObjectURL(url);
 };
-
-
-export function enableAutoScrollOnFocus() {
-  document.addEventListener('focusin', (event) => {
-    const target = event.target;
-    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
-      setTimeout(() => {
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 300);
-    }
-  });
-}
 
 
 /*

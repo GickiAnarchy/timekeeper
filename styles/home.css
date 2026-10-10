@@ -1,6 +1,6 @@
 @import url("./ui.css");
 
-.home-body { min-height: 100vh; padding: 0; }
+.home-body { min-height: 100vh; min-height: 100dvh; padding: 0; }
 .home-dashboard { width: min(100%, 1080px); margin: 0 auto; padding: clamp(18px, 3vw, 30px); }
 .dashboard-hero {
   position: relative;

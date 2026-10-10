@@ -42,6 +42,6 @@ test('curated quotes have text, explicit author attribution, work, and a source 
     assert.ok(quote.text.trim());
     assert.ok(quote.author.trim());
     assert.ok(quote.work.trim());
-    assert.match(quote.source, /^https:\/\/www\.gutenberg\.org\//);
+    assert.match(quote.source, /^https:\/\/[a-zA-Z0-9.-]+\//);
   }
 });

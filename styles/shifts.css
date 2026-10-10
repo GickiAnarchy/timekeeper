@@ -26,7 +26,7 @@ body { padding: clamp(14px, 3vw, 26px); }
 .list-item-buttons button { min-height: 31px; padding: 0 9px; color: var(--green-deep); background: var(--green-soft); font-size: 9px; font-weight: 650; }
 .list-item-buttons .delete-btn { color: var(--red); background: var(--red-soft); }
 .list-item-buttons button:hover { filter: brightness(.97); }
-.shift-modal { width: min(100% - 24px, 600px); max-width: 600px; max-height: 92vh; margin: auto; padding: 20px; overflow: auto; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 24px 80px rgba(16, 38, 25, .23); }
+.shift-modal { width: min(100% - 24px, 600px); max-width: 600px; max-height: min(92vh, 760px); max-height: min(92dvh, 760px); margin: auto; padding: 20px; overflow: auto; overscroll-behavior: contain; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 24px 80px rgba(16, 38, 25, .23); }
 .shift-modal::backdrop { background: rgba(19, 35, 27, .4); backdrop-filter: blur(3px); }
 .shift-modal > h2 { margin: 0 0 14px; font-size: 18px; }
 .shift-form { display: grid; gap: 13px; }
