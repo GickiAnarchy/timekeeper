@@ -585,6 +585,27 @@ export class AppDataStore {
     return emp;
   }
 
+  async updateEmployee(id, name, wage) {
+    const employee = this.employees.get(id);
+    if (!employee) throw new Error("Employee not found.");
+
+    const cleanName = String(name ?? '').trim();
+    const cleanWage = Number(wage);
+    if (!cleanName) throw new Error("Employee name cannot be empty.");
+    if (!Number.isFinite(cleanWage) || cleanWage < 0) {
+      throw new Error("Employee wage must be a non-negative number.");
+    }
+    const duplicate = Array.from(this.employees.values()).some(
+      candidate => candidate.id !== id && normalize(candidate.name) === normalize(cleanName)
+    );
+    if (duplicate) throw new Error("An employee with that name already exists.");
+
+    await updateDoc(doc(db, "employees", id), { name: cleanName, wage: cleanWage });
+    employee.name = cleanName;
+    employee.wage = cleanWage;
+    return employee;
+  }
+
   async deleteEmployee(id) {
     if (this.employees.has(id)) {
       await deleteDoc(doc(db, "employees", id));
@@ -634,22 +655,42 @@ export class AppDataStore {
     return site;
   }
 
-  async updateCustomer(id, name, location, note) {
+  async updateCustomer(id, name, location, note, billingRate = undefined) {
     const customer = this.customers.get(id);
-    if (customer) {
-      customer.name = name.trim();
-      customer.location = location ? location.trim() : null;
-      customer.note = note ? note.trim() : null;
+    if (!customer) throw new Error("Customer not found.");
 
-      await updateDoc(doc(db, "customers", id), {
-        name: customer.name,
-        location: customer.location,
-        note: customer.note,
-        billingRate: customer.billingRate
-      });
-      return true;
+    const cleanName = String(name ?? '').trim();
+    const cleanLocation = String(location ?? '').trim();
+    const cleanNote = String(note ?? '').trim() || null;
+    if (!cleanName) throw new Error("Customer name cannot be empty.");
+    if (!cleanLocation) throw new Error("Customer location cannot be empty.");
+    const duplicate = Array.from(this.customers.values()).some(candidate =>
+      candidate.id !== id &&
+      normalize(candidate.name) === normalize(cleanName) &&
+      normalize(candidate.location) === normalize(cleanLocation)
+    );
+    if (duplicate) throw new Error("A customer with that name and location already exists.");
+
+    const updates = {
+      name: cleanName,
+      location: cleanLocation,
+      note: cleanNote
+    };
+    let cleanRate;
+    if (billingRate !== undefined) {
+      cleanRate = billingRate === null || billingRate === '' ? null : Number(billingRate);
+      if (cleanRate !== null && (!Number.isFinite(cleanRate) || cleanRate < 0)) {
+        throw new Error("Hourly billing rate must be a non-negative number.");
+      }
+      updates.billingRate = cleanRate;
     }
-    return false;
+
+    await updateDoc(doc(db, "customers", id), updates);
+    customer.name = cleanName;
+    customer.location = cleanLocation;
+    customer.note = cleanNote;
+    if (billingRate !== undefined) customer.billingRate = cleanRate;
+    return true;
   }
 
   async updateCustomerBillingRate(id, billingRate) {
