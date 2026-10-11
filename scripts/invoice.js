@@ -12,6 +12,7 @@ import {
 } from './domain.mjs';
 import { initializeTableSorting, sortTableRows } from './table-sort.mjs';
 
+
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
   enableAutoScrollOnFocus();
