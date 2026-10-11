@@ -94,6 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const signOutButton = document.getElementById('sign-out-button');
   const authError = document.getElementById('auth-error');
   const signedInEmail = document.getElementById('signed-in-email');
+  const ownerAccessBadge = document.getElementById('owner-access-badge');
   const ownerEmailInput = document.getElementById('owner-email');
   const ownerPasswordInput = document.getElementById('owner-password');
   const title = document.getElementById('active-page-title');
@@ -105,6 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (appShell) appShell.hidden = true;
     if (authError) authError.textContent = message;
     if (signedInEmail) signedInEmail.textContent = '';
+    if (ownerAccessBadge) ownerAccessBadge.hidden = true;
     if (mainIframe && mainIframe.getAttribute('src') !== 'about:blank') mainIframe.src = 'about:blank';
   }
 
@@ -113,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (appShell) appShell.hidden = false;
     if (authError) authError.textContent = '';
     if (signedInEmail) signedInEmail.textContent = user.email || 'Owner';
+    if (ownerAccessBadge) ownerAccessBadge.hidden = user.uid !== OWNER_UID;
     if (mainIframe && mainIframe.getAttribute('src') === 'about:blank') mainIframe.src = 'html/home.html';
   }
 

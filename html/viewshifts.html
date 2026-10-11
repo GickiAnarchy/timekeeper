@@ -8,7 +8,7 @@
     <script type="module" src="../scripts/shifts.js" defer></script>
     <title>Shift History · Timekeeper</title>
   </head>
-  <body>
+  <body data-owner="false">
     <main class="shifts-section">
       <h1>Shift History</h1>
       <div class="filters">
@@ -26,7 +26,7 @@
         <input type="checkbox" id="paid-filter">
       </div>
       <div class="button-div">
-        <button type="button" id="add-button">Add Shift</button>
+        <button type="button" id="add-button" data-owner-only>Add Shift</button>
       </div>
       <hr>
       <details class="shift-list-details" open>
@@ -37,7 +37,7 @@
       </details>
     </main>
 
-    <dialog class="shift-modal" id="viewShiftModal" aria-labelledby="shift-modal-title">
+    <dialog class="shift-modal" id="viewShiftModal" data-owner-only aria-labelledby="shift-modal-title">
       <h2 id="shift-modal-title">Shift Details</h2>
       <form class="shift-form" id="shift-form">
         <div class="shift-data" id="shiftBase">

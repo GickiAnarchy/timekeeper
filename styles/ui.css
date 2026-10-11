@@ -175,6 +175,8 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+body:not([data-owner="true"]) [data-owner-only] { display: none !important; }
+
 button, input, select, textarea { font: inherit; }
 button { color: inherit; }
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
@@ -284,4 +286,3 @@ h1, h2, h3 { color: var(--ink); letter-spacing: -0.035em; }
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }
-

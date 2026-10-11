@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const actions = document.createElement('div');
       actions.className = 'item-actions';
+      actions.dataset.ownerOnly = 'true';
       const editButton = document.createElement('button');
       editButton.type = 'button';
       editButton.className = 'edit-btn';
@@ -104,6 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const actions = document.createElement('div');
       actions.className = 'item-actions';
+      actions.dataset.ownerOnly = 'true';
       const editButton = document.createElement('button');
       editButton.type = 'button';
       editButton.className = 'edit-btn';

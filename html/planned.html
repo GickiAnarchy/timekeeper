@@ -8,7 +8,7 @@
     <script type="module" src="../scripts/keyboard.mjs" defer></script>
     <script type="module" src="../scripts/planned.js" defer></script>
   </head>
-  <body class="planned-body">
+  <body class="planned-body" data-owner="false">
     <main class="planned-page">
       <section class="page-intro" aria-labelledby="planned-title">
         <div>
@@ -16,7 +16,7 @@
           <h1 id="planned-title">Planned jobs</h1>
           <p class="page-subtitle">A clear view of the work ahead and what’s already done.</p>
         </div>
-        <button id="add-button" class="button button-primary" type="button">
+        <button id="add-button" class="button button-primary" data-owner-only type="button">
           <span aria-hidden="true">＋</span> Add a job
         </button>
       </section>
@@ -52,7 +52,7 @@
       </section>
     </main>
 
-    <dialog class="add-job-modal" id="add-modal" aria-labelledby="add-job-title">
+    <dialog class="add-job-modal" id="add-modal" data-owner-only aria-labelledby="add-job-title">
       <form id="add-form" class="add-form">
         <div class="modal-heading">
           <div>

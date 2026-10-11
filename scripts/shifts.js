@@ -304,6 +304,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       summary.append(employeeName, details, document.createElement('br'), timeLine, document.createElement('br'), workedLine);
 
       const actions = makeElement('div', 'list-item-buttons');
+      actions.dataset.ownerOnly = 'true';
       const editButton = makeElement('button', 'view-btn', 'Edit');
       editButton.type = 'button';
       editButton.dataset.id = shift.id;

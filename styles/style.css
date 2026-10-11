@@ -115,6 +115,9 @@ body.app-body.keyboard-open { height: var(--app-visible-height, 100vh); min-heig
 .topbar h1 { margin: 0; font-size: 21px; line-height: 1.2; letter-spacing: -.045em; }
 .topbar-tools { display: flex; align-items: center; gap: 8px; }
 .topbar-date { padding: 8px 12px; color: var(--ink-soft); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; font-size: 11px; font-weight: 600; }
+.permission-badge { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; color: var(--green-deep); background: var(--green-soft); border: 1px solid var(--green-line); border-radius: 999px; font-size: 9px; font-weight: 800; letter-spacing: .07em; white-space: nowrap; }
+.permission-badge[hidden] { display: none; }
+.permission-badge svg { width: 14px; height: 14px; flex: 0 0 14px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .workspace-frame { min-width: 0; min-height: 0; overflow: hidden; background: var(--canvas); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow-soft); }
 .workspace-frame iframe { display: block; width: 100%; height: 100%; min-height: 0; border: 0; background: var(--canvas); }
 .site-footer { display: flex; justify-content: space-between; gap: 12px; padding: 9px 5px 0; color: #8b9891; font-size: 9px; }
@@ -201,6 +204,8 @@ body.app-body.keyboard-open { height: var(--app-visible-height, 100vh); min-heig
   .topbar { flex-wrap: wrap; row-gap: 6px; }
   .topbar-tools { gap: 5px; }
   .topbar-date { padding: 7px 8px; font-size: 9px; }
+  .permission-badge { gap: 4px; padding: 6px 7px; font-size: 8px; }
+  .permission-badge svg { width: 12px; height: 12px; flex-basis: 12px; }
   .topbar-eyebrow { font-size: 8px; }
   .home-benefits { grid-template-columns: 1fr; gap: 13px; }
   .signed-in-email { display: none; }

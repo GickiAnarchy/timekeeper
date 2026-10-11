@@ -394,15 +394,17 @@ export class AppDataStore {
     this.ledger = new Ledger();
     this.plannedJobs = [];
     this.loadFailures = [];
-    this.isAdmin = null;
+    this.isOwner = false;
     this.authRequired = false;
   }
   
   async init() {
     this.loadFailures = [];
     const owner = await getCurrentOwner();
-    this.authRequired = !owner;
-    if (!owner) return;
+    this.isOwner = Boolean(owner);
+    this.authRequired = !this.isOwner;
+    globalThis.document?.body?.setAttribute('data-owner', String(this.isOwner));
+    if (!this.isOwner) return;
     await this.loadEmployees();
     await this.loadCustomers();
     await this.loadShifts();

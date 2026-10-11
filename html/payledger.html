@@ -8,7 +8,7 @@
     <script type="module" src="../scripts/ledger.js" defer></script>
     <title>Employee Ledger · Timekeeper</title>
   </head>
-  <body>
+  <body data-owner="false">
     <section class="ledger-section">
       <div class="ledger-heading">
         <div>
@@ -34,7 +34,7 @@
             <th scope="col" data-sort-key="hours" data-sort-type="number"><button class="table-sort-button" type="button"><span class="table-sort-label">Hours</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
             <th scope="col" data-sort-key="amount" data-sort-type="number"><button class="table-sort-button" type="button"><span class="table-sort-label">Amount</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
             <th scope="col" data-sort-key="notes" data-sort-type="text"><button class="table-sort-button" type="button"><span class="table-sort-label">Notes</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
-            <th scope="col">Actions</th>
+            <th scope="col" data-owner-only>Actions</th>
           </tr>
         </thead>
         <tbody id="ledger-body" aria-live="polite"></tbody>
@@ -51,7 +51,7 @@
       </table>
     </div>
 
-    <div class="form-container">
+    <div class="form-container" data-owner-only>
       <form id="ledger-form">
         <label for="employee-select">Employee
           <select id="employee-select" required>
@@ -81,7 +81,7 @@
       </form>
     </div>
 
-    <dialog class="ledger-edit-modal" id="ledger-edit-modal" aria-labelledby="ledger-edit-title" aria-describedby="ledger-edit-help ledger-edit-error">
+    <dialog class="ledger-edit-modal" id="ledger-edit-modal" data-owner-only aria-labelledby="ledger-edit-title" aria-describedby="ledger-edit-help ledger-edit-error">
       <form class="ledger-edit-form" id="ledger-edit-form">
         <div class="ledger-edit-heading">
           <p class="ledger-edit-eyebrow">LEDGER ENTRY</p>

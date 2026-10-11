@@ -59,3 +59,52 @@ test('employee ledger footer includes a separate total-hours summary after the b
   assert.match(markup, /<strong>Total hours<\/strong>[\s\S]*?id="ledger-hours-total"/);
   assert.match(script, /sumLedgerHours\(entries\)/);
 });
+
+test('the shell labels the authenticated owner session with an elevated-access badge', () => {
+  const markup = readFileSync(join(projectRoot, 'index.html'), 'utf8');
+  const script = readFileSync(join(projectRoot, 'scripts', 'index.js'), 'utf8');
+  const stylesheet = readFileSync(join(projectRoot, 'styles', 'style.css'), 'utf8');
+  assert.match(markup, /id="owner-access-badge"[^>]*role="status"[^>]*hidden/);
+  assert.match(markup, /<span>OWNER ACCESS<\/span>/);
+  assert.match(script, /ownerAccessBadge\.hidden = user\.uid !== OWNER_UID/);
+  assert.match(script, /ownerAccessBadge\.hidden = true/);
+  assert.match(stylesheet, /\.permission-badge\[hidden\]\s*\{\s*display:\s*none;/);
+});
+
+test('embedded owner-only actions fail closed for non-owners and reveal only after owner verification', () => {
+  const sharedStylesheet = readFileSync(join(projectRoot, 'styles', 'ui.css'), 'utf8');
+  const modelScript = readFileSync(join(projectRoot, 'scripts', 'models.js'), 'utf8');
+  assert.match(sharedStylesheet, /body:not\(\[data-owner="true"\]\)\s+\[data-owner-only\]\s*\{\s*display:\s*none\s*!important;/);
+  assert.match(modelScript, /this\.isOwner = Boolean\(owner\)/);
+  assert.match(modelScript, /setAttribute\('data-owner', String\(this\.isOwner\)\)/);
+
+  for (const file of embeddedPages) {
+    const markup = readFileSync(join(htmlDirectory, file), 'utf8');
+    assert.match(markup, /<body\b[^>]*data-owner="false"/i, `${file} should start in a fail-closed state`);
+  }
+
+  const ownerOnlyMarkup = {
+    'basic-data.html': /class="form-container" data-owner-only/,
+    'planned.html': /id="add-button"[^>]*data-owner-only/,
+    'viewshifts.html': /id="add-button"[^>]*data-owner-only/,
+    'payledger.html': /class="form-container" data-owner-only/,
+    'invoice.html': /class="invoice-actions" data-owner-only/,
+    'settings.html': /class="settings-card" data-owner-only aria-labelledby="backup-title"/
+  };
+  for (const [file, pattern] of Object.entries(ownerOnlyMarkup)) {
+    const markup = readFileSync(join(htmlDirectory, file), 'utf8');
+    assert.match(markup, pattern, `${file} should mark write surfaces as owner-only`);
+  }
+
+  for (const [file, pattern] of [
+    ['data.js', /actions\.dataset\.ownerOnly = 'true'/],
+    ['planned.js', /actions\.dataset\.ownerOnly = 'true'/],
+    ['shifts.js', /actions\.dataset\.ownerOnly = 'true'/],
+    ['ledger.js', /actionCell\.dataset\.ownerOnly = 'true'/],
+    ['clock.js', /clockOutButton\.dataset\.ownerOnly = 'true'/],
+    ['invoice.js', /mark-paid-btn" data-owner-only/]
+  ]) {
+    const script = readFileSync(join(projectRoot, 'scripts', file), 'utf8');
+    assert.match(script, pattern, `${file} should mark dynamically rendered write controls`);
+  }
+});

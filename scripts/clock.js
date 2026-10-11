@@ -80,6 +80,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         card.appendChild(breakTimer);
       }
       const breakButtons = makeElement('div', 'break-buttons');
+      breakButtons.dataset.ownerOnly = 'true';
       const breakInBtn = makeElement('button', 'start-break-btn', 'Start Break');
       breakInBtn.type = 'button';
       breakInBtn.dataset.id = shift.id;
@@ -91,6 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const clockOutButton = makeElement('button', 'stop-btn', 'Clock Out');
       clockOutButton.type = 'button';
       clockOutButton.dataset.id = shift.id;
+      clockOutButton.dataset.ownerOnly = 'true';
       card.append(breakButtons, clockOutButton);
       li.appendChild(card);
       
