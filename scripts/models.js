@@ -6,9 +6,6 @@ import {
   roundUp15Minutes,
   shiftIsAttachedElsewhere
 } from './domain.mjs';
-import { enableAutoScrollOnFocus } from './keyboard.mjs';
-
-export { enableAutoScrollOnFocus };
 
 /*
   Firebase Setup
@@ -121,17 +118,6 @@ const commitBatch = (batch, message = 'Saving this group of changes to Firestore
   firestoreRequest(message, () => batch.commit());
 
 
-/*
-  HELPER FUNCTIONS
-*/
-
-function changeHeader(text = '') {
-  const header = document.querySelector('header h1') || document.querySelector('header');
-  if (header && text) {
-    header.dataset.originalText = header.dataset.originalText || header.textContent;
-  }
-}
-
 export { roundTo15Minutes, roundDown15Minutes, roundUp15Minutes };
 
 // Normalizes the name string
@@ -152,18 +138,6 @@ export function formatTime24(date) {
   
   return `${hours}:${minutes}`;
 }
-
-// JSON downloader
-const downloadJSON = (data, filename) => {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-};
-
 
 /*
   DATA MODELS
@@ -435,7 +409,6 @@ export class AppDataStore {
   }
   
   async init() {
-    changeHeader("Loading");
     this.loadFailures = [];
     await this.loadEmployees();
     await this.loadCustomers();
@@ -444,7 +417,6 @@ export class AppDataStore {
     await this.loadInvoices();
     await this.loadLedger();
     await this.loadPlanned();
-    changeHeader();
   }
   
   // LEDGER --

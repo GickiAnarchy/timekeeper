@@ -249,8 +249,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }).format(new Date());
   }
 });
-
-export function changeHeader(newHeader = 'Mosher Lawns') {
-  const header = document.getElementById('active-page-title');
-  if (header) header.textContent = newHeader;
-}

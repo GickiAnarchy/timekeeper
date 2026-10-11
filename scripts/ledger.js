@@ -1,8 +1,7 @@
 import {
   store,
   populateEmployeeDropdowns,
-  compareByFirstName,
-  enableAutoScrollOnFocus
+  compareByFirstName
 } from './models.js';
 import { sortLedgerEntriesByDate, sumLedgerHours } from './domain.mjs';
 import { initializeTableSorting, sortTableRows } from './table-sort.mjs';
@@ -22,7 +21,6 @@ function makeCell(text) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
-  enableAutoScrollOnFocus();
 
   const form = document.getElementById('ledger-form');
   const dateInput = document.getElementById('date');

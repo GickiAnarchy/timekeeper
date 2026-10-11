@@ -1,8 +1,7 @@
 import {
   store,
   populateCustomerDropdowns,
-  Invoice,
-  enableAutoScrollOnFocus
+  Invoice
 } from './models.js';
 import {
   invoiceShiftIds as getInvoiceShiftIds,
@@ -15,7 +14,6 @@ import { initializeTableSorting, sortTableRows } from './table-sort.mjs';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
-  enableAutoScrollOnFocus();
 
   const custSelect = document.getElementById('cust-select');
   const invList = document.getElementById('inv-select');
