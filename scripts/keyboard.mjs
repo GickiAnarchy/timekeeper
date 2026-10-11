@@ -1,4 +1,7 @@
 const registeredDocuments = new WeakSet();
+const FOCUSABLE_TAGS = new Set([
+  'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'IFRAME', 'OBJECT', 'EMBED', 'SUMMARY', 'AUDIO', 'VIDEO'
+]);
 const NON_TEXT_INPUT_TYPES = new Set([
   'button', 'checkbox', 'color', 'file', 'hidden', 'image', 'radio', 'range', 'reset', 'submit'
 ]);
@@ -8,6 +11,21 @@ const DIALOG_VIEWPORT_PROPERTIES = [
   'position', 'inset-block-start', 'inset-block-end', 'max-height', 'margin-block'
 ];
 const VIEWPORT_GUTTER = 8;
+
+function hasAttribute(target, name) {
+  if (typeof target?.hasAttribute === 'function') return target.hasAttribute(name);
+  return typeof target?.getAttribute === 'function' && target.getAttribute(name) != null;
+}
+
+export function isFocusableElement(target) {
+  if (!target || target.disabled || target.hidden || target.inert || target.isConnected === false) return false;
+  const tagName = String(target.tagName || '').toUpperCase();
+  if (tagName === 'INPUT' && String(target.type || 'text').toLowerCase() === 'hidden') return false;
+  if (tagName === 'A' || tagName === 'AREA') return hasAttribute(target, 'href') || hasAttribute(target, 'tabindex');
+  if (FOCUSABLE_TAGS.has(tagName)) return true;
+  if (target.isContentEditable || String(target.contentEditable || '').toLowerCase() === 'true') return true;
+  return hasAttribute(target, 'tabindex') || Number(target.tabIndex) >= 0;
+}
 
 function isKeyboardInput(target) {
   if (!target || target.disabled || target.readOnly) return false;
@@ -73,15 +91,25 @@ export function enableAutoScrollOnFocus(doc = globalThis.document) {
     const documentHeight = Number(doc.documentElement?.clientHeight);
     const windowHeight = Number(view?.innerHeight);
     const layoutHeight = [windowHeight, documentHeight].find(value => Number.isFinite(value) && value > 0) || 0;
+    const documentWidth = Number(doc.documentElement?.clientWidth);
+    const windowWidth = Number(view?.innerWidth);
+    const layoutWidth = [windowWidth, documentWidth].find(value => Number.isFinite(value) && value > 0) || 0;
     const reportedHeight = Number(view?.visualViewport?.height);
     const visibleHeight = Number.isFinite(reportedHeight) && reportedHeight > 0
       ? Math.min(layoutHeight || reportedHeight, reportedHeight)
       : layoutHeight;
+    const reportedWidth = Number(view?.visualViewport?.width);
+    const visibleWidth = Number.isFinite(reportedWidth) && reportedWidth > 0
+      ? Math.min(layoutWidth || reportedWidth, reportedWidth)
+      : layoutWidth;
     const reportedTop = Number(view?.visualViewport?.offsetTop);
     const visibleTop = Math.max(0, Math.min(layoutHeight, Number.isFinite(reportedTop) ? reportedTop : 0));
+    const reportedLeft = Number(view?.visualViewport?.offsetLeft);
+    const visibleLeft = Math.max(0, Math.min(layoutWidth, Number.isFinite(reportedLeft) ? reportedLeft : 0));
     const visibleBottom = Math.max(visibleTop, Math.min(layoutHeight || visibleTop + visibleHeight, visibleTop + visibleHeight));
+    const visibleRight = Math.max(visibleLeft, Math.min(layoutWidth || visibleLeft + visibleWidth, visibleLeft + visibleWidth));
     const overlayKeyboardHeight = Number(view?.navigator?.virtualKeyboard?.boundingRect?.height) || 0;
-    return { layoutHeight, visibleHeight, visibleTop, visibleBottom, overlayKeyboardHeight };
+    return { layoutHeight, layoutWidth, visibleHeight, visibleWidth, visibleTop, visibleBottom, visibleLeft, visibleRight, overlayKeyboardHeight };
   }
 
   let baselineViewportHeight = (() => {
@@ -90,17 +118,18 @@ export function enableAutoScrollOnFocus(doc = globalThis.document) {
   })();
 
   function revealIfNeeded(target = focusedControl) {
-    if (!target || !isKeyboardInput(target) || !target.isConnected || doc.activeElement !== target) return;
-    const viewport = view?.visualViewport;
-    const viewportTop = Math.max(0, Number(viewport?.offsetTop) || 0);
-    const viewportHeight = Number(viewport?.height) || Number(view?.innerHeight) || Number(doc.documentElement?.clientHeight);
-    if (!Number.isFinite(viewportHeight) || viewportHeight <= 0) return;
+    if (!isFocusableElement(target) || doc.activeElement !== target) return;
+    const metrics = viewportMetrics();
+    if (!Number.isFinite(metrics.visibleTop) || !Number.isFinite(metrics.visibleBottom) || metrics.visibleBottom <= metrics.visibleTop) return;
     const rect = target.getBoundingClientRect();
-    const margin = Math.min(24, Math.max(12, rect.height / 3));
-    const viewportBottom = viewportTop + viewportHeight;
-    const outsideVisibleArea = rect.top < viewportTop + margin || rect.bottom > viewportBottom - margin;
+    const outsideVerticalArea = rect.top < metrics.visibleTop || rect.bottom > metrics.visibleBottom;
+    const hasHorizontalViewport = metrics.visibleRight > metrics.visibleLeft &&
+      Number.isFinite(rect.left) && Number.isFinite(rect.right);
+    const outsideHorizontalArea = hasHorizontalViewport &&
+      (rect.left < metrics.visibleLeft || rect.right > metrics.visibleRight);
+    const outsideVisibleArea = outsideVerticalArea || outsideHorizontalArea;
     if (outsideVisibleArea) {
-      target.scrollIntoView?.({ behavior: 'auto', block: 'center', inline: 'nearest' });
+      target.scrollIntoView?.({ behavior: 'auto', block: 'nearest', inline: 'nearest' });
     }
   }
 
@@ -138,21 +167,23 @@ export function enableAutoScrollOnFocus(doc = globalThis.document) {
   }
 
   doc.addEventListener('focusin', event => {
-    if (!isKeyboardInput(event.target)) return;
+    if (!isFocusableElement(event.target)) return;
     focusedControl = event.target;
     syncDialogViewport(focusedControl);
     scheduleReveal(focusedControl);
     // The keyboard and its viewport resize can arrive after the initial focus event.
-    const setDelay = view?.setTimeout?.bind(view) || setTimeout;
-    for (const delay of [150, 350, 700]) {
-      setDelay(() => scheduleReveal(focusedControl), delay);
+    if (isKeyboardInput(focusedControl)) {
+      const setDelay = view?.setTimeout?.bind(view) || setTimeout;
+      for (const delay of [150, 350, 700]) {
+        setDelay(() => scheduleReveal(focusedControl), delay);
+      }
     }
   }, true);
 
   doc.addEventListener('focusout', () => {
     const requestFrame = view?.requestAnimationFrame?.bind(view) || (callback => setTimeout(callback, 0));
     requestFrame(() => {
-      focusedControl = isKeyboardInput(doc.activeElement) ? doc.activeElement : null;
+      focusedControl = isFocusableElement(doc.activeElement) ? doc.activeElement : null;
       syncDialogViewport(focusedControl);
     });
   }, true);

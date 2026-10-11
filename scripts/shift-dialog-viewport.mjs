@@ -1,17 +1,6 @@
+import { isFocusableElement } from './keyboard.mjs';
+
 const VIEWPORT_GUTTER = 8;
-const NON_TEXT_INPUT_TYPES = new Set([
-  'button', 'checkbox', 'color', 'file', 'hidden', 'image', 'radio', 'range', 'reset', 'submit'
-]);
-
-function isKeyboardInput(target) {
-  if (!target || target.disabled || target.readOnly) return false;
-
-  const tagName = String(target.tagName || '').toUpperCase();
-  if (tagName === 'TEXTAREA' || tagName === 'SELECT') return true;
-  if (tagName !== 'INPUT') return false;
-
-  return !NON_TEXT_INPUT_TYPES.has(String(target.type || 'text').toLowerCase());
-}
 
 export function resetShiftDialogViewport(dialog) {
   if (!dialog) return;
@@ -50,14 +39,17 @@ export function syncShiftDialogViewport(dialog, view = globalThis.window) {
   dialog.classList.add('viewport-constrained');
 
   const focusedControl = doc?.activeElement;
-  if (!dialog.contains(focusedControl) || !isKeyboardInput(focusedControl)) return true;
+  if (!dialog.contains(focusedControl) || !isFocusableElement(focusedControl)) return true;
 
   const setTimeout = view.setTimeout?.bind(view) || globalThis.setTimeout;
   const requestFrame = view.requestAnimationFrame?.bind(view)
     || (callback => setTimeout(callback, 0));
   requestFrame(() => {
     if (dialog.open && doc.activeElement === focusedControl && dialog.contains(focusedControl)) {
-      focusedControl.scrollIntoView?.({ behavior: 'auto', block: 'nearest', inline: 'nearest' });
+      const rect = focusedControl.getBoundingClientRect?.();
+      if (rect && (rect.top < visibleTop || rect.bottom > visibleBottom)) {
+        focusedControl.scrollIntoView?.({ behavior: 'auto', block: 'nearest', inline: 'nearest' });
+      }
     }
   });
 
