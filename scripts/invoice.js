@@ -10,6 +10,7 @@ import {
   shiftInvoiceLineStatus,
   shiftIsAttachedElsewhere
 } from './domain.mjs';
+import { initializeTableSorting, sortTableRows } from './table-sort.mjs';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
@@ -29,12 +30,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   const shiftLinkList = document.getElementById('shift-link-list');
   const shiftLinkError = document.getElementById('shift-link-error');
   const saveShiftLinksBtn = document.getElementById('save-shift-links-btn');
+  const invoiceTable = document.getElementById('inv-table');
 
   if (!custSelect || !invList || !addItemBtn || !editItemBtn || !removeItemBtn ||
       !addInvBtn || !deleteInvBtn || !invoiceBody || !invoiceDateInput || !openDiv ||
       !shiftLinkList || !shiftLinkError || !saveShiftLinksBtn) return;
 
   let selectedItemIndex = null;
+  let invoiceSort = null;
+
+  initializeTableSorting(invoiceTable, {
+    onSort: sort => {
+      invoiceSort = sort;
+      sortInvoiceRows();
+    }
+  });
 
   // Populate customers dropdown
   populateCustomerDropdowns(custSelect);
@@ -134,6 +144,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   function getSelectedInvoice() {
     if (!Array.isArray(store.invoices)) return null;
     return store.invoices.find(invoice => String(invoice.id) === String(invList.value)) || null;
+  }
+
+  function sortInvoiceRows() {
+    const rows = [...invoiceBody.querySelectorAll('tr[data-item-index]')];
+    const sortedRows = invoiceSort
+      ? sortTableRows(rows, {
+          ...invoiceSort,
+          getValue: (row, key) => key === 'item' ? row.dataset.sortItem : row.dataset.sortValue
+        })
+      : rows.sort((a, b) => Number(a.dataset.itemIndex) - Number(b.dataset.itemIndex));
+    sortedRows.forEach(row => invoiceBody.appendChild(row));
   }
 
   function shortInvoiceId(id) {
@@ -445,6 +466,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       invoice.items.forEach((item, index) => {
         const row = document.createElement('tr');
         row.dataset.itemIndex = index;
+        row.dataset.sortItem = item.name || '';
+        row.dataset.sortValue = String(Number(item.value || 0));
         row.title = item.shiftId
           ? 'This labor line is generated from a linked work shift; edit it in the Work shifts and labor section.'
           : 'Click to select this item for editing or removal';
@@ -471,6 +494,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         row.append(nameCell, valueCell);
         invoiceBody.appendChild(row);
       });
+      sortInvoiceRows();
     }
   }
 

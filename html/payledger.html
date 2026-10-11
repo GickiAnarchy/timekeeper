@@ -25,22 +25,27 @@
     </section>
 
     <div class="table-div">
-      <table aria-label="Employee ledger entries">
+      <table id="ledger-table" aria-label="Employee ledger entries">
         <thead>
           <tr>
-            <th>Entry</th>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Hours</th>
-            <th>Amount</th>
-            <th>Notes</th>
-            <th>Actions</th>
+            <th scope="col" data-sort-key="index" data-sort-type="number"><button class="table-sort-button" type="button"><span class="table-sort-label">Entry</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+            <th scope="col" data-sort-key="date" data-sort-type="date" aria-sort="descending"><button class="table-sort-button" type="button"><span class="table-sort-label">Date</span><span class="table-sort-indicator" aria-hidden="true">↓</span></button></th>
+            <th scope="col" data-sort-key="type" data-sort-type="text"><button class="table-sort-button" type="button"><span class="table-sort-label">Type</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+            <th scope="col" data-sort-key="hours" data-sort-type="number"><button class="table-sort-button" type="button"><span class="table-sort-label">Hours</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+            <th scope="col" data-sort-key="amount" data-sort-type="number"><button class="table-sort-button" type="button"><span class="table-sort-label">Amount</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+            <th scope="col" data-sort-key="notes" data-sort-type="text"><button class="table-sort-button" type="button"><span class="table-sort-label">Notes</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody id="ledger-body" aria-live="polite"></tbody>
         <tfoot>
           <tr>
             <td colspan="7" id="ledger-total"><strong>Total: $0.00</strong></td>
+          </tr>
+          <tr>
+            <td colspan="3"><strong>Total hours</strong></td>
+            <td id="ledger-hours-total"><strong>0.00</strong></td>
+            <td colspan="3"></td>
           </tr>
         </tfoot>
       </table>

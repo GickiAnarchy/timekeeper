@@ -16,6 +16,43 @@ export function sortLedgerEntriesByDate(entries = []) {
   });
 }
 
+export function sumLedgerHours(entries = []) {
+  return (Array.isArray(entries) ? entries : []).reduce((sum, entry) => {
+    if (String(entry?.type || '').toLowerCase() === 'advance') return sum;
+    const hours = Number(entry?.hours || 0);
+    return Number.isFinite(hours) ? sum + hours : sum;
+  }, 0);
+}
+
+export function sortTableRows(rows = [], { key, direction = 'ascending', type = 'text', getValue = row => row?.[key] } = {}) {
+  const source = Array.isArray(rows) ? rows : [];
+  if (!key || !['ascending', 'descending'].includes(direction)) return [...source];
+
+  const normalizedType = ['number', 'date'].includes(type) ? type : 'text';
+  const comparable = value => {
+    if (value === null || value === undefined || (typeof value === 'string' && value.trim() === '')) return null;
+    if (normalizedType === 'number') {
+      const number = Number(value);
+      return Number.isFinite(number) ? number : null;
+    }
+    if (normalizedType === 'date') return asValidDate(value)?.getTime() ?? null;
+    return String(value).trim();
+  };
+
+  return source.map((row, index) => ({ row, index, value: comparable(getValue(row, key)) }))
+    .sort((a, b) => {
+      if (a.value === null || b.value === null) {
+        if (a.value === null && b.value === null) return a.index - b.index;
+        return a.value === null ? 1 : -1;
+      }
+      const comparison = normalizedType === 'text'
+        ? a.value.localeCompare(b.value, undefined, { numeric: true, sensitivity: 'base' })
+        : a.value - b.value;
+      return comparison === 0 ? a.index - b.index : direction === 'descending' ? -comparison : comparison;
+    })
+    .map(item => item.row);
+}
+
 export function roundTo15Minutes(date = new Date()) {
   const source = asValidDate(date);
   if (!source) throw new TypeError('A valid date is required.');

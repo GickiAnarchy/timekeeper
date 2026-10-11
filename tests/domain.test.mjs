@@ -8,6 +8,8 @@ import {
   roundTo15Minutes,
   roundUp15Minutes,
   sortLedgerEntriesByDate,
+  sortTableRows,
+  sumLedgerHours,
   shiftInvoiceLineStatus,
   shiftIsAttachedElsewhere
 } from '../scripts/domain.mjs';
@@ -26,6 +28,34 @@ test('ledger entries sort newest first, then by entry index, without mutating th
     'newer-last', 'newer-first', 'older', 'invalid-date'
   ]);
   assert.equal(entries[0].id, 'older');
+});
+
+test('table sorting handles text, numeric, and date values without mutating rows or moving blanks first', () => {
+  const rows = [
+    { name: 'Item 12', amount: 12, date: '2026-10-09' },
+    { name: 'item 2', amount: 2, date: '2026-01-12' },
+    { name: 'Alpha', amount: null, date: '' }
+  ];
+
+  assert.deepEqual(sortTableRows(rows, { key: 'name', type: 'text' }).map(row => row.name), [
+    'Alpha', 'item 2', 'Item 12'
+  ]);
+  assert.deepEqual(sortTableRows(rows, { key: 'amount', type: 'number' }).map(row => row.name), [
+    'item 2', 'Item 12', 'Alpha'
+  ]);
+  assert.deepEqual(sortTableRows(rows, { key: 'date', type: 'date', direction: 'descending' }).map(row => row.name), [
+    'Item 12', 'item 2', 'Alpha'
+  ]);
+  assert.deepEqual(rows.map(row => row.name), ['Item 12', 'item 2', 'Alpha']);
+});
+
+test('ledger hour totals exclude advances and ignore invalid hour values', () => {
+  assert.equal(sumLedgerHours([
+    { type: 'normal', hours: 3.5 },
+    { type: 'advance', hours: 20 },
+    { type: 'general', hours: 2 },
+    { type: 'normal', hours: 'not a number' }
+  ]), 5.5);
 });
 
 test('quarter-hour rounding preserves the nearest/down/up behavior at boundaries', () => {

@@ -4,7 +4,8 @@ import {
   compareByFirstName,
   enableAutoScrollOnFocus
 } from './models.js';
-import { sortLedgerEntriesByDate } from './domain.mjs';
+import { sortLedgerEntriesByDate, sumLedgerHours } from './domain.mjs';
+import { initializeTableSorting, sortTableRows } from './table-sort.mjs';
 
 function localDateInputValue(date = new Date()) {
   const year = date.getFullYear();
@@ -33,6 +34,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const ledgerOwner = document.getElementById('ledger-owner');
   const tableBody = document.getElementById('ledger-body');
   const totalRow = document.getElementById('ledger-total');
+  const hoursTotal = document.getElementById('ledger-hours-total');
+  const ledgerTable = document.getElementById('ledger-table');
   const editDialog = document.getElementById('ledger-edit-modal');
   const editForm = document.getElementById('ledger-edit-form');
   const editTitle = document.getElementById('ledger-edit-title');
@@ -46,6 +49,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   const editNotes = document.getElementById('edit-ledger-notes');
   let editingEntryId = null;
   let editTrigger = null;
+  let ledgerSort = { key: 'date', direction: 'descending', type: 'date' };
+
+  initializeTableSorting(ledgerTable, {
+    initialSort: ledgerSort,
+    onSort: sort => {
+      ledgerSort = sort;
+      renderLedger();
+    }
+  });
 
   populateEmployeeDropdowns(employeeSelect);
   ledgerFilter.replaceChildren(new Option('Choose an employee', ''));
@@ -73,8 +85,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   function filteredEntries() {
     if (!ledgerFilter.value) return [];
     const employeeId = selectedEmployeeId();
-    return sortLedgerEntriesByDate(store.ledger.entries
-      .filter(entry => employeeId ? entry.employeeId === employeeId : !entry.employeeId));
+    const entries = store.ledger.entries
+      .filter(entry => employeeId ? entry.employeeId === employeeId : !entry.employeeId);
+    if (ledgerSort.key === 'date' && ledgerSort.direction === 'descending') {
+      return sortLedgerEntriesByDate(entries);
+    }
+    return sortTableRows(entries, {
+      ...ledgerSort,
+      getValue: (entry, key) => {
+        switch (key) {
+          case 'index': return entry.index;
+          case 'date': return entry.date;
+          case 'type': return entry.type;
+          case 'hours': return entry.hours;
+          case 'amount': {
+            const amount = Number(entry.amount || 0);
+            return String(entry.type || '').toLowerCase() === 'advance' ? -Math.abs(amount) : amount;
+          }
+          case 'notes': return entry.notes;
+          default: return '';
+        }
+      }
+    });
   }
 
   function updateEditTypeInputs() {
@@ -94,6 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       tableBody.appendChild(row);
       ledgerOwner.textContent = 'Choose an employee to view their ledger.';
       totalRow.innerHTML = '<strong>Total: $0.00</strong>';
+      hoursTotal.innerHTML = '<strong>0.00</strong>';
       return;
     }
 
@@ -154,6 +187,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       return sum + (String(entry.type || '').toLowerCase() === 'advance' ? -amount : amount);
     }, 0);
     totalRow.innerHTML = `<strong>Balance: $${total.toFixed(2)}</strong>`;
+    const totalHours = sumLedgerHours(entries);
+    hoursTotal.innerHTML = `<strong>${totalHours.toFixed(2)}</strong>`;
   }
 
   ledgerFilter.addEventListener('change', () => {

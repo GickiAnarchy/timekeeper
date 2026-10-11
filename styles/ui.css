@@ -213,3 +213,22 @@ h1, h2, h3 { color: var(--ink); letter-spacing: -0.035em; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+
+
+.table-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 2px 4px;
+  color: inherit;
+  background: transparent;
+  border-radius: 6px;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  text-transform: inherit;
+  white-space: nowrap;
+}
+.table-sort-button:hover { color: var(--green-deep); background: var(--surface-hover); }
+.table-sort-indicator { min-width: 1em; color: var(--green-deep); font-size: 1.15em; line-height: 1; text-align: center; }
