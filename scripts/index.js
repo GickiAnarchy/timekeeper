@@ -1,3 +1,5 @@
+import { OWNER_UID, observeAuthState, signInOwner, signOutOwner } from './firebase.js';
+
 const THEME_KEY = 'timekeeper-theme';
 const FONT_SCALE_KEY = 'timekeeper-font-scale';
 const THEMES = new Set(['forest', 'coastal', 'harvest', 'midnight', 'lavender', 'rose', 'slate']);
@@ -85,9 +87,86 @@ function applyTextScaleToDocument(doc, scale) {
 document.addEventListener('DOMContentLoaded', () => {
   const navigation = [...document.querySelectorAll('.nav-link[data-page]')];
   const mainIframe = document.querySelector('iframe[name="main-content"]');
+  const authScreen = document.getElementById('auth-screen');
+  const appShell = document.getElementById('app-shell');
+  const signInForm = document.getElementById('owner-signin-form');
+  const signInButton = document.getElementById('sign-in-button');
+  const signOutButton = document.getElementById('sign-out-button');
+  const authError = document.getElementById('auth-error');
+  const signedInEmail = document.getElementById('signed-in-email');
+  const ownerEmailInput = document.getElementById('owner-email');
+  const ownerPasswordInput = document.getElementById('owner-password');
   const title = document.getElementById('active-page-title');
   const dateLabel = document.getElementById('topbar-date');
   let baselineViewportHeight = 0;
+
+  function showSignIn(message = '') {
+    if (authScreen) authScreen.hidden = false;
+    if (appShell) appShell.hidden = true;
+    if (authError) authError.textContent = message;
+    if (signedInEmail) signedInEmail.textContent = '';
+    if (mainIframe && mainIframe.getAttribute('src') !== 'about:blank') mainIframe.src = 'about:blank';
+  }
+
+  function showWorkspace(user) {
+    if (authScreen) authScreen.hidden = true;
+    if (appShell) appShell.hidden = false;
+    if (authError) authError.textContent = '';
+    if (signedInEmail) signedInEmail.textContent = user.email || 'Owner';
+    if (mainIframe && mainIframe.getAttribute('src') === 'about:blank') mainIframe.src = 'html/home.html';
+  }
+
+  signInForm?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const email = ownerEmailInput?.value.trim() || '';
+    const password = ownerPasswordInput?.value || '';
+    if (!email || !password) {
+      showSignIn('Enter the owner email and password.');
+      return;
+    }
+    if (signInButton) {
+      signInButton.disabled = true;
+      signInButton.textContent = 'Signing in…';
+    }
+    if (authError) authError.textContent = '';
+    try {
+      await signInOwner(email, password);
+    } catch (error) {
+      console.warn('Owner sign-in failed.', error?.code || 'auth/error');
+      showSignIn(error.message || 'Sign-in failed. Check the owner account and try again.');
+    } finally {
+      if (ownerPasswordInput) ownerPasswordInput.value = '';
+      if (signInButton) {
+        signInButton.disabled = false;
+        signInButton.textContent = 'Sign in';
+      }
+    }
+  });
+
+  signOutButton?.addEventListener('click', async () => {
+    signOutButton.disabled = true;
+    try {
+      await signOutOwner();
+    } catch (error) {
+      console.error('Unable to sign out.', error);
+      showSignIn('Sign-out failed. Reload this page and try again.');
+    } finally {
+      signOutButton.disabled = false;
+    }
+  });
+
+  observeAuthState(user => {
+    if (user && user.uid !== OWNER_UID) {
+      signOutOwner().catch(error => console.error('Unable to end a non-owner session.', error));
+      showSignIn('This account is not authorized to use this workspace.');
+      return;
+    }
+    if (user) showWorkspace(user);
+    else showSignIn();
+  }, error => {
+    console.error('Unable to read the sign-in state.', error);
+    showSignIn('Sign-in status could not be checked. Reload and try again.');
+  });
 
   function isKeyboardInput(target) {
     if (!target || target.disabled || target.readOnly) return false;

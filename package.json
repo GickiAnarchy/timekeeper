@@ -1,0 +1,16 @@
+{
+  "name": "timekeeper-live-fork",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "test:firebase-emulator": "ROOT=\"$PWD\"; WORK=\"$(mktemp -d)\"; trap 'rm -rf \"$WORK\"' EXIT; ln -s \"$ROOT/firestore.rules\" \"$WORK/firestore.rules\"; printf '{\"firestore\":{\"rules\":\"firestore.rules\"},\"emulators\":{\"auth\":{\"host\":\"127.0.0.1\",\"port\":9099},\"firestore\":{\"host\":\"127.0.0.1\",\"port\":8080},\"ui\":{\"enabled\":false},\"singleProjectMode\":true}}' > \"$WORK/firebase.json\"; cd \"$WORK\" && \"$ROOT/node_modules/.bin/firebase\" emulators:exec --config \"$WORK/firebase.json\" --project demo-timekeeper --only auth,firestore --log-verbosity=QUIET \"node --test $ROOT/tests/security-emulator.mjs\""
+  },
+  "devDependencies": {
+    "@firebase/app": "0.16.2",
+    "@firebase/auth": "1.13.6",
+    "@firebase/firestore": "4.17.2",
+    "@firebase/rules-unit-testing": "5.0.2",
+    "firebase-tools": "15.32.1"
+  }
+}

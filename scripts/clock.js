@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (shiftToStop) {
           if (confirm("Are you sure you want to clock out?")) {
             shiftToStop.stopShift();
-            await store.saveShift(shiftToStop);
+            await store.saveShift(shiftToStop, { routine: true });
             renderActiveShifts();
           }
             
@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const shiftToBreak = store.shifts.find(s => s.id === shiftId);
         if (shiftToBreak) {
           shiftToBreak.startBreak();
-          await store.saveShift(shiftToBreak);
+          await store.saveShift(shiftToBreak, { routine: true });
           renderActiveShifts();
         }
       }
@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const shiftToBreak = store.shifts.find(s => s.id === shiftId);
         if (shiftToBreak) {
           shiftToBreak.stopBreak();
-          await store.saveShift(shiftToBreak);
+          await store.saveShift(shiftToBreak, { routine: true });
           renderActiveShifts();
         }
       }

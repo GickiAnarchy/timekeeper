@@ -1,0 +1,77 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Replace this fail-closed placeholder with the owner's Firebase Auth UID
+    // before any future production deployment. No client can self-enroll here.
+    function isOwner() {
+      return request.auth != null && request.auth.uid == 'N9fh9kr98neSYBSNdyDHBZn9IGv1';
+    }
+
+    function hasRecentOwnerAuthentication() {
+      return isOwner()
+      && request.auth.token.auth_time is int
+      && request.auth.token.auth_time > (request.time.toMillis() / 1000) - 300;
+    }
+
+    function isNewActiveClockIn() {
+      return request.resource.data.keys().hasAll([
+          'employeeId', 'custId', 'clockInTime', 'clockOutTime',
+          'note', 'isPaid', 'breaks', 'paidHours'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'employeeId', 'custId', 'clockInTime', 'clockOutTime',
+          'note', 'isPaid', 'breaks', 'paidHours'
+        ])
+        && request.resource.data.employeeId is string
+        && request.resource.data.custId is string
+        && request.resource.data.clockInTime is string
+        && request.resource.data.clockOutTime == null
+        && request.resource.data.note == null
+        && request.resource.data.isPaid == false
+        && request.resource.data.breaks is list
+        && request.resource.data.breaks.size() == 0
+        && request.resource.data.paidHours == null;
+    }
+
+    function isRoutineActiveShiftUpdate() {
+      return resource.data.clockInTime is string
+        && resource.data.clockOutTime == null
+        && request.resource.data.employeeId == resource.data.employeeId
+        && request.resource.data.custId == resource.data.custId
+        && request.resource.data.clockInTime == resource.data.clockInTime
+        && request.resource.data.note == resource.data.note
+        && request.resource.data.isPaid == resource.data.isPaid
+        && request.resource.data.paidHours == resource.data.paidHours
+        && request.resource.data.breaks is list
+        && (request.resource.data.clockOutTime == null || request.resource.data.clockOutTime is string)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['clockOutTime', 'breaks'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasAny(['clockOutTime', 'breaks']);
+    }
+
+    // Every existing and future collection is private by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Workspace data can only be read by the configured owner. Mutations to
+    // all non-shift records require a recently authenticated owner password.
+    match /{collectionName}/{documentId} {
+      allow read: if isOwner();
+      allow create, update, delete: if hasRecentOwnerAuthentication()
+        && collectionName in [
+          'employees', 'customers', 'payments', 'invoices',
+          'ledgerRows', 'planned'
+        ];
+    }
+
+    // Routine clock-in is limited to creating a pristine active shift. Routine
+    // clock-out and break changes may update only an active shift's break list
+    // and/or clockOutTime. Manual edits and deletes require recent auth above.
+    match /shifts/{shiftId} {
+      allow read: if isOwner();
+      allow create: if isOwner() && (hasRecentOwnerAuthentication() || isNewActiveClockIn());
+      allow update: if hasRecentOwnerAuthentication() || (isOwner() && isRoutineActiveShiftUpdate());
+      allow delete: if hasRecentOwnerAuthentication();
+    }
+  }
+}

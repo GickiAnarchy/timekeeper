@@ -12,9 +12,7 @@ import {
 */
 
 // 1. Import Firebase & Firestore Modular SDKs (CDN Links)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
-  getFirestore,
   collection,
   setDoc as firestoreSetDoc,
   getDocs as firestoreGetDocs,
@@ -23,20 +21,7 @@ import {
   deleteDoc as firestoreDeleteDoc,
   writeBatch
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-// 2. Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyDn_y846YGhK689a3-2S6VvO46uElD1JXw",
-  authDomain: "timekeeper-ad253.firebaseapp.com",
-  projectId: "timekeeper-ad253",
-  storageBucket: "timekeeper-ad253.firebasestorage.app",
-  messagingSenderId: "516577372091",
-  appId: "1:516577372091:web:3bb56f8017058ffcd9869e"
-};
-
-// 3. Initialize Firebase & Firestore
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { db, getCurrentOwner, requireRecentOwnerReauthentication } from './firebase.js';
 
 function showFirestoreError(message, retryOperation) {
   if (!globalThis.document?.body) return;
@@ -110,12 +95,16 @@ function firestoreRequest(message, operation) {
   });
 }
 
-const setDoc = (...args) => firestoreRequest('Saving data to Firestore failed.', () => firestoreSetDoc(...args));
+const setDoc = (...args) => requireRecentOwnerReauthentication('Saving workspace data')
+  .then(() => firestoreRequest('Saving data to Firestore failed.', () => firestoreSetDoc(...args)));
 const getDocs = (...args) => firestoreRequest('Loading data from Firestore failed.', () => firestoreGetDocs(...args));
-const updateDoc = (...args) => firestoreRequest('Updating data in Firestore failed.', () => firestoreUpdateDoc(...args));
-const deleteDoc = (...args) => firestoreRequest('Deleting data from Firestore failed.', () => firestoreDeleteDoc(...args));
+const updateDoc = (...args) => requireRecentOwnerReauthentication('Updating workspace data')
+  .then(() => firestoreRequest('Updating data in Firestore failed.', () => firestoreUpdateDoc(...args)));
+const deleteDoc = (...args) => requireRecentOwnerReauthentication('Deleting workspace data')
+  .then(() => firestoreRequest('Deleting data from Firestore failed.', () => firestoreDeleteDoc(...args)));
 const commitBatch = (batch, message = 'Saving this group of changes to Firestore failed.') =>
-  firestoreRequest(message, () => batch.commit());
+  requireRecentOwnerReauthentication(message).then(() => firestoreRequest(message, () => batch.commit()));
+const commitRoutineBatch = (batch, message) => firestoreRequest(message, () => batch.commit());
 
 
 export { roundTo15Minutes, roundDown15Minutes, roundUp15Minutes };
@@ -406,10 +395,14 @@ export class AppDataStore {
     this.plannedJobs = [];
     this.loadFailures = [];
     this.isAdmin = null;
+    this.authRequired = false;
   }
   
   async init() {
     this.loadFailures = [];
+    const owner = await getCurrentOwner();
+    this.authRequired = !owner;
+    if (!owner) return;
     await this.loadEmployees();
     await this.loadCustomers();
     await this.loadShifts();
@@ -728,13 +721,12 @@ export class AppDataStore {
     }
   }
   
-  async saveShift(shift) {
+  async saveShift(shift, { routine = false } = {}) {
     const formattedBreaks = shift.breaks.map(b => ({
       start: b.start instanceof Date ? b.start.toISOString() : b.start,
       end: b.end instanceof Date ? b.end.toISOString() : b.end
     }));
-    
-    await setDoc(doc(db, "shifts", shift.id), {
+    const shiftData = {
       employeeId: shift.employee ? shift.employee.id : null,
       custId: shift.customer ? shift.customer.id : null,
       clockInTime: shift.clockInTime ? shift.clockInTime.toISOString() : null,
@@ -743,7 +735,13 @@ export class AppDataStore {
       isPaid: shift.isPaid || false,
       breaks: formattedBreaks,
       paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null
-    });
+    };
+    const shiftRef = doc(db, "shifts", shift.id);
+    if (routine) {
+      await firestoreRequest('Saving routine clock activity failed.', () => firestoreSetDoc(shiftRef, shiftData));
+    } else {
+      await setDoc(shiftRef, shiftData);
+    }
   }
   
   async saveShifts(shifts) {
@@ -768,7 +766,7 @@ export class AppDataStore {
         paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null
       });
     });
-    await commitBatch(batch, 'Clocking in the selected employees failed.');
+    await commitRoutineBatch(batch, 'Clocking in the selected employees failed.');
   }
   
   async deleteShift(shiftId) {

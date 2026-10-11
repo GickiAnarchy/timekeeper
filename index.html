@@ -8,7 +8,24 @@
     <script type="module" src="./scripts/index.js" defer></script>
   </head>
   <body class="app-body">
-    <div class="app-shell">
+    <section class="auth-screen" id="auth-screen" aria-labelledby="auth-title">
+      <div class="auth-card">
+        <p class="auth-kicker">MOSHER LAWNS · TIMEKEEPER</p>
+        <h1 id="auth-title">Owner sign-in</h1>
+        <p class="auth-description">Sign in with the owner email and password to open the private workspace.</p>
+        <form id="owner-signin-form" novalidate>
+          <label for="owner-email">Email</label>
+          <input id="owner-email" name="email" type="email" autocomplete="username" required>
+          <label for="owner-password">Password</label>
+          <input id="owner-password" name="password" type="password" autocomplete="current-password" required>
+          <p class="auth-error" id="auth-error" role="alert" aria-live="polite"></p>
+          <button type="submit" id="sign-in-button">Sign in</button>
+        </form>
+        <p class="auth-footnote">This app has no sign-up form. Owner accounts must be created administratively.</p>
+      </div>
+    </section>
+
+    <div class="app-shell" id="app-shell" hidden>
       <aside class="sidebar" aria-label="Workspace navigation">
         <a class="brand" href="html/home.html" target="main-content" aria-label="Mosher Lawns home">
           <span class="brand-mark"><img src="./imgs/logo_bw.jpg" alt=""></span>
@@ -60,11 +77,13 @@
           </div>
           <div class="topbar-tools">
             <div class="topbar-date" id="topbar-date"></div>
+            <span class="signed-in-email" id="signed-in-email"></span>
+            <button class="secondary-button sign-out-button" id="sign-out-button" type="button">Sign out</button>
           </div>
         </header>
 
         <main class="workspace-frame">
-          <iframe name="main-content" title="Timekeeper workspace" src="html/home.html"></iframe>
+          <iframe name="main-content" title="Timekeeper workspace" src="about:blank"></iframe>
         </main>
         <footer class="site-footer"><a class="site-footer-link" href="https://github.com/GickiAnarchy" target="_blank" rel="noopener noreferrer">© 2026 GickiStudios</a><span>Timekeeping made simple</span></footer>
       </div>
