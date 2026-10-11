@@ -31,13 +31,15 @@ function createView({ innerHeight = 800, visualHeight = 800, offsetTop = 0 } = {
   };
 }
 
-function createNotesControl() {
+function createNotesControl({ tagName = 'TEXTAREA', top = 530, bottom = 570 } = {}) {
   const scrollCalls = [];
   return {
-    tagName: 'TEXTAREA',
+    tagName,
     disabled: false,
     readOnly: false,
+    isConnected: true,
     scrollCalls,
+    getBoundingClientRect() { return { top, bottom, height: bottom - top }; },
     scrollIntoView(options) { scrollCalls.push(options); }
   };
 }
@@ -86,4 +88,15 @@ test('Shift dialog uses the layout viewport when VisualViewport is unavailable',
   assert.equal(values.get('--shift-visible-top'), '8px');
   assert.equal(values.get('--shift-visible-bottom'), '8px');
   assert.equal(values.get('--shift-visible-max-height'), '784px');
+});
+
+test('Shift edit dialog reveals a focused action button that is outside the visible area', () => {
+  const button = createNotesControl({ tagName: 'BUTTON', top: 790, bottom: 830 });
+  const { dialog } = createDialog(button);
+  const view = createView();
+
+  assert.equal(syncShiftDialogViewport(dialog, view), true);
+  assert.deepEqual(button.scrollCalls, [{
+    behavior: 'auto', block: 'nearest', inline: 'nearest'
+  }]);
 });
