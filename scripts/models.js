@@ -733,7 +733,7 @@ export class AppDataStore {
       start: b.start instanceof Date ? b.start.toISOString() : b.start,
       end: b.end instanceof Date ? b.end.toISOString() : b.end
     }));
-    
+
     await setDoc(doc(db, "shifts", shift.id), {
       employeeId: shift.employee ? shift.employee.id : null,
       custId: shift.customer ? shift.customer.id : null,

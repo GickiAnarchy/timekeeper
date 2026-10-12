@@ -1,15 +1,33 @@
-# TIME KEEPER
+# Timekeeper
 
-A javascript project to keep track of hours working.
+A JavaScript app for tracking work hours. The workspace includes clock in/out, breaks, shift history, employee and customer records, invoices, an employee ledger, and planned jobs. The Home dashboard summarizes today's and this week's break-adjusted hours, highlights active shifts and upcoming jobs, and updates active totals every minute. Themes and text-size preferences are saved in the current browser.
 
-The workspace includes clock in/out, break tracking, shift history, employee
-and customer records, invoices, an employee ledger, and planned jobs. The Home
-dashboard summarizes today's and this week's break-adjusted hours, highlights
-active shifts and upcoming jobs, and updates active totals every minute. Choose
-Forest, Coastal, Harvest, or Midnight and select Standard, Large, or Extra large
-text from Settings; these preferences are saved in the current browser.
+> **Access model:** This app intentionally uses a fully public shared workflow. Firestore rules allow anyone—signed in or not—to read, create, update, and delete every document in every collection and subcollection. Do not put confidential or sensitive information in this Firebase project while these rules are deployed.
 
-*This is a work in progress*
-<hr>
+The hosted app is available at [GickiAnarchy.github.io/timekeeper](https://www.gickianarchy.github.io/timekeeper/).
 
-[Link to the site.](https://www.gickianarchy.github.io/timekeeper/)
+## Tests
+
+Run the local Node test suite (Node.js 18 or newer):
+
+```sh
+npm test
+```
+
+Run the Firestore Rules test against the local emulator only:
+
+```sh
+npm run test:firebase-emulator
+```
+
+The emulator command binds to loopback and uses the `demo-timekeeper` project ID; it does not read or write production Firestore data.
+
+## Rules deployment
+
+The recursive public rule is in `firestore.rules`. Deploy only Firestore rules to the production project by explicitly specifying its project ID:
+
+```sh
+./node_modules/.bin/firebase deploy --only firestore:rules --project timekeeper-ad253
+```
+
+The default Firebase CLI project remains `demo-timekeeper` to reduce the chance that local emulator work targets production accidentally.

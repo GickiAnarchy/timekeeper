@@ -10,24 +10,26 @@ const embeddedPages = readdirSync(htmlDirectory)
   .filter(file => file.endsWith('.html'))
   .sort();
 
+const readProjectFile = (...parts) => readFileSync(join(projectRoot, ...parts), 'utf8');
+
 test('every embedded project page loads the shared keyboard-visibility helper', () => {
   assert.ok(embeddedPages.length > 0, 'expected embedded HTML pages');
   for (const file of embeddedPages) {
-    const markup = readFileSync(join(htmlDirectory, file), 'utf8');
+    const markup = readProjectFile('html', file);
     assert.match(markup, /<script\b(?=[^>]*\btype=["']module["'])(?=[^>]*\bsrc=["']\.\.\/scripts\/keyboard\.mjs["'])[^>]*>/i, file);
   }
 });
 
 test('the parent shell monitors keyboard focus and viewport changes in its active iframe', () => {
-  const script = readFileSync(join(projectRoot, 'scripts', 'index.js'), 'utf8');
+  const script = readProjectFile('scripts', 'index.js');
   assert.match(script, /mainIframe\?\.contentDocument\?\.activeElement/);
   assert.match(script, /frameDocument\.addEventListener\('focusin'/);
   assert.match(script, /visualViewport\?\.addEventListener\('resize'/);
 });
 
 test('the footer copyright line links to the requested GitHub profile and preserves footer styling', () => {
-  const markup = readFileSync(join(projectRoot, 'index.html'), 'utf8');
-  const stylesheet = readFileSync(join(projectRoot, 'styles', 'style.css'), 'utf8');
+  const markup = readProjectFile('index.html');
+  const stylesheet = readProjectFile('styles', 'style.css');
   assert.match(markup, /<a class="site-footer-link" href="https:\/\/github\.com\/GickiAnarchy"[^>]*>© 2026 GickiStudios<\/a>/);
   assert.match(stylesheet, /\.site-footer-link\s*\{\s*color:\s*inherit;\s*text-decoration:\s*none;/);
 });
@@ -35,7 +37,7 @@ test('the footer copyright line links to the requested GitHub profile and preser
 test('every native data table has accessible sortable controls for each sortable column', () => {
   const tablePages = ['invoice.html', 'payledger.html'];
   for (const file of tablePages) {
-    const markup = readFileSync(join(htmlDirectory, file), 'utf8');
+    const markup = readProjectFile('html', file);
     const tables = [...markup.matchAll(/<table\b[\s\S]*?<\/table>/gi)];
     assert.ok(tables.length > 0, `${file} should contain a data table`);
     for (const [table] of tables) {
@@ -53,9 +55,56 @@ test('every native data table has accessible sortable controls for each sortable
 });
 
 test('employee ledger footer includes a separate total-hours summary after the balance', () => {
-  const markup = readFileSync(join(htmlDirectory, 'payledger.html'), 'utf8');
-  const script = readFileSync(join(projectRoot, 'scripts', 'ledger.js'), 'utf8');
+  const markup = readProjectFile('html', 'payledger.html');
+  const script = readProjectFile('scripts', 'ledger.js');
   assert.match(markup, /id="ledger-hours-total"/);
   assert.match(markup, /<strong>Total hours<\/strong>[\s\S]*?id="ledger-hours-total"/);
   assert.match(script, /sumLedgerHours\(entries\)/);
+});
+
+test('the workspace opens directly to Home without authentication UI or owner-only gates', () => {
+  const markup = readProjectFile('index.html');
+  const shellScript = readProjectFile('scripts', 'index.js');
+  const sharedStylesheet = readProjectFile('styles', 'style.css');
+  const embeddedStylesheet = readProjectFile('styles', 'ui.css');
+
+  assert.match(markup, /<iframe[^>]*src="html\/home\.html"/);
+  assert.doesNotMatch(markup, /sign.?in|sign.?out|password|guest-access-badge|owner-access-badge/i);
+  assert.doesNotMatch(shellScript, /firebase\.js|AuthState|signIn|signOut|isOwner|data-owner-only/i);
+  assert.doesNotMatch(sharedStylesheet + embeddedStylesheet, /data-owner-only|data-owner=/i);
+
+  for (const file of embeddedPages) {
+    const page = readProjectFile('html', file);
+    assert.doesNotMatch(page, /data-owner-only|data-owner=/i, `${file} should have no role-gated controls`);
+  }
+});
+
+test('the app writes directly to its canonical Firestore collections without request or projection layers', () => {
+  const model = readProjectFile('scripts', 'models.js');
+  assert.match(model, /collection\(db, "employees"\)/);
+  assert.match(model, /collection\(db, "customers"\)/);
+  assert.match(model, /collection\(db, "shifts"\)/);
+  assert.match(model, /collection\(db, "invoices"\)/);
+  assert.match(model, /collection\(db, "payments"\)/);
+  assert.match(model, /collection\(db, "ledgerRows"\)/);
+  assert.match(model, /collection\(db, "planned"\)/);
+  assert.match(model, /setDoc\(doc\(db, "shifts", shift\.id\)/);
+  assert.doesNotMatch(model, /publicEmployees|publicCustomers|publicShifts|changeRequests|getCurrentOwner|requireRecentOwnerReauthentication/);
+});
+
+test('the no-login clock screen retains multi-employee selection and clock actions', () => {
+  const clockMarkup = readProjectFile('html', 'clock.html');
+  const clockScript = readProjectFile('scripts', 'clock.js');
+  const model = readProjectFile('scripts', 'models.js');
+  assert.match(clockMarkup, /<select id="emp-select" multiple/);
+  assert.match(clockMarkup, /id="clock-in-button"/);
+  assert.match(clockScript, /saveShifts\(shifts\)/);
+  assert.match(model, /async saveShifts\(shifts\)/);
+  assert.match(model, /async saveShift\(shift\)/);
+});
+
+test('Firestore rules intentionally grant public read/write access recursively', () => {
+  const rules = readProjectFile('firestore.rules');
+  assert.match(rules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if true;\s*\}/);
+  assert.doesNotMatch(rules, /request\.auth|isOwner|isGuest|hasRecentOwnerAuthentication/);
 });
