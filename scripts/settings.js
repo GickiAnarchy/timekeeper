@@ -74,7 +74,23 @@ const backupFileInput = document.getElementById('backup-file');
 const backupPreview = document.getElementById('backup-preview');
 const restoreBackupButton = document.getElementById('restore-backup-btn');
 const backupStatus = document.getElementById('backup-status');
+const refreshGuestDataButton = document.getElementById('refresh-guest-data-btn');
+const guestDataStatus = document.getElementById('guest-data-status');
 let pendingBackup = null;
+
+refreshGuestDataButton?.addEventListener('click', async () => {
+  refreshGuestDataButton.disabled = true;
+  guestDataStatus.textContent = 'Refreshing the guest-safe projections…';
+  try {
+    await store.init();
+    const result = await store.refreshGuestProjections();
+    guestDataStatus.textContent = `Guest-safe data refreshed: ${result.employees} employees, ${result.customers} customers, ${result.shifts} shifts (${result.writes} projection writes).`;
+  } catch (error) {
+    guestDataStatus.textContent = error.message || 'Guest-safe data could not be refreshed.';
+  } finally {
+    refreshGuestDataButton.disabled = false;
+  }
+});
 
 async function loadBackupWorkspace() {
   try {

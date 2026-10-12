@@ -15,6 +15,7 @@ body.app-body.keyboard-open { height: var(--app-visible-height, 100vh); min-heig
   padding: 16px;
   background: var(--canvas);
 }
+.app-shell[data-owner="false"] [data-owner-only] { display: none !important; }
 
 .sidebar {
   display: flex;
@@ -150,22 +151,27 @@ body.app-body.keyboard-open { height: var(--app-visible-height, 100vh); min-heig
 .home-benefits strong { display: block; margin-bottom: 4px; color: var(--ink-soft); font-size: 12px; }
 
 /* Owner authentication */
-.auth-screen { display: grid; place-items: center; min-height: 100vh; min-height: 100dvh; padding: 24px; background: var(--canvas); }
-.auth-screen[hidden], .app-shell[hidden] { display: none !important; }
+.signin-dialog { width: min(92vw, 480px); max-width: none; padding: 0; color: var(--ink); background: transparent; border: 0; }
+.signin-dialog::backdrop { background: rgba(16, 27, 21, .52); backdrop-filter: blur(2px); }
 .auth-card { width: min(100%, 430px); padding: clamp(24px, 5vw, 38px); background: var(--surface); border: 1px solid var(--border); border-radius: 22px; box-shadow: var(--shadow-soft); }
 .auth-kicker { margin: 0 0 9px; color: var(--green); font-size: 10px; font-weight: 750; letter-spacing: .14em; }
-.auth-card h1 { margin: 0 0 8px; font-size: 27px; letter-spacing: -.04em; }
+.auth-card h2 { margin: 0 0 8px; font-size: 27px; letter-spacing: -.04em; }
 .auth-description, .auth-footnote { color: var(--muted); font-size: 12px; line-height: 1.55; }
 .auth-description { margin: 0 0 22px; }
 .auth-card form { display: grid; gap: 8px; }
 .auth-card label, .reauth-dialog label { color: var(--ink-soft); font-size: 12px; font-weight: 650; }
 .auth-card input, .reauth-dialog input { width: 100%; min-height: 43px; margin-bottom: 8px; padding: 9px 11px; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; font: inherit; }
 .auth-card input:focus, .reauth-dialog input:focus { outline: 3px solid color-mix(in srgb, var(--green) 20%, transparent); border-color: var(--green); }
-.auth-card form button { min-height: 43px; margin-top: 5px; }
+.auth-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 5px; }
+.auth-actions button { min-height: 43px; padding: 0 15px; }
 .auth-error, .reauth-error { min-height: 18px; margin: 0; color: var(--red, #a43b36); font-size: 11px; }
 .auth-footnote { margin: 17px 0 0; padding-top: 14px; border-top: 1px solid var(--border-soft); }
 .signed-in-email { max-width: 180px; overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .sign-out-button { min-height: 34px; padding: 0 10px; font-size: 10px; }
+.sign-in-open-button { min-height: 34px; padding: 0 10px; font-size: 10px; }
+.sign-in-open-button[hidden], .sign-out-button[hidden] { display: none !important; }
+.guest-access-badge { color: var(--ink-soft); background: var(--surface); border-color: var(--border); }
+.guest-access-badge[hidden] { display: none !important; }
 .reauth-dialog { width: min(92vw, 430px); max-width: none; padding: 24px; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 18px 54px rgba(0, 0, 0, .24); }
 .reauth-dialog::backdrop { background: rgba(16, 27, 21, .52); backdrop-filter: blur(2px); }
 .reauth-dialog h2 { margin: 0 0 8px; font-size: 20px; }
@@ -209,4 +215,5 @@ body.app-body.keyboard-open { height: var(--app-visible-height, 100vh); min-heig
   .topbar-eyebrow { font-size: 8px; }
   .home-benefits { grid-template-columns: 1fr; gap: 13px; }
   .signed-in-email { display: none; }
+  .guest-access-badge { white-space: normal; }
 }

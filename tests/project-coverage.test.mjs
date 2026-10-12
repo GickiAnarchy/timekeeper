@@ -60,33 +60,62 @@ test('employee ledger footer includes a separate total-hours summary after the b
   assert.match(script, /sumLedgerHours\(entries\)/);
 });
 
-test('the shell labels the authenticated owner session with an elevated-access badge', () => {
+test('the shell starts in guest mode and offers owner sign-in with a cancelable modal', () => {
   const markup = readFileSync(join(projectRoot, 'index.html'), 'utf8');
   const script = readFileSync(join(projectRoot, 'scripts', 'index.js'), 'utf8');
   const stylesheet = readFileSync(join(projectRoot, 'styles', 'style.css'), 'utf8');
+  assert.match(markup, /id="app-shell" data-owner="false"/);
+  assert.match(markup, /id="guest-access-badge"/);
+  assert.match(markup, /id="sign-in-open-button"/);
+  assert.match(markup, /id="owner-signin-dialog"/);
+  assert.match(markup, /id="cancel-sign-in"/);
   assert.match(markup, /id="owner-access-badge"[^>]*role="status"[^>]*hidden/);
   assert.match(markup, /<span>OWNER ACCESS<\/span>/);
-  assert.match(script, /ownerAccessBadge\.hidden = user\.uid !== OWNER_UID/);
-  assert.match(script, /ownerAccessBadge\.hidden = true/);
+  assert.match(script, /ownerAccessBadge\.hidden = !isOwner/);
+  assert.match(script, /signOutOwner\(\)/);
+  assert.match(stylesheet, /\.app-shell\[data-owner="false"\]\s+\[data-owner-only\]/);
   assert.match(stylesheet, /\.permission-badge\[hidden\]\s*\{\s*display:\s*none;/);
 });
 
-test('embedded owner-only actions fail closed for non-owners and reveal only after owner verification', () => {
+test('the shared kiosk lets staff choose employees and the owner queue initializes auth before gating', () => {
+  const clockMarkup = readFileSync(join(htmlDirectory, 'clock.html'), 'utf8');
+  const requestsScript = readFileSync(join(projectRoot, 'scripts', 'requests.js'), 'utf8');
+  assert.match(clockMarkup, /<select id="emp-select" multiple/);
+  assert.doesNotMatch(clockMarkup, /(?:employee )?(?:pin|access code|passcode)/i);
+  assert.match(requestsScript, /async function renderRequests\(\) \{\s*refreshButton\.disabled = true;[\s\S]*?await store\.init\(\);[\s\S]*?if \(!store\.isOwner\)/);
+});
+
+test('embedded private fields remain owner-only while guest people and shift actions are requestable', () => {
   const sharedStylesheet = readFileSync(join(projectRoot, 'styles', 'ui.css'), 'utf8');
   const modelScript = readFileSync(join(projectRoot, 'scripts', 'models.js'), 'utf8');
+  const dataMarkup = readFileSync(join(htmlDirectory, 'basic-data.html'), 'utf8');
+  const shiftMarkup = readFileSync(join(htmlDirectory, 'viewshifts.html'), 'utf8');
+  const dataScript = readFileSync(join(projectRoot, 'scripts', 'data.js'), 'utf8');
+  const shiftScript = readFileSync(join(projectRoot, 'scripts', 'shifts.js'), 'utf8');
+  const clockScript = readFileSync(join(projectRoot, 'scripts', 'clock.js'), 'utf8');
   assert.match(sharedStylesheet, /body:not\(\[data-owner="true"\]\)\s+\[data-owner-only\]\s*\{\s*display:\s*none\s*!important;/);
   assert.match(modelScript, /this\.isOwner = Boolean\(owner\)/);
   assert.match(modelScript, /setAttribute\('data-owner', String\(this\.isOwner\)\)/);
+  assert.match(modelScript, /collection\(db, this\.isOwner \? "employees" : "publicEmployees"\)/);
+  assert.match(modelScript, /publicShiftData\(shift\)/);
 
   for (const file of embeddedPages) {
     const markup = readFileSync(join(htmlDirectory, file), 'utf8');
     assert.match(markup, /<body\b[^>]*data-owner="false"/i, `${file} should start in a fail-closed state`);
   }
 
+  assert.doesNotMatch(dataMarkup, /id="add-emp-form"[^>]*data-owner-only/);
+  assert.doesNotMatch(dataMarkup, /id="people-edit-modal"[^>]*data-owner-only/);
+  assert.match(dataScript, /store\.isOwner \? `\$\{emp\.name\} - \$\$\{emp\.wage\}` : emp\.name/);
+  assert.match(dataScript, /store\.isOwner \? String\(record\.wage\) : ''/);
+  assert.match(shiftMarkup, /id="add-button">Add Shift/);
+  assert.doesNotMatch(shiftMarkup, /id="add-button"[^>]*data-owner-only/);
+  assert.match(shiftMarkup, /class="time-row" data-owner-only>[\s\S]*?for="paid-hours"/);
+  assert.match(shiftMarkup, /id="shiftNote"/);
+  assert.match(shiftMarkup, /class="paid-toggle"[^>]*data-owner-only/);
+
   const ownerOnlyMarkup = {
-    'basic-data.html': /class="form-container" data-owner-only/,
     'planned.html': /id="add-button"[^>]*data-owner-only/,
-    'viewshifts.html': /id="add-button"[^>]*data-owner-only/,
     'payledger.html': /class="form-container" data-owner-only/,
     'invoice.html': /class="invoice-actions" data-owner-only/,
     'settings.html': /class="settings-card" data-owner-only aria-labelledby="backup-title"/
@@ -97,14 +126,15 @@ test('embedded owner-only actions fail closed for non-owners and reveal only aft
   }
 
   for (const [file, pattern] of [
-    ['data.js', /actions\.dataset\.ownerOnly = 'true'/],
     ['planned.js', /actions\.dataset\.ownerOnly = 'true'/],
-    ['shifts.js', /actions\.dataset\.ownerOnly = 'true'/],
     ['ledger.js', /actionCell\.dataset\.ownerOnly = 'true'/],
-    ['clock.js', /clockOutButton\.dataset\.ownerOnly = 'true'/],
     ['invoice.js', /mark-paid-btn" data-owner-only/]
   ]) {
     const script = readFileSync(join(projectRoot, 'scripts', file), 'utf8');
     assert.match(script, pattern, `${file} should mark dynamically rendered write controls`);
   }
+  assert.doesNotMatch(shiftScript, /actions\.dataset\.ownerOnly = 'true'/);
+  assert.doesNotMatch(clockScript, /clockOutButton\.dataset\.ownerOnly = 'true'/);
+  assert.match(modelScript, /Submitting this change request failed/);
+  assert.match(modelScript, /Request \$\{requestId\} was sent to the owner/);
 });

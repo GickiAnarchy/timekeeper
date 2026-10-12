@@ -80,7 +80,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         card.appendChild(breakTimer);
       }
       const breakButtons = makeElement('div', 'break-buttons');
-      breakButtons.dataset.ownerOnly = 'true';
       const breakInBtn = makeElement('button', 'start-break-btn', 'Start Break');
       breakInBtn.type = 'button';
       breakInBtn.dataset.id = shift.id;
@@ -92,7 +91,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const clockOutButton = makeElement('button', 'stop-btn', 'Clock Out');
       clockOutButton.type = 'button';
       clockOutButton.dataset.id = shift.id;
-      clockOutButton.dataset.ownerOnly = 'true';
       card.append(breakButtons, clockOutButton);
       li.appendChild(card);
       
@@ -168,9 +166,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (shiftToStop) {
           if (confirm("Are you sure you want to clock out?")) {
+            const previousClockOut = shiftToStop.clockOutTime;
+            const previousBreaks = shiftToStop.breaks.map(item => ({ ...item }));
             shiftToStop.stopShift();
-            await store.saveShift(shiftToStop, { routine: true });
-            renderActiveShifts();
+            try {
+              await store.saveShift(shiftToStop, { routine: true, action: 'clockOut' });
+              renderActiveShifts();
+              shiftError.textContent = '';
+            } catch (error) {
+              shiftToStop.clockOutTime = previousClockOut;
+              shiftToStop.breaks = previousBreaks;
+              shiftError.textContent = error.message || 'Unable to clock out. Please try again.';
+              renderActiveShifts();
+            }
           }
             
         } // shicttostop if statement
@@ -180,9 +188,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const shiftId = e.target.getAttribute('data-id');
         const shiftToBreak = store.shifts.find(s => s.id === shiftId);
         if (shiftToBreak) {
+          const previousBreaks = shiftToBreak.breaks.map(item => ({ ...item }));
           shiftToBreak.startBreak();
-          await store.saveShift(shiftToBreak, { routine: true });
-          renderActiveShifts();
+          try {
+            await store.saveShift(shiftToBreak, { routine: true });
+            renderActiveShifts();
+            shiftError.textContent = '';
+          } catch (error) {
+            shiftToBreak.breaks = previousBreaks;
+            shiftError.textContent = error.message || 'Unable to submit the break request.';
+            renderActiveShifts();
+          }
         }
       }
       
@@ -190,9 +206,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const shiftId = e.target.getAttribute('data-id');
         const shiftToBreak = store.shifts.find(s => s.id === shiftId);
         if (shiftToBreak) {
+          const previousBreaks = shiftToBreak.breaks.map(item => ({ ...item }));
           shiftToBreak.stopBreak();
-          await store.saveShift(shiftToBreak, { routine: true });
-          renderActiveShifts();
+          try {
+            await store.saveShift(shiftToBreak, { routine: true });
+            renderActiveShifts();
+            shiftError.textContent = '';
+          } catch (error) {
+            shiftToBreak.breaks = previousBreaks;
+            shiftError.textContent = error.message || 'Unable to submit the break request.';
+            renderActiveShifts();
+          }
         }
       }
       

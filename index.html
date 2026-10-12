@@ -8,24 +8,7 @@
     <script type="module" src="./scripts/index.js" defer></script>
   </head>
   <body class="app-body">
-    <section class="auth-screen" id="auth-screen" aria-labelledby="auth-title">
-      <div class="auth-card">
-        <p class="auth-kicker">MOSHER LAWNS · TIMEKEEPER</p>
-        <h1 id="auth-title">Owner sign-in</h1>
-        <p class="auth-description">Sign in with the owner email and password to open the private workspace.</p>
-        <form id="owner-signin-form" novalidate>
-          <label for="owner-email">Email</label>
-          <input id="owner-email" name="email" type="email" autocomplete="username" required>
-          <label for="owner-password">Password</label>
-          <input id="owner-password" name="password" type="password" autocomplete="current-password" required>
-          <p class="auth-error" id="auth-error" role="alert" aria-live="polite"></p>
-          <button type="submit" id="sign-in-button">Sign in</button>
-        </form>
-        <p class="auth-footnote">This app has no sign-up form. Owner accounts must be created administratively.</p>
-      </div>
-    </section>
-
-    <div class="app-shell" id="app-shell" hidden>
+    <div class="app-shell" id="app-shell" data-owner="false">
       <aside class="sidebar" aria-label="Workspace navigation">
         <a class="brand" href="html/home.html" target="main-content" aria-label="Mosher Lawns home">
           <span class="brand-mark"><img src="./imgs/logo_bw.jpg" alt=""></span>
@@ -43,7 +26,7 @@
           <button class="nav-link" type="button" data-page="html/viewshifts.html" data-title="Shift history">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16M4 12h16M4 18.5h10"/><circle cx="7" cy="5.5" r=".7"/><circle cx="7" cy="12" r=".7"/><circle cx="7" cy="18.5" r=".7"/></svg><span>Shift history</span>
           </button>
-          <button class="nav-link" type="button" data-page="html/planned.html" data-title="Planned jobs">
+          <button class="nav-link" type="button" data-page="html/planned.html" data-title="Planned jobs" data-owner-only>
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M7.5 3.5v3M16.5 3.5v3M3.5 9.5h17M8 13h3M8 16.5h7"/></svg><span>Planned jobs</span>
           </button>
 
@@ -51,10 +34,13 @@
           <button class="nav-link" type="button" data-page="html/basic-data.html" data-title="People data">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20v-1.5a5.5 5.5 0 0 1 11 0V20zM16 5.3a3.1 3.1 0 0 1 0 6.1M17 14a4.5 4.5 0 0 1 3.5 4.4V20h-4"/></svg><span>People data</span>
           </button>
-          <button class="nav-link" type="button" data-page="html/payledger.html" data-title="Employee ledger">
+          <button class="nav-link" type="button" data-page="html/requests.html" data-title="Pending requests" data-owner-only>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14v15H5zM8 8h8M8 12h8M8 16h5"/></svg><span>Pending requests</span>
+          </button>
+          <button class="nav-link" type="button" data-page="html/payledger.html" data-title="Employee ledger" data-owner-only>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3.5h10l4 4V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1zM14.5 3.5V8h4.2M8 12h8M8 16h8"/></svg><span>Ledger</span>
           </button>
-          <button class="nav-link" type="button" data-page="html/invoice.html" data-title="Invoices">
+          <button class="nav-link" type="button" data-page="html/invoice.html" data-title="Invoices" data-owner-only>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12v17l-2.5-1.8-3.5 1.8-3.5-1.8L6 20.5zM9 8h6M9 12h6M9 16h3"/></svg><span>Invoices</span>
           </button>
           <p class="nav-label nav-label-spaced">PREFERENCES</p>
@@ -77,12 +63,16 @@
           </div>
           <div class="topbar-tools">
             <div class="topbar-date" id="topbar-date"></div>
+            <span class="permission-badge guest-access-badge" id="guest-access-badge" role="status">
+              <span>GUEST · LIMITED ACCESS</span>
+            </span>
             <span class="permission-badge" id="owner-access-badge" role="status" hidden>
               <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5 16 5v4.2c0 3.7-2.5 6.6-6 8.3-3.5-1.7-6-4.6-6-8.3V5z"/><path d="m7.3 9.8 1.8 1.8 3.7-4"/></svg>
               <span>OWNER ACCESS</span>
             </span>
             <span class="signed-in-email" id="signed-in-email"></span>
-            <button class="secondary-button sign-out-button" id="sign-out-button" type="button">Sign out</button>
+            <button class="secondary-button sign-in-open-button" id="sign-in-open-button" type="button">Owner sign in</button>
+            <button class="secondary-button sign-out-button" id="sign-out-button" type="button" hidden>Return to guest</button>
           </div>
         </header>
 
@@ -92,5 +82,25 @@
         <footer class="site-footer"><a class="site-footer-link" href="https://github.com/GickiAnarchy" target="_blank" rel="noopener noreferrer">© 2026 GickiStudios</a><span>Timekeeping made simple</span></footer>
       </div>
     </div>
+
+    <dialog class="signin-dialog" id="owner-signin-dialog" aria-labelledby="auth-title">
+      <div class="auth-card">
+        <p class="auth-kicker">MOSHER LAWNS · TIMEKEEPER</p>
+        <h2 id="auth-title">Owner sign-in</h2>
+        <p class="auth-description">Sign in with the owner email and password to open the private workspace.</p>
+        <form id="owner-signin-form" novalidate>
+          <label for="owner-email">Email</label>
+          <input id="owner-email" name="email" type="email" autocomplete="username" required>
+          <label for="owner-password">Password</label>
+          <input id="owner-password" name="password" type="password" autocomplete="current-password" required>
+          <p class="auth-error" id="auth-error" role="alert" aria-live="polite"></p>
+          <div class="auth-actions">
+            <button type="button" class="secondary-button" id="cancel-sign-in">Cancel</button>
+            <button type="submit" id="sign-in-button">Sign in</button>
+          </div>
+        </form>
+        <p class="auth-footnote">This app has no sign-up form. Owner accounts must be created administratively.</p>
+      </div>
+    </dialog>
   </body>
 </html>

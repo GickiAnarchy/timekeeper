@@ -21,12 +21,12 @@
           <select id="cust-filter"></select>
         </div>
       </div>
-      <div class="paid-div">
+      <div class="paid-div" data-owner-only>
         <label for="paid-filter">Hide paid shifts</label>
         <input type="checkbox" id="paid-filter">
       </div>
       <div class="button-div">
-        <button type="button" id="add-button" data-owner-only>Add Shift</button>
+        <button type="button" id="add-button">Add Shift</button>
       </div>
       <hr>
       <details class="shift-list-details" open>
@@ -37,7 +37,7 @@
       </details>
     </main>
 
-    <dialog class="shift-modal" id="viewShiftModal" data-owner-only aria-labelledby="shift-modal-title">
+    <dialog class="shift-modal" id="viewShiftModal" aria-labelledby="shift-modal-title">
       <h2 id="shift-modal-title">Shift Details</h2>
       <form class="shift-form" id="shift-form">
         <div class="shift-data" id="shiftBase">
@@ -60,12 +60,12 @@
               <label for="total-hours">Actual hours worked</label>
               <input type="number" id="total-hours" step="0.01" disabled>
             </div>
-            <div class="time-row">
+            <div class="time-row" data-owner-only>
               <label for="paid-hours">Paid hours</label>
               <input type="number" id="paid-hours" min="0" step="0.01" inputmode="decimal">
             </div>
           </div>
-          <small class="field-hint">Paid hours affect payroll only; leave blank to use the break-adjusted shift hours.</small>
+          <small class="field-hint" data-owner-only>Paid hours affect payroll only; leave blank to use the break-adjusted shift hours.</small>
         </div>
         <div class="shift-data break-section">
           <div class="break-heading">
@@ -77,7 +77,7 @@
         <div class="shift-data" id="shiftNote">
           <label for="note-view">Notes</label>
           <textarea id="note-view" rows="3"></textarea>
-          <label class="paid-toggle" for="paid-checkbox-view">
+          <label class="paid-toggle" for="paid-checkbox-view" data-owner-only>
             <input type="checkbox" id="paid-checkbox-view"> Paid in full
           </label>
         </div>

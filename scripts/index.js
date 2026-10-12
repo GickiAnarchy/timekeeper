@@ -84,47 +84,79 @@ function applyTextScaleToDocument(doc, scale) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const navigation = [...document.querySelectorAll('.nav-link[data-page]')];
   const mainIframe = document.querySelector('iframe[name="main-content"]');
-  const authScreen = document.getElementById('auth-screen');
   const appShell = document.getElementById('app-shell');
+  const signInDialog = document.getElementById('owner-signin-dialog');
   const signInForm = document.getElementById('owner-signin-form');
   const signInButton = document.getElementById('sign-in-button');
+  const signInOpenButton = document.getElementById('sign-in-open-button');
+  const cancelSignInButton = document.getElementById('cancel-sign-in');
   const signOutButton = document.getElementById('sign-out-button');
   const authError = document.getElementById('auth-error');
   const signedInEmail = document.getElementById('signed-in-email');
   const ownerAccessBadge = document.getElementById('owner-access-badge');
+  const guestAccessBadge = document.getElementById('guest-access-badge');
   const ownerEmailInput = document.getElementById('owner-email');
   const ownerPasswordInput = document.getElementById('owner-password');
   const title = document.getElementById('active-page-title');
   const dateLabel = document.getElementById('topbar-date');
   let baselineViewportHeight = 0;
+  let currentWorkspaceOwner = false;
 
-  function showSignIn(message = '') {
-    if (authScreen) authScreen.hidden = false;
-    if (appShell) appShell.hidden = true;
+  function showGuestWorkspace(message = '') {
+    if (appShell) appShell.dataset.owner = 'false';
     if (authError) authError.textContent = message;
     if (signedInEmail) signedInEmail.textContent = '';
     if (ownerAccessBadge) ownerAccessBadge.hidden = true;
-    if (mainIframe && mainIframe.getAttribute('src') !== 'about:blank') mainIframe.src = 'about:blank';
+    if (guestAccessBadge) guestAccessBadge.hidden = false;
+    if (signInOpenButton) signInOpenButton.hidden = false;
+    if (signOutButton) signOutButton.hidden = true;
+    refreshWorkspaceForRole(false);
   }
 
   function showWorkspace(user) {
-    if (authScreen) authScreen.hidden = true;
-    if (appShell) appShell.hidden = false;
+    const isOwner = Boolean(user && user.uid === OWNER_UID);
+    if (appShell) appShell.dataset.owner = String(isOwner);
     if (authError) authError.textContent = '';
-    if (signedInEmail) signedInEmail.textContent = user.email || 'Owner';
-    if (ownerAccessBadge) ownerAccessBadge.hidden = user.uid !== OWNER_UID;
-    if (mainIframe && mainIframe.getAttribute('src') === 'about:blank') mainIframe.src = 'html/home.html';
+    if (signedInEmail) signedInEmail.textContent = isOwner ? (user.email || 'Owner') : '';
+    if (ownerAccessBadge) ownerAccessBadge.hidden = !isOwner;
+    if (guestAccessBadge) guestAccessBadge.hidden = isOwner;
+    if (signInOpenButton) signInOpenButton.hidden = isOwner;
+    if (signOutButton) signOutButton.hidden = !isOwner;
+    refreshWorkspaceForRole(isOwner);
   }
+
+  function refreshWorkspaceForRole(isOwner) {
+    const roleChanged = currentWorkspaceOwner !== isOwner;
+    currentWorkspaceOwner = isOwner;
+    if (mainIframe && mainIframe.getAttribute('src') === 'about:blank') mainIframe.src = 'html/home.html';
+    else if (mainIframe && roleChanged) mainIframe.src = mainIframe.src;
+  }
+
+  signInOpenButton?.addEventListener('click', () => {
+    if (!signInDialog?.open) signInDialog?.showModal();
+    ownerEmailInput?.focus();
+  });
+
+  cancelSignInButton?.addEventListener('click', () => {
+    if (ownerPasswordInput) ownerPasswordInput.value = '';
+    if (authError) authError.textContent = '';
+    signInDialog?.close();
+  });
+
+  signInDialog?.addEventListener('close', () => {
+    if (ownerPasswordInput) ownerPasswordInput.value = '';
+    if (authError) authError.textContent = '';
+  });
 
   signInForm?.addEventListener('submit', async event => {
     event.preventDefault();
     const email = ownerEmailInput?.value.trim() || '';
     const password = ownerPasswordInput?.value || '';
     if (!email || !password) {
-      showSignIn('Enter the owner email and password.');
+      if (authError) authError.textContent = 'Enter the owner email and password.';
       return;
     }
     if (signInButton) {
@@ -134,9 +166,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (authError) authError.textContent = '';
     try {
       await signInOwner(email, password);
+      signInDialog?.close();
     } catch (error) {
       console.warn('Owner sign-in failed.', error?.code || 'auth/error');
-      showSignIn(error.message || 'Sign-in failed. Check the owner account and try again.');
+      if (authError) authError.textContent = error.message || 'Sign-in failed. Check the owner account and try again.';
     } finally {
       if (ownerPasswordInput) ownerPasswordInput.value = '';
       if (signInButton) {
@@ -152,23 +185,30 @@ document.addEventListener('DOMContentLoaded', () => {
       await signOutOwner();
     } catch (error) {
       console.error('Unable to sign out.', error);
-      showSignIn('Sign-out failed. Reload this page and try again.');
+      showGuestWorkspace('Sign-out failed. Reload this page and try again.');
     } finally {
       signOutButton.disabled = false;
     }
   });
 
+  // This is a shared kiosk: discard any owner session persisted by an earlier visit.
+  try {
+    await signOutOwner();
+  } catch (error) {
+    console.warn('Could not clear the previous kiosk session.', error);
+  }
+
   observeAuthState(user => {
     if (user && user.uid !== OWNER_UID) {
       signOutOwner().catch(error => console.error('Unable to end a non-owner session.', error));
-      showSignIn('This account is not authorized to use this workspace.');
+      showGuestWorkspace('This account is not authorized to use the owner workspace.');
       return;
     }
     if (user) showWorkspace(user);
-    else showSignIn();
+    else showGuestWorkspace();
   }, error => {
     console.error('Unable to read the sign-in state.', error);
-    showSignIn('Sign-in status could not be checked. Reload and try again.');
+    showGuestWorkspace('Sign-in status could not be checked. Reload and try again.');
   });
 
   function isKeyboardInput(target) {

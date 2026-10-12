@@ -166,9 +166,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     custSelect.value = shift.customer?.id || '';
     timeIn.value = formatForDateTimeLocal(shift.clockInTime);
     timeOut.value = formatForDateTimeLocal(shift.clockOutTime);
-    noteView.value = shift.note || '';
-    paidBox.checked = Boolean(shift.isPaid);
-    paidHours.value = Number.isFinite(shift.paidHours) ? String(shift.paidHours) : '';
+    noteView.value = store.isOwner ? (shift.note || '') : '';
+    paidBox.checked = store.isOwner && Boolean(shift.isPaid);
+    paidHours.value = store.isOwner && Number.isFinite(shift.paidHours) ? String(shift.paidHours) : '';
     breaksList.replaceChildren();
     shift.breaks.forEach(breakItem => addBreakRow(breakItem));
     updateActualHours();
@@ -299,12 +299,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const details = makeElement('div', '', ` @ ${shift.customer?.name || 'Unknown customer'}`);
       const timeLine = makeElement('small', 'time-small',
         `In: ${shift.clockInTime?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'Unknown'}  ·  Out: ${shift.clockOutTime?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'Unknown'}`);
-      const workedLine = makeElement('small', 'time-small',
-        `Worked ${shift.getHoursWorked().toFixed(2)} h  ·  Paid ${shift.getPaidHours().toFixed(2)} h`);
+      const hoursSummary = store.isOwner
+        ? `Worked ${shift.getHoursWorked().toFixed(2)} h  ·  Paid ${shift.getPaidHours().toFixed(2)} h`
+        : `Worked ${shift.getHoursWorked().toFixed(2)} h`;
+      const workedLine = makeElement('small', 'time-small', hoursSummary);
       summary.append(employeeName, details, document.createElement('br'), timeLine, document.createElement('br'), workedLine);
 
       const actions = makeElement('div', 'list-item-buttons');
-      actions.dataset.ownerOnly = 'true';
       const editButton = makeElement('button', 'view-btn', 'Edit');
       editButton.type = 'button';
       editButton.dataset.id = shift.id;
