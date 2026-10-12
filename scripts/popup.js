@@ -30,3 +30,4 @@ export function confirmDialog(message = 'Are you sure?', confirmText = 'Yes', ca
     cancel.focus();
   });
 }
+
