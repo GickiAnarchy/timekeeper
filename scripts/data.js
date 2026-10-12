@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const li = document.createElement('li');
       li.className = 'emp-item';
       const summary = document.createElement('p');
-      summary.textContent = store.isOwner ? `${emp.name} - $${emp.wage}` : emp.name;
+      summary.textContent = `${emp.name} - $${emp.wage}`;
 
       const actions = document.createElement('div');
       actions.className = 'item-actions';
@@ -141,25 +141,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (isEmployee) {
       editEyebrow.textContent = 'EMPLOYEE PROFILE';
       editTitle.textContent = 'Edit employee';
-      editHelp.textContent = store.isOwner
-        ? 'Update this team member’s name and wage. Changes are saved to shared records.'
-        : 'Suggest employee details for owner review. Existing wage information is not shown, and nothing changes until approved.';
+      editHelp.textContent = 'Update this team member’s name and wage. Changes are saved to shared records.';
       editEmpName.value = record.name;
-      editEmpWage.value = store.isOwner ? String(record.wage) : '';
-      editEmpWage.required = store.isOwner;
+      editEmpWage.value = String(record.wage);
     } else {
       editEyebrow.textContent = 'CUSTOMER PROFILE';
       editTitle.textContent = 'Edit customer';
       editHelp.textContent = 'Update this customer’s details and billing information. Changes are saved to shared records.';
       editCustName.value = record.name;
       editCustLocation.value = record.location || '';
-      editCustBillingRate.value = !store.isOwner || record.billingRate === null || record.billingRate === undefined
+      editCustBillingRate.value = record.billingRate === null || record.billingRate === undefined
         ? ''
         : String(record.billingRate);
-      editCustNote.value = store.isOwner ? (record.note || '') : '';
-      editHelp.textContent = store.isOwner
-        ? 'Update this customer’s details and billing information. Changes are saved to shared records.'
-        : 'Suggest customer details for owner review. The shared record will not change until approved.';
+      editCustNote.value = record.note || '';
     }
 
     editModal.showModal();
@@ -198,9 +192,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await store.updateEmployee(editingId, editEmpName.value, editEmpWage.value);
         renderEmpList();
       } else if (editingType === 'customer') {
-        const billingRate = editCustBillingRate.value === ''
-          ? (store.isOwner ? null : undefined)
-          : Number(editCustBillingRate.value);
+        const billingRate = editCustBillingRate.value === '' ? null : Number(editCustBillingRate.value);
         await store.updateCustomer(
           editingId,
           editCustName.value,

@@ -1,25 +1,19 @@
-# Domain, UI-contract, and security emulator tests
+# Timekeeper tests
 
-Run the Node.js test suite with Node.js 18 or newer:
+Run the local Node.js tests with Node.js 18 or newer:
 
 ```sh
 npm test
 ```
 
-The default suite includes keyboard/dialog viewport helpers, Shift edit Notes behavior, domain logic, guest-data sanitization, and project-wide page coverage. It does not connect to Firebase.
+The default suite checks domain behavior, keyboard/dialog handling, shift-edit Notes behavior, app-page coverage, and the public no-login data-access contract. It does not connect to Firebase.
 
-Run the current Firestore rules and Auth emulator tests with:
+Run the Firestore Rules tests with:
 
 ```sh
 npm run test:firebase-emulator
 ```
 
-This command uses only the `demo-timekeeper` emulators bound to loopback. It tests `firestore.rules`, including both configured owners, owner isolation, recent-auth writes, and routine clocking exceptions. The rules source is kept aligned with the currently deployed guest-enabled source. No live Firebase project is selected.
+This starts only the local Firestore emulator bound to `127.0.0.1:8080`, using the `demo-timekeeper` emulator project ID. It checks that unauthenticated users and unrelated authenticated users can read, create, update, and delete records in the app's established collections, as well as arbitrary and nested collections. It does not read or modify production Firestore data.
 
-Run the separate proposed guest-access rules against the local Firestore emulator with:
-
-```sh
-npm run test:firebase-emulator:guest
-```
-
-This command tests `proposals/firestore.guest-proposal.rules` from a temporary emulator configuration, including guest kiosk access and both configured owners. It does not replace or modify `firestore.rules`, deploy anything, or contact the live Firebase project. Keep this file aligned with `firestore.rules` before rule deployments.
+The production rules are deliberately fully public. Anyone can access all documents, including payroll, invoice, employee, customer, and shift records. Keep sensitive data out of this project while that ruleset is deployed.

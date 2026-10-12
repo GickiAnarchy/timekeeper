@@ -1,25 +1,33 @@
-# TIME KEEPER
+# Timekeeper
 
-A javascript project to keep track of hours working.
+A JavaScript app for tracking work hours. The workspace includes clock in/out, breaks, shift history, employee and customer records, invoices, an employee ledger, and planned jobs. The Home dashboard summarizes today's and this week's break-adjusted hours, highlights active shifts and upcoming jobs, and updates active totals every minute. Themes and text-size preferences are saved in the current browser.
 
-The workspace includes clock in/out, break tracking, shift history, employee
-and customer records, invoices, an employee ledger, and planned jobs. The Home
-dashboard summarizes today's and this week's break-adjusted hours, highlights
-active shifts and upcoming jobs, and updates active totals every minute. Choose
-Forest, Coastal, Harvest, or Midnight and select Standard, Large, or Extra large
-text from Settings; these preferences are saved in the current browser.
+> **Access model:** This app intentionally uses a fully public shared workflow. Firestore rules allow anyone—signed in or not—to read, create, update, and delete every document in every collection and subcollection. Do not put confidential or sensitive information in this Firebase project while these rules are deployed.
 
-*This is a work in progress*
-<hr>
+The hosted app is available at [GickiAnarchy.github.io/timekeeper](https://www.gickianarchy.github.io/timekeeper/).
 
-[Link to the site.](https://www.gickianarchy.github.io/timekeeper/)
+## Tests
 
-## Local Firebase authentication and Firestore security
+Run the local Node test suite (Node.js 18 or newer):
 
-The app shell provides **owner email/password sign-in only**; it has no public sign-up flow. Both owner accounts must be created administratively. Firebase Authentication account-management settings are managed separately and are not changed by this application. See [Firebase user self-service settings](https://firebase.google.com/docs/auth/users#user_self-service).
+```sh
+npm test
+```
 
-The approved owner UIDs are `N9fh9kr98neSYBSNdyDHBZn9IGv1` and `S7v71Kjhesf4oWv1qTzsN8zcIZm1`. They are checked by the frontend and Firestore Rules; the client-side check improves the UI, while Firestore Rules are the data-access boundary. Keep `firestore.rules` and `proposals/firestore.guest-proposal.rules` aligned so a future deployment does not revert guest-kiosk access or owner authorization.
+Run the Firestore Rules test against the local emulator only:
 
-All private workspace reads require one of the configured owner UIDs. Writes to employees, customers, payments, invoices, the ledger, and planned jobs require an owner ID token whose Auth `auth_time` is within five minutes of the Firestore request. The app explicitly asks for the owner password before the first protected write in a signed-in page session, then re-prompts before its four-minute local window expires; Firestore Rules enforce the five-minute server-side limit. The routine exception is deliberately narrow: creating a pristine active shift and updating only an active shift's breaks or clock-out time. Editing completed shifts, deleting shifts, importing/restoring records, and every non-shift mutation use the recent-auth path.
+```sh
+npm run test:firebase-emulator
+```
 
-The Firebase CLI default project remains the local `demo-timekeeper` emulator project. Production rules deployments must explicitly select `timekeeper-ad253` with `--project`; do not change the default project to production.
+The emulator command binds to loopback and uses the `demo-timekeeper` project ID; it does not read or write production Firestore data.
+
+## Rules deployment
+
+The recursive public rule is in `firestore.rules`. Deploy only Firestore rules to the production project by explicitly specifying its project ID:
+
+```sh
+./node_modules/.bin/firebase deploy --only firestore:rules --project timekeeper-ad253
+```
+
+The default Firebase CLI project remains `demo-timekeeper` to reduce the chance that local emulator work targets production accidentally.

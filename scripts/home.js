@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (jobs.length === 0) {
       const empty = makeElement('li', 'dashboard-empty', 'No planned jobs yet.');
-      if (store.isOwner) empty.appendChild(makeLink('Add the first job', 'planned.html'));
+      empty.appendChild(makeLink('Add the first job', 'planned.html'));
       upcomingList.appendChild(empty);
       return;
     }
@@ -164,7 +164,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
-    await store.init();
+    await store.loadEmployees();
+    await store.loadCustomers();
+    await store.loadShifts();
+    await store.loadPlanned();
     renderOverview();
     renderPlannedJobs();
     window.setInterval(renderOverview, 60_000);

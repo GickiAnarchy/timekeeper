@@ -8,7 +8,7 @@
     <script type="module" src="../scripts/settings.js" defer></script>
     <title>Settings · Mosher Lawns Timekeeper</title>
   </head>
-  <body class="settings-body" data-owner="false">
+  <body class="settings-body">
     <main class="settings-page">
       <header class="settings-intro">
         <p class="settings-eyebrow">YOUR WORKSPACE</p>
@@ -69,20 +69,7 @@
         <p class="settings-help" id="text-size-help">Your choice is saved in this browser and applies across all pages.</p>
       </section>
 
-      <section class="settings-card" data-owner-only aria-labelledby="guest-data-title">
-        <div class="settings-card-heading">
-          <span class="settings-icon" aria-hidden="true">◉</span>
-          <div>
-            <h2 id="guest-data-title">Guest-safe workspace data</h2>
-            <p>Publish employee names, customer names and general locations, and operational shift times for the shared kiosk.</p>
-          </div>
-        </div>
-        <p class="settings-warning">Wages, customer notes, billing rates, and numbered street addresses are excluded. This refresh does not publish payroll or invoice data.</p>
-        <button class="backup-button" id="refresh-guest-data-btn" type="button">Refresh guest-safe data</button>
-        <p class="settings-help" id="guest-data-status" role="status" aria-live="polite">Sign in as owner to publish guest-safe data.</p>
-      </section>
-
-      <section class="settings-card" data-owner-only aria-labelledby="backup-title">
+      <section class="settings-card" aria-labelledby="backup-title">
         <div class="settings-card-heading">
           <span class="settings-icon" aria-hidden="true">⇄</span>
           <div>

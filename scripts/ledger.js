@@ -159,7 +159,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           makeCell(entry.notes || '')
         );
         const actionCell = document.createElement('td');
-        actionCell.dataset.ownerOnly = 'true';
         const rowActions = document.createElement('div');
         rowActions.className = 'ledger-row-actions';
         const editButton = document.createElement('button');

@@ -12,125 +12,32 @@ import {
 */
 
 // 1. Import Firebase & Firestore Modular SDKs (CDN Links)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
+  getFirestore,
   collection,
   setDoc as firestoreSetDoc,
   getDocs as firestoreGetDocs,
   doc,
   updateDoc as firestoreUpdateDoc,
   deleteDoc as firestoreDeleteDoc,
-  writeBatch as firestoreWriteBatch,
-  getDoc as firestoreGetDoc
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { db, getCurrentOwner, requireRecentOwnerReauthentication } from './firebase.js';
-import { publicCustomerData, publicEmployeeData, publicShiftData } from './guest-data.mjs';
 
-const REQUESTABLE_COLLECTIONS = new Set([
-  'employees', 'customers', 'payments', 'invoices', 'ledgerRows', 'planned', 'shifts'
-]);
+// 2. Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDn_y846YGhK689a3-2S6VvO46uElD1JXw",
+  authDomain: "timekeeper-ad253.firebaseapp.com",
+  projectId: "timekeeper-ad253",
+  storageBucket: "timekeeper-ad253.firebasestorage.app",
+  messagingSenderId: "516577372091",
+  appId: "1:516577372091:web:3bb56f8017058ffcd9869e"
+};
 
-export class PendingRequestSubmittedError extends Error {
-  constructor(requestId) {
-    super(`Request ${requestId} was sent to the owner. No workspace data has changed.`);
-    this.name = 'PendingRequestSubmittedError';
-    this.requestId = requestId;
-    this.pending = true;
-  }
-}
+// 3. Initialize Firebase & Firestore
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-function requestSafeValue(value) {
-  if (value instanceof Date) return value.toISOString();
-  if (Array.isArray(value)) return value.map(requestSafeValue);
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value)
-      .filter(([, entry]) => entry !== undefined)
-      .map(([key, entry]) => [key, requestSafeValue(entry)]));
-  }
-  return value;
-}
-
-function operationForReference(operation, reference, data = undefined) {
-  const [collectionName, documentId] = String(reference.path || '').split('/');
-  if (!REQUESTABLE_COLLECTIONS.has(collectionName) || !documentId || documentId.includes('/')) {
-    throw new Error('This change cannot be submitted from guest access.');
-  }
-  const item = { operation, collection: collectionName, documentId };
-  if (data !== undefined) item.data = requestSafeValue(data);
-  return item;
-}
-
-async function submitPendingRequest(operations, kind = 'write') {
-  const requestId = globalThis.crypto?.randomUUID?.();
-  if (!requestId) throw new Error('This browser cannot create a secure change-request ID.');
-  const requestData = {
-    kind,
-    status: 'pending',
-    submittedAt: new Date().toISOString(),
-    requester: 'Shared kiosk',
-    ...(kind === 'write' ? operations[0] : { operations })
-  };
-  await firestoreRequest('Submitting this change request failed.', () =>
-    firestoreSetDoc(doc(db, 'changeRequests', requestId), requestData));
-  throw new PendingRequestSubmittedError(requestId);
-}
-
-async function writeWithAccess(operation, reference, data, options = undefined) {
-  if (!await getCurrentOwner()) {
-    await submitPendingRequest([operationForReference(operation, reference, data)]);
-  }
-  await requireRecentOwnerReauthentication('Saving workspace data');
-  const writer = operation === 'set' ? firestoreSetDoc : operation === 'update' ? firestoreUpdateDoc : firestoreDeleteDoc;
-  const args = operation === 'delete' ? [reference] : [reference, data, ...(options === undefined ? [] : [options])];
-  return firestoreRequest('Saving data to Firestore failed.', () => writer(...args));
-}
-
-const setDoc = (reference, data, options) => writeWithAccess('set', reference, data, options);
-const updateDoc = (reference, data) => writeWithAccess('update', reference, data);
-const deleteDoc = reference => writeWithAccess('delete', reference);
-const getDocs = (...args) => firestoreRequest('Loading data from Firestore failed.', () => firestoreGetDocs(...args));
-
-function writeBatch(database) {
-  const batch = firestoreWriteBatch(database);
-  const operations = [];
-  const api = {
-    set(reference, data, options) {
-      operations.push(operationForReference('set', reference, data));
-      if (options === undefined) batch.set(reference, data);
-      else batch.set(reference, data, options);
-      return api;
-    },
-    update(reference, data) {
-      operations.push(operationForReference('update', reference, data));
-      batch.update(reference, data);
-      return api;
-    },
-    delete(reference) {
-      operations.push(operationForReference('delete', reference));
-      batch.delete(reference);
-      return api;
-    },
-    commit() { return batch.commit(); },
-    _operations: operations,
-    _rawBatch: batch
-  };
-  return api;
-}
-
-async function commitBatch(batch, message = 'Saving this group of changes to Firestore failed.') {
-  if (!await getCurrentOwner()) await submitPendingRequest(batch._operations || [], 'batch');
-  await requireRecentOwnerReauthentication(message);
-  return firestoreRequest(message, () => batch._rawBatch.commit());
-}
-
-const commitRoutineBatch = (batch, message) => firestoreRequest(message, () => batch._rawBatch.commit());
-
-async function tryUpdateGuestProjection(operation, description) {
-  try {
-    await operation();
-  } catch (error) {
-    console.warn(`Guest-safe projection update skipped (${description}). Deploy the separately reviewed guest-access rules before refreshing projections.`, error?.code || error);
-  }
-}
 function showFirestoreError(message, retryOperation) {
   if (!globalThis.document?.body) return;
   let banner = document.getElementById('firestore-error-banner');
@@ -203,6 +110,12 @@ function firestoreRequest(message, operation) {
   });
 }
 
+const setDoc = (...args) => firestoreRequest('Saving data to Firestore failed.', () => firestoreSetDoc(...args));
+const getDocs = (...args) => firestoreRequest('Loading data from Firestore failed.', () => firestoreGetDocs(...args));
+const updateDoc = (...args) => firestoreRequest('Updating data in Firestore failed.', () => firestoreUpdateDoc(...args));
+const deleteDoc = (...args) => firestoreRequest('Deleting data from Firestore failed.', () => firestoreDeleteDoc(...args));
+const commitBatch = (batch, message = 'Saving this group of changes to Firestore failed.') =>
+  firestoreRequest(message, () => batch.commit());
 
 
 export { roundTo15Minutes, roundDown15Minutes, roundUp15Minutes };
@@ -488,31 +401,15 @@ export class AppDataStore {
     this.customers = new Map();
     this.payments = [];
     this.shifts = [];
-    this.privateShiftIds = new Set();
     this.invoices = [];
     this.ledger = new Ledger();
     this.plannedJobs = [];
     this.loadFailures = [];
-    this.isOwner = false;
-    this.authRequired = false;
+    this.isAdmin = null;
   }
   
   async init() {
     this.loadFailures = [];
-    const owner = await getCurrentOwner();
-    this.isOwner = Boolean(owner);
-    this.authRequired = !this.isOwner;
-    globalThis.document?.body?.setAttribute('data-owner', String(this.isOwner));
-    if (!this.isOwner) {
-      this.payments = [];
-      this.invoices = [];
-      this.ledger = new Ledger();
-      this.plannedJobs = [];
-      await this.loadEmployees();
-      await this.loadCustomers();
-      await this.loadShifts();
-      return;
-    }
     await this.loadEmployees();
     await this.loadCustomers();
     await this.loadShifts();
@@ -520,95 +417,6 @@ export class AppDataStore {
     await this.loadInvoices();
     await this.loadLedger();
     await this.loadPlanned();
-  }
-
-  async loadPendingRequests() {
-    if (!await getCurrentOwner()) throw new Error('Owner sign-in is required to review pending requests.');
-    const snapshot = await getDocs(collection(db, 'changeRequests'));
-    return snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
-      .sort((a, b) => String(b.submittedAt || '').localeCompare(String(a.submittedAt || '')));
-  }
-
-  async resolvePendingRequest(requestId, decision, reviewerNote = '') {
-    if (!await getCurrentOwner()) throw new Error('Owner sign-in is required to review pending requests.');
-    if (!['approved', 'denied'].includes(decision)) throw new Error('Choose approve or deny.');
-    const requestRef = doc(db, 'changeRequests', requestId);
-    const requestSnap = await firestoreRequest('Loading this request failed.', () => firestoreGetDoc(requestRef));
-    if (!requestSnap.exists() || requestSnap.data().status !== 'pending') {
-      throw new Error('This request is no longer pending. Refresh the request list.');
-    }
-
-    const request = requestSnap.data();
-    const operations = request.kind === 'batch' ? request.operations : [request];
-    if (decision === 'approved' && (!Array.isArray(operations) || operations.length === 0 || operations.length > 499)) {
-      throw new Error('This request has an invalid or oversized change list.');
-    }
-    const allowedOperations = new Set(['set', 'update', 'delete']);
-    const batch = firestoreWriteBatch(db);
-    if (decision === 'approved') {
-      for (const operation of operations) {
-        if (!operation || !REQUESTABLE_COLLECTIONS.has(operation.collection) ||
-          typeof operation.documentId !== 'string' || !operation.documentId || operation.documentId.includes('/') ||
-          !allowedOperations.has(operation.operation)) {
-          throw new Error('This request contains a change that cannot be applied.');
-        }
-        const reference = doc(db, operation.collection, operation.documentId);
-        if (operation.operation === 'set') batch.set(reference, operation.data || {});
-        else if (operation.operation === 'update') batch.update(reference, operation.data || {});
-        else batch.delete(reference);
-      }
-    }
-    batch.update(requestRef, {
-      status: decision,
-      reviewedAt: new Date().toISOString(),
-      reviewerNote: String(reviewerNote || '').trim().slice(0, 500)
-    });
-    await requireRecentOwnerReauthentication(decision === 'approved'
-      ? 'Approving this guest change request'
-      : 'Denying this guest change request');
-    await firestoreRequest('Resolving this change request failed.', () => batch.commit());
-
-    if (decision === 'approved') {
-      await this.init();
-      await this.refreshGuestProjections();
-    }
-    return decision;
-  }
-
-  async refreshGuestProjections() {
-    if (!await getCurrentOwner()) throw new Error('Owner sign-in is required to refresh guest data.');
-    await requireRecentOwnerReauthentication('Refreshing the safe guest-data projections');
-    const collections = ['publicEmployees', 'publicCustomers', 'publicShifts'];
-    const snapshots = await Promise.all(collections.map(name =>
-      firestoreRequest('Loading the existing guest-data projections failed.', () => firestoreGetDocs(collection(db, name)))
-    ));
-    const desired = new Map([
-      ['publicEmployees', new Map([...this.employees].map(([id, employee]) => [id, publicEmployeeData(employee)]))],
-      ['publicCustomers', new Map([...this.customers].map(([id, customer]) => [id, publicCustomerData(customer)]))],
-      ['publicShifts', new Map(this.shifts.map(shift => [shift.id, publicShiftData(shift)]))]
-    ]);
-    const writes = [];
-    collections.forEach((name, index) => {
-      const records = desired.get(name);
-      for (const [id, data] of records) writes.push({ type: 'set', ref: doc(db, name, id), data });
-      for (const docSnap of snapshots[index].docs) {
-        if (!records.has(docSnap.id)) writes.push({ type: 'delete', ref: doc(db, name, docSnap.id) });
-      }
-    });
-    for (let offset = 0; offset < writes.length; offset += 450) {
-      const batch = firestoreWriteBatch(db);
-      for (const write of writes.slice(offset, offset + 450)) {
-        if (write.type === 'set') batch.set(write.ref, write.data);
-        else batch.delete(write.ref);
-      }
-      await firestoreRequest('Refreshing safe guest data failed.', () => batch.commit());
-    }
-    return {
-      employees: this.employees.size,
-      customers: this.customers.size,
-      shifts: this.shifts.length,
-      writes: writes.length
-    };
   }
   
   // LEDGER --
@@ -665,19 +473,6 @@ export class AppDataStore {
   async deleteLedgerEntry(entryId) {
     const entry = this.ledger.getEntry(entryId);
     if (!entry) return;
-    if (!this.isOwner) {
-      const nextEntries = this.ledger.entries
-        .filter(candidate => candidate.employeeId === (entry.employeeId || null) && candidate.id !== entryId)
-        .sort((a, b) => Number(a.index || 0) - Number(b.index || 0));
-      const operations = [operationForReference('delete', doc(db, 'ledgerRows', entryId))];
-      nextEntries.forEach((candidate, index) => {
-        const nextIndex = index + 1;
-        if (candidate.index !== nextIndex) {
-          operations.push(operationForReference('update', doc(db, 'ledgerRows', candidate.id), { index: nextIndex }));
-        }
-      });
-      await submitPendingRequest(operations, 'batch');
-    }
     const isDeleted = this.ledger.deleteEntry(entryId);
     if (!isDeleted) return;
     
@@ -745,10 +540,10 @@ export class AppDataStore {
   async loadEmployees() {
     this.employees.clear();
     try {
-      const querySnapshot = await getDocs(collection(db, this.isOwner ? "employees" : "publicEmployees"));
+      const querySnapshot = await getDocs(collection(db, "employees"));
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        this.employees.set(docSnap.id, new Employee(docSnap.id, data.name, this.isOwner ? data.wage : 0));
+        this.employees.set(docSnap.id, new Employee(docSnap.id, data.name, data.wage));
       });
     } catch (e) {
       console.error("Error loading employees from Firestore:", e);
@@ -770,10 +565,6 @@ export class AppDataStore {
       name: emp.name,
       wage: emp.wage
     });
-    if (this.isOwner) await tryUpdateGuestProjection(
-      () => firestoreSetDoc(doc(db, 'publicEmployees', emp.id), publicEmployeeData(emp)),
-      'employee create'
-    );
     this.employees.set(emp.id, emp);
     return emp;
   }
@@ -783,10 +574,9 @@ export class AppDataStore {
     if (!employee) throw new Error("Employee not found.");
     
     const cleanName = String(name ?? '').trim();
-    const hasWage = String(wage ?? '').trim() !== '';
-    const cleanWage = hasWage ? Number(wage) : null;
+    const cleanWage = Number(wage);
     if (!cleanName) throw new Error("Employee name cannot be empty.");
-    if ((this.isOwner && !hasWage) || (hasWage && (!Number.isFinite(cleanWage) || cleanWage < 0))) {
+    if (!Number.isFinite(cleanWage) || cleanWage < 0) {
       throw new Error("Employee wage must be a non-negative number.");
     }
     const duplicate = Array.from(this.employees.values()).some(
@@ -794,25 +584,15 @@ export class AppDataStore {
     );
     if (duplicate) throw new Error("An employee with that name already exists.");
     
-    const updates = { name: cleanName };
-    if (hasWage) updates.wage = cleanWage;
-    await updateDoc(doc(db, "employees", id), updates);
-    if (this.isOwner) await tryUpdateGuestProjection(
-      () => firestoreSetDoc(doc(db, 'publicEmployees', id), publicEmployeeData({ name: cleanName })),
-      'employee update'
-    );
+    await updateDoc(doc(db, "employees", id), { name: cleanName, wage: cleanWage });
     employee.name = cleanName;
-    if (hasWage) employee.wage = cleanWage;
+    employee.wage = cleanWage;
     return employee;
   }
   
   async deleteEmployee(id) {
     if (this.employees.has(id)) {
       await deleteDoc(doc(db, "employees", id));
-      if (this.isOwner) await tryUpdateGuestProjection(
-        () => firestoreDeleteDoc(doc(db, 'publicEmployees', id)),
-        'employee delete'
-      );
       this.employees.delete(id);
       return true;
     }
@@ -823,16 +603,10 @@ export class AppDataStore {
   async loadCustomers() {
     this.customers.clear();
     try {
-      const querySnapshot = await getDocs(collection(db, this.isOwner ? "customers" : "publicCustomers"));
+      const querySnapshot = await getDocs(collection(db, "customers"));
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        this.customers.set(docSnap.id, new Customer(
-          docSnap.id,
-          data.name,
-          data.location,
-          this.isOwner ? data.note : null,
-          this.isOwner ? data.billingRate : null
-        ));
+        this.customers.set(docSnap.id, new Customer(docSnap.id, data.name, data.location, data.note, data.billingRate));
       });
     } catch (e) {
       console.error("Error loading customers from Firestore:", e);
@@ -861,10 +635,6 @@ export class AppDataStore {
       note: site.note,
       billingRate: site.billingRate
     });
-    if (this.isOwner) await tryUpdateGuestProjection(
-      () => firestoreSetDoc(doc(db, 'publicCustomers', site.id), publicCustomerData(site)),
-      'customer create'
-    );
     this.customers.set(site.id, site);
     return site;
   }
@@ -885,8 +655,11 @@ export class AppDataStore {
     );
     if (duplicate) throw new Error("A customer with that name and location already exists.");
     
-    const updates = { name: cleanName, location: cleanLocation };
-    if (this.isOwner || cleanNote) updates.note = cleanNote;
+    const updates = {
+      name: cleanName,
+      location: cleanLocation,
+      note: cleanNote
+    };
     let cleanRate;
     if (billingRate !== undefined) {
       cleanRate = billingRate === null || billingRate === '' ? null : Number(billingRate);
@@ -897,12 +670,6 @@ export class AppDataStore {
     }
     
     await updateDoc(doc(db, "customers", id), updates);
-    if (this.isOwner) {
-      await tryUpdateGuestProjection(() => firestoreSetDoc(doc(db, 'publicCustomers', id), publicCustomerData({
-        name: cleanName,
-        location: cleanLocation
-      })), 'customer update');
-    }
     customer.name = cleanName;
     customer.location = cleanLocation;
     customer.note = cleanNote;
@@ -931,10 +698,6 @@ export class AppDataStore {
   async deleteCustomer(id) {
     if (this.customers.has(id)) {
       await deleteDoc(doc(db, "customers", id));
-      if (this.isOwner) await tryUpdateGuestProjection(
-        () => firestoreDeleteDoc(doc(db, 'publicCustomers', id)),
-        'customer delete'
-      );
       this.customers.delete(id);
       return true;
     }
@@ -945,44 +708,17 @@ export class AppDataStore {
   async loadShifts() {
     this.shifts = [];
     try {
-      const privateSnapshot = this.isOwner ? await getDocs(collection(db, 'shifts')) : null;
-      let publicSnapshot;
-      try {
-        publicSnapshot = await firestoreGetDocs(collection(db, 'publicShifts'));
-      } catch (error) {
-        if (!this.isOwner) throw error;
-        console.warn('Safe kiosk shifts are unavailable until the reviewed guest-access rules are deployed.', error?.code || error);
-        publicSnapshot = { docs: [], forEach() {} };
-      }
-      const records = new Map();
-      privateSnapshot?.forEach(docSnap => records.set(docSnap.id, docSnap.data()));
-      this.privateShiftIds = new Set(records.keys());
-      publicSnapshot.forEach(docSnap => {
-        const publicData = docSnap.data();
-        const privateData = records.get(docSnap.id) || {};
-        records.set(docSnap.id, this.isOwner ? { ...privateData, ...publicData } : publicData);
-      });
-      records.forEach((data, shiftId) => {
+      const querySnapshot = await getDocs(collection(db, "shifts"));
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
         const emp = (this.employees && this.employees.get(data.employeeId)) || new Employee(data.employeeId, 'Unknown Employee', 0);
         const site = (this.customers && this.customers.get(data.custId)) || new Customer(data.custId, 'Unknown Site');
         const parsedBreaks = (data.breaks || []).map(b => ({ start: b.start ? new Date(b.start) : null, end: b.end ? new Date(b.end) : null }));
-        const savedClockOut = data.clockOutTime ? new Date(data.clockOutTime) : null;
-        if (savedClockOut) parsedBreaks.forEach(item => {
-          if (item.start && !item.end) item.end = savedClockOut;
-        });
         
-        const shift = new WorkShift(
-          emp,
-          site,
-          shiftId,
-          this.isOwner ? data.note || null : null,
-          this.isOwner ? data.isPaid : false,
-          parsedBreaks,
-          this.isOwner ? data.paidHours : null
-        );
+        const shift = new WorkShift(emp, site, docSnap.id, data.note || null, data.isPaid, parsedBreaks, data.paidHours);
         
         shift.clockInTime = data.clockInTime ? new Date(data.clockInTime) : null;
-        shift.clockOutTime = savedClockOut;
+        shift.clockOutTime = data.clockOutTime ? new Date(data.clockOutTime) : null;
         
         this.shifts.push(shift);
       });
@@ -992,12 +728,13 @@ export class AppDataStore {
     }
   }
   
-  async saveShift(shift, { routine = false, action = '' } = {}) {
+  async saveShift(shift) {
     const formattedBreaks = shift.breaks.map(b => ({
       start: b.start instanceof Date ? b.start.toISOString() : b.start,
       end: b.end instanceof Date ? b.end.toISOString() : b.end
     }));
-    const shiftData = {
+
+    await setDoc(doc(db, "shifts", shift.id), {
       employeeId: shift.employee ? shift.employee.id : null,
       custId: shift.customer ? shift.customer.id : null,
       clockInTime: shift.clockInTime ? shift.clockInTime.toISOString() : null,
@@ -1006,47 +743,7 @@ export class AppDataStore {
       isPaid: shift.isPaid || false,
       breaks: formattedBreaks,
       paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null
-    };
-    const shiftRef = doc(db, "shifts", shift.id);
-    if (!this.isOwner) {
-      const publicData = publicShiftData(shiftData);
-      const existing = this.shifts.find(candidate => candidate.id === shift.id);
-      if (routine && existing) {
-        const previous = publicShiftData(existing);
-        if (action === 'clockOut' && previous.clockInTime && publicData.clockOutTime) {
-          await firestoreRequest('Saving routine clock-out failed.', () =>
-            firestoreUpdateDoc(doc(db, 'publicShifts', shift.id), { clockOutTime: publicData.clockOutTime }));
-          return;
-        }
-        const sameExceptClockOut = previous.employeeId === publicData.employeeId &&
-          previous.custId === publicData.custId && previous.clockInTime === publicData.clockInTime &&
-          JSON.stringify(previous.breaks) === JSON.stringify(publicData.breaks) &&
-          previous.clockOutTime === null && typeof publicData.clockOutTime === 'string';
-        if (sameExceptClockOut) {
-          await firestoreRequest('Saving routine clock-out failed.', () =>
-            firestoreUpdateDoc(doc(db, 'publicShifts', shift.id), { clockOutTime: publicData.clockOutTime }));
-          return;
-        }
-
-        const sameExceptBreaks = previous.employeeId === publicData.employeeId &&
-          previous.custId === publicData.custId && previous.clockInTime === publicData.clockInTime &&
-          previous.clockOutTime === publicData.clockOutTime;
-        const changes = sameExceptBreaks ? { breaks: publicData.breaks } : publicData;
-        await submitPendingRequest([operationForReference('update', shiftRef, changes)]);
-      }
-      const requestedData = { ...publicData };
-      if (shiftData.note) requestedData.note = shiftData.note;
-      await submitPendingRequest([operationForReference('set', shiftRef, requestedData)]);
-    }
-    if (routine) {
-      await firestoreRequest('Saving routine clock activity failed.', () => firestoreSetDoc(shiftRef, shiftData));
-    } else {
-      await setDoc(shiftRef, shiftData);
-    }
-    if (this.isOwner) await tryUpdateGuestProjection(
-      () => firestoreSetDoc(doc(db, 'publicShifts', shift.id), publicShiftData(shiftData)),
-      'shift update'
-    );
+    });
   }
   
   async saveShifts(shifts) {
@@ -1054,13 +751,13 @@ export class AppDataStore {
     if (shifts.length > 500) throw new Error("A single clock-in batch cannot contain more than 500 shifts.");
     const ids = shifts.map(shift => String(shift.id));
     if (new Set(ids).size !== ids.length) throw new Error("A shift appears more than once in this clock-in batch.");
-    const batch = firestoreWriteBatch(db);
+    const batch = writeBatch(db);
     shifts.forEach(shift => {
       const formattedBreaks = (shift.breaks || []).map(b => ({
         start: b.start instanceof Date ? b.start.toISOString() : b.start,
         end: b.end instanceof Date ? b.end.toISOString() : b.end
       }));
-      const shiftData = {
+      batch.set(doc(db, "shifts", shift.id), {
         employeeId: shift.employee ? shift.employee.id : null,
         custId: shift.customer ? shift.customer.id : null,
         clockInTime: shift.clockInTime ? shift.clockInTime.toISOString() : null,
@@ -1069,46 +766,14 @@ export class AppDataStore {
         isPaid: Boolean(shift.isPaid),
         breaks: formattedBreaks,
         paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null
-      };
-      if (!this.isOwner) batch.set(doc(db, 'publicShifts', shift.id), publicShiftData(shiftData));
-    });
-    if (this.isOwner) {
-      // Keep the established owner clock-in batch independent of optional guest rules.
-      const ownerBatch = firestoreWriteBatch(db);
-      shifts.forEach(shift => {
-        const data = {
-          employeeId: shift.employee ? shift.employee.id : null,
-          custId: shift.customer ? shift.customer.id : null,
-          clockInTime: shift.clockInTime ? shift.clockInTime.toISOString() : null,
-          clockOutTime: shift.clockOutTime ? shift.clockOutTime.toISOString() : null,
-          note: shift.note || null,
-          isPaid: Boolean(shift.isPaid),
-          breaks: (shift.breaks || []).map(item => ({
-            start: item.start instanceof Date ? item.start.toISOString() : item.start,
-            end: item.end instanceof Date ? item.end.toISOString() : item.end
-          })),
-          paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null
-        };
-        ownerBatch.set(doc(db, 'shifts', shift.id), data);
       });
-      await firestoreRequest('Clocking in the selected employees failed.', () => ownerBatch.commit());
-      for (const shift of shifts) await tryUpdateGuestProjection(
-        () => firestoreSetDoc(doc(db, 'publicShifts', shift.id), publicShiftData(shift)),
-        'shift clock-in'
-      );
-    } else {
-      await commitRoutineBatch(batch, 'Clocking in the selected employees failed.');
-    }
+    });
+    await commitBatch(batch, 'Clocking in the selected employees failed.');
   }
   
   async deleteShift(shiftId) {
     await deleteDoc(doc(db, "shifts", shiftId));
-    if (this.isOwner) await tryUpdateGuestProjection(
-      () => firestoreDeleteDoc(doc(db, 'publicShifts', shiftId)),
-      'shift delete'
-    );
     this.shifts = this.shifts.filter(s => s.id !== shiftId);
-    this.privateShiftIds.delete(shiftId);
   }
   
   async updateShift(shiftId, employee, customer, clockInTime, clockOutTime, note = null, isPaid = false, breaks = null, paidHours = undefined) {
@@ -1150,7 +815,7 @@ export class AppDataStore {
       throw new Error("Paid hours must be a valid non-negative number, or left blank to use worked hours.");
     }
     
-    const updates = {
+    await updateDoc(doc(db, "shifts", shiftId), {
       employeeId: employee.id,
       custId: customer.id,
       clockInTime: start.toISOString(),
@@ -1159,27 +824,7 @@ export class AppDataStore {
       isPaid: Boolean(isPaid),
       breaks: normalizedBreaks.map(b => ({ start: b.start.toISOString(), end: b.end.toISOString() })),
       paidHours: nextPaidHours
-    };
-    if (!this.isOwner) {
-      await submitPendingRequest([operationForReference('update', doc(db, 'shifts', shiftId), {
-        employeeId: updates.employeeId,
-        custId: updates.custId,
-        clockInTime: updates.clockInTime,
-        clockOutTime: updates.clockOutTime,
-        breaks: updates.breaks,
-        ...(updates.note ? { note: updates.note } : {})
-      })]);
-    }
-    if (this.privateShiftIds.has(shiftId)) {
-      await updateDoc(doc(db, "shifts", shiftId), updates);
-    } else {
-      await setDoc(doc(db, "shifts", shiftId), updates);
-      this.privateShiftIds.add(shiftId);
-    }
-    if (this.isOwner) await tryUpdateGuestProjection(
-      () => firestoreSetDoc(doc(db, 'publicShifts', shiftId), publicShiftData(updates)),
-      'shift edit'
-    );
+    });
     
     shift.employee = employee;
     shift.customer = customer;
@@ -1618,7 +1263,7 @@ export function populateEmployeeDropdowns(empDropdownElement) {
   [...store.employees.values()].sort(compareByFirstName).forEach((emp) => {
     const opt = document.createElement('option');
     opt.value = emp.id;
-    opt.textContent = store.isOwner ? `${emp.name} -- ($${emp.wage}/hr)` : emp.name;
+    opt.textContent = `${emp.name} -- ($${emp.wage}/hr)`;
     empDropdownElement.appendChild(opt);
   });
 }

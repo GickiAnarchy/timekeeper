@@ -260,7 +260,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const label = makeElement('label', 'shift-link-option');
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
-      checkbox.dataset.ownerOnly = 'true';
       checkbox.dataset.shiftId = shiftId;
       checkbox.checked = linkedIds.has(shiftId);
       checkbox.disabled = Boolean(invoice.isPaid);
@@ -276,7 +275,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const label = makeElement('label', 'shift-link-option');
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
-      checkbox.dataset.ownerOnly = 'true';
       checkbox.dataset.shiftId = shiftId;
       checkbox.checked = true;
       checkbox.disabled = Boolean(invoice.isPaid);
@@ -441,7 +439,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           } else {
             paidLabel.innerHTML = `
               <td colspan="3">
-                <button id="mark-paid-btn" data-owner-only type="button">Mark Paid</button>
+                <button id="mark-paid-btn" type="button">Mark Paid</button>
               </td>
             `;
             const markPaidBtn = paidLabel.querySelector('#mark-paid-btn');

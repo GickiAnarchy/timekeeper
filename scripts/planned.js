@@ -116,7 +116,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     );
 
     const actions = makeElement('div', 'job-actions');
-    actions.dataset.ownerOnly = 'true';
     const editButton = makeElement('button', 'button button-small button-secondary', 'Edit');
     editButton.type = 'button';
     editButton.dataset.action = 'edit';

@@ -10,24 +10,26 @@ const embeddedPages = readdirSync(htmlDirectory)
   .filter(file => file.endsWith('.html'))
   .sort();
 
+const readProjectFile = (...parts) => readFileSync(join(projectRoot, ...parts), 'utf8');
+
 test('every embedded project page loads the shared keyboard-visibility helper', () => {
   assert.ok(embeddedPages.length > 0, 'expected embedded HTML pages');
   for (const file of embeddedPages) {
-    const markup = readFileSync(join(htmlDirectory, file), 'utf8');
+    const markup = readProjectFile('html', file);
     assert.match(markup, /<script\b(?=[^>]*\btype=["']module["'])(?=[^>]*\bsrc=["']\.\.\/scripts\/keyboard\.mjs["'])[^>]*>/i, file);
   }
 });
 
 test('the parent shell monitors keyboard focus and viewport changes in its active iframe', () => {
-  const script = readFileSync(join(projectRoot, 'scripts', 'index.js'), 'utf8');
+  const script = readProjectFile('scripts', 'index.js');
   assert.match(script, /mainIframe\?\.contentDocument\?\.activeElement/);
   assert.match(script, /frameDocument\.addEventListener\('focusin'/);
   assert.match(script, /visualViewport\?\.addEventListener\('resize'/);
 });
 
 test('the footer copyright line links to the requested GitHub profile and preserves footer styling', () => {
-  const markup = readFileSync(join(projectRoot, 'index.html'), 'utf8');
-  const stylesheet = readFileSync(join(projectRoot, 'styles', 'style.css'), 'utf8');
+  const markup = readProjectFile('index.html');
+  const stylesheet = readProjectFile('styles', 'style.css');
   assert.match(markup, /<a class="site-footer-link" href="https:\/\/github\.com\/GickiAnarchy"[^>]*>© 2026 GickiStudios<\/a>/);
   assert.match(stylesheet, /\.site-footer-link\s*\{\s*color:\s*inherit;\s*text-decoration:\s*none;/);
 });
@@ -35,7 +37,7 @@ test('the footer copyright line links to the requested GitHub profile and preser
 test('every native data table has accessible sortable controls for each sortable column', () => {
   const tablePages = ['invoice.html', 'payledger.html'];
   for (const file of tablePages) {
-    const markup = readFileSync(join(htmlDirectory, file), 'utf8');
+    const markup = readProjectFile('html', file);
     const tables = [...markup.matchAll(/<table\b[\s\S]*?<\/table>/gi)];
     assert.ok(tables.length > 0, `${file} should contain a data table`);
     for (const [table] of tables) {
@@ -53,104 +55,56 @@ test('every native data table has accessible sortable controls for each sortable
 });
 
 test('employee ledger footer includes a separate total-hours summary after the balance', () => {
-  const markup = readFileSync(join(htmlDirectory, 'payledger.html'), 'utf8');
-  const script = readFileSync(join(projectRoot, 'scripts', 'ledger.js'), 'utf8');
+  const markup = readProjectFile('html', 'payledger.html');
+  const script = readProjectFile('scripts', 'ledger.js');
   assert.match(markup, /id="ledger-hours-total"/);
   assert.match(markup, /<strong>Total hours<\/strong>[\s\S]*?id="ledger-hours-total"/);
   assert.match(script, /sumLedgerHours\(entries\)/);
 });
 
-test('the shell starts in guest mode and offers owner sign-in with a cancelable modal', () => {
-  const markup = readFileSync(join(projectRoot, 'index.html'), 'utf8');
-  const script = readFileSync(join(projectRoot, 'scripts', 'index.js'), 'utf8');
-  const stylesheet = readFileSync(join(projectRoot, 'styles', 'style.css'), 'utf8');
-  assert.match(markup, /id="app-shell" data-owner="false"/);
-  assert.match(markup, /id="guest-access-badge"/);
-  assert.match(markup, /id="sign-in-open-button"/);
-  assert.match(markup, /id="owner-signin-dialog"/);
-  assert.match(markup, /id="cancel-sign-in"/);
-  assert.match(markup, /id="owner-access-badge"[^>]*role="status"[^>]*hidden/);
-  assert.match(markup, /<span>OWNER ACCESS<\/span>/);
-  assert.match(script, /ownerAccessBadge\.hidden = !isOwner/);
-  assert.match(script, /signOutOwner\(\)/);
-  assert.match(stylesheet, /\.app-shell\[data-owner="false"\]\s+\[data-owner-only\]/);
-  assert.match(stylesheet, /\.permission-badge\[hidden\]\s*\{\s*display:\s*none;/);
-});
+test('the workspace opens directly to Home without authentication UI or owner-only gates', () => {
+  const markup = readProjectFile('index.html');
+  const shellScript = readProjectFile('scripts', 'index.js');
+  const sharedStylesheet = readProjectFile('styles', 'style.css');
+  const embeddedStylesheet = readProjectFile('styles', 'ui.css');
 
-test('all frontend owner gates use the approved primary and secondary UID allowlist', () => {
-  const firebaseScript = readFileSync(join(projectRoot, 'scripts', 'firebase.js'), 'utf8');
-  const shellScript = readFileSync(join(projectRoot, 'scripts', 'index.js'), 'utf8');
-  for (const uid of ['N9fh9kr98neSYBSNdyDHBZn9IGv1', 'S7v71Kjhesf4oWv1qTzsN8zcIZm1']) {
-    assert.ok(firebaseScript.includes(uid), `Firebase owner allowlist should include ${uid}`);
-  }
-  assert.match(firebaseScript, /export const OWNER_UIDS = Object\.freeze\(/);
-  assert.match(firebaseScript, /export function isOwnerUid\(uid\) \{\s*return OWNER_UIDS\.includes\(uid\);\s*\}/);
-  assert.match(firebaseScript, /if \(!isOwnerUid\(user\.uid\)\)/);
-  assert.match(firebaseScript, /if \(!isOwnerUid\(result\.user\.uid\)\)/);
-  assert.match(firebaseScript, /if \(!user \|\| !isOwnerUid\(user\.uid\)\)/);
-  assert.match(shellScript, /import \{ isOwnerUid,/);
-  assert.match(shellScript, /Boolean\(user && isOwnerUid\(user\.uid\)\)/);
-  assert.match(shellScript, /if \(user && !isOwnerUid\(user\.uid\)\)/);
-});
-
-test('the shared kiosk lets staff choose employees and the owner queue initializes auth before gating', () => {
-  const clockMarkup = readFileSync(join(htmlDirectory, 'clock.html'), 'utf8');
-  const requestsScript = readFileSync(join(projectRoot, 'scripts', 'requests.js'), 'utf8');
-  assert.match(clockMarkup, /<select id="emp-select" multiple/);
-  assert.doesNotMatch(clockMarkup, /(?:employee )?(?:pin|access code|passcode)/i);
-  assert.match(requestsScript, /async function renderRequests\(\) \{\s*refreshButton\.disabled = true;[\s\S]*?await store\.init\(\);[\s\S]*?if \(!store\.isOwner\)/);
-});
-
-test('embedded private fields remain owner-only while guest people and shift actions are requestable', () => {
-  const sharedStylesheet = readFileSync(join(projectRoot, 'styles', 'ui.css'), 'utf8');
-  const modelScript = readFileSync(join(projectRoot, 'scripts', 'models.js'), 'utf8');
-  const dataMarkup = readFileSync(join(htmlDirectory, 'basic-data.html'), 'utf8');
-  const shiftMarkup = readFileSync(join(htmlDirectory, 'viewshifts.html'), 'utf8');
-  const dataScript = readFileSync(join(projectRoot, 'scripts', 'data.js'), 'utf8');
-  const shiftScript = readFileSync(join(projectRoot, 'scripts', 'shifts.js'), 'utf8');
-  const clockScript = readFileSync(join(projectRoot, 'scripts', 'clock.js'), 'utf8');
-  assert.match(sharedStylesheet, /body:not\(\[data-owner="true"\]\)\s+\[data-owner-only\]\s*\{\s*display:\s*none\s*!important;/);
-  assert.match(modelScript, /this\.isOwner = Boolean\(owner\)/);
-  assert.match(modelScript, /setAttribute\('data-owner', String\(this\.isOwner\)\)/);
-  assert.match(modelScript, /collection\(db, this\.isOwner \? "employees" : "publicEmployees"\)/);
-  assert.match(modelScript, /publicShiftData\(shift\)/);
+  assert.match(markup, /<iframe[^>]*src="html\/home\.html"/);
+  assert.doesNotMatch(markup, /sign.?in|sign.?out|password|guest-access-badge|owner-access-badge/i);
+  assert.doesNotMatch(shellScript, /firebase\.js|AuthState|signIn|signOut|isOwner|data-owner-only/i);
+  assert.doesNotMatch(sharedStylesheet + embeddedStylesheet, /data-owner-only|data-owner=/i);
 
   for (const file of embeddedPages) {
-    const markup = readFileSync(join(htmlDirectory, file), 'utf8');
-    assert.match(markup, /<body\b[^>]*data-owner="false"/i, `${file} should start in a fail-closed state`);
+    const page = readProjectFile('html', file);
+    assert.doesNotMatch(page, /data-owner-only|data-owner=/i, `${file} should have no role-gated controls`);
   }
+});
 
-  assert.doesNotMatch(dataMarkup, /id="add-emp-form"[^>]*data-owner-only/);
-  assert.doesNotMatch(dataMarkup, /id="people-edit-modal"[^>]*data-owner-only/);
-  assert.match(dataScript, /store\.isOwner \? `\$\{emp\.name\} - \$\$\{emp\.wage\}` : emp\.name/);
-  assert.match(dataScript, /store\.isOwner \? String\(record\.wage\) : ''/);
-  assert.match(shiftMarkup, /id="add-button">Add Shift/);
-  assert.doesNotMatch(shiftMarkup, /id="add-button"[^>]*data-owner-only/);
-  assert.match(shiftMarkup, /class="time-row" data-owner-only>[\s\S]*?for="paid-hours"/);
-  assert.match(shiftMarkup, /id="shiftNote"/);
-  assert.match(shiftMarkup, /class="paid-toggle"[^>]*data-owner-only/);
+test('the app writes directly to its canonical Firestore collections without request or projection layers', () => {
+  const model = readProjectFile('scripts', 'models.js');
+  assert.match(model, /collection\(db, "employees"\)/);
+  assert.match(model, /collection\(db, "customers"\)/);
+  assert.match(model, /collection\(db, "shifts"\)/);
+  assert.match(model, /collection\(db, "invoices"\)/);
+  assert.match(model, /collection\(db, "payments"\)/);
+  assert.match(model, /collection\(db, "ledgerRows"\)/);
+  assert.match(model, /collection\(db, "planned"\)/);
+  assert.match(model, /setDoc\(doc\(db, "shifts", shift\.id\)/);
+  assert.doesNotMatch(model, /publicEmployees|publicCustomers|publicShifts|changeRequests|getCurrentOwner|requireRecentOwnerReauthentication/);
+});
 
-  const ownerOnlyMarkup = {
-    'planned.html': /id="add-button"[^>]*data-owner-only/,
-    'payledger.html': /class="form-container" data-owner-only/,
-    'invoice.html': /class="invoice-actions" data-owner-only/,
-    'settings.html': /class="settings-card" data-owner-only aria-labelledby="backup-title"/
-  };
-  for (const [file, pattern] of Object.entries(ownerOnlyMarkup)) {
-    const markup = readFileSync(join(htmlDirectory, file), 'utf8');
-    assert.match(markup, pattern, `${file} should mark write surfaces as owner-only`);
-  }
+test('the no-login clock screen retains multi-employee selection and clock actions', () => {
+  const clockMarkup = readProjectFile('html', 'clock.html');
+  const clockScript = readProjectFile('scripts', 'clock.js');
+  const model = readProjectFile('scripts', 'models.js');
+  assert.match(clockMarkup, /<select id="emp-select" multiple/);
+  assert.match(clockMarkup, /id="clock-in-button"/);
+  assert.match(clockScript, /saveShifts\(shifts\)/);
+  assert.match(model, /async saveShifts\(shifts\)/);
+  assert.match(model, /async saveShift\(shift\)/);
+});
 
-  for (const [file, pattern] of [
-    ['planned.js', /actions\.dataset\.ownerOnly = 'true'/],
-    ['ledger.js', /actionCell\.dataset\.ownerOnly = 'true'/],
-    ['invoice.js', /mark-paid-btn" data-owner-only/]
-  ]) {
-    const script = readFileSync(join(projectRoot, 'scripts', file), 'utf8');
-    assert.match(script, pattern, `${file} should mark dynamically rendered write controls`);
-  }
-  assert.doesNotMatch(shiftScript, /actions\.dataset\.ownerOnly = 'true'/);
-  assert.doesNotMatch(clockScript, /clockOutButton\.dataset\.ownerOnly = 'true'/);
-  assert.match(modelScript, /Submitting this change request failed/);
-  assert.match(modelScript, /Request \$\{requestId\} was sent to the owner/);
+test('Firestore rules intentionally grant public read/write access recursively', () => {
+  const rules = readProjectFile('firestore.rules');
+  assert.match(rules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if true;\s*\}/);
+  assert.doesNotMatch(rules, /request\.auth|isOwner|isGuest|hasRecentOwnerAuthentication/);
 });
