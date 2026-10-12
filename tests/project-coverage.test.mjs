@@ -77,6 +77,22 @@ test('the shell starts in guest mode and offers owner sign-in with a cancelable 
   assert.match(stylesheet, /\.permission-badge\[hidden\]\s*\{\s*display:\s*none;/);
 });
 
+test('all frontend owner gates use the approved primary and secondary UID allowlist', () => {
+  const firebaseScript = readFileSync(join(projectRoot, 'scripts', 'firebase.js'), 'utf8');
+  const shellScript = readFileSync(join(projectRoot, 'scripts', 'index.js'), 'utf8');
+  for (const uid of ['N9fh9kr98neSYBSNdyDHBZn9IGv1', 'S7v71Kjhesf4oWv1qTzsN8zcIZm1']) {
+    assert.ok(firebaseScript.includes(uid), `Firebase owner allowlist should include ${uid}`);
+  }
+  assert.match(firebaseScript, /export const OWNER_UIDS = Object\.freeze\(/);
+  assert.match(firebaseScript, /export function isOwnerUid\(uid\) \{\s*return OWNER_UIDS\.includes\(uid\);\s*\}/);
+  assert.match(firebaseScript, /if \(!isOwnerUid\(user\.uid\)\)/);
+  assert.match(firebaseScript, /if \(!isOwnerUid\(result\.user\.uid\)\)/);
+  assert.match(firebaseScript, /if \(!user \|\| !isOwnerUid\(user\.uid\)\)/);
+  assert.match(shellScript, /import \{ isOwnerUid,/);
+  assert.match(shellScript, /Boolean\(user && isOwnerUid\(user\.uid\)\)/);
+  assert.match(shellScript, /if \(user && !isOwnerUid\(user\.uid\)\)/);
+});
+
 test('the shared kiosk lets staff choose employees and the owner queue initializes auth before gating', () => {
   const clockMarkup = readFileSync(join(htmlDirectory, 'clock.html'), 'utf8');
   const requestsScript = readFileSync(join(projectRoot, 'scripts', 'requests.js'), 'utf8');

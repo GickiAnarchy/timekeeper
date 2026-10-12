@@ -30,6 +30,8 @@ import {
 
 const PROJECT_ID = 'demo-timekeeper';
 const TEST_PASSWORD = 'LocalOnly-EmulatorPassword!42';
+const PRIMARY_OWNER_UID = 'N9fh9kr98neSYBSNdyDHBZn9IGv1';
+const SECONDARY_OWNER_UID = 'S7v71Kjhesf4oWv1qTzsN8zcIZm1';
 const firestoreHost = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
 const [firestoreHostname, firestorePortText] = firestoreHost.split(':');
 const firestorePort = Number(firestorePortText);
@@ -38,10 +40,13 @@ let app;
 let auth;
 let firestore;
 let ownerUser;
+let secondOwnerUser;
 let outsiderUser;
 let ownerEmail;
+let secondOwnerEmail;
 let outsiderEmail;
 let ownerUid;
+let secondOwnerUid;
 let testEnvironment;
 
 function activeShift(overrides = {}) {
@@ -61,7 +66,7 @@ function activeShift(overrides = {}) {
 function testContext(uid, authTime) {
   return testEnvironment.authenticatedContext(uid, {
     auth_time: authTime,
-    email: uid === ownerUid ? ownerEmail : 'other@example.test',
+    email: uid === ownerUid ? ownerEmail : uid === secondOwnerUid ? secondOwnerEmail : 'other@example.test',
     email_verified: true
   }).firestore();
 }
@@ -80,15 +85,21 @@ before(async () => {
 
   const runId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
   ownerEmail = `owner-${runId}@example.test`;
+  secondOwnerEmail = `second-owner-${runId}@example.test`;
   outsiderEmail = `outsider-${runId}@example.test`;
   ownerUser = (await createUserWithEmailAndPassword(auth, ownerEmail, TEST_PASSWORD)).user;
   ownerUid = ownerUser.uid;
+  await signOut(auth);
+  secondOwnerUser = (await createUserWithEmailAndPassword(auth, secondOwnerEmail, TEST_PASSWORD)).user;
+  secondOwnerUid = secondOwnerUser.uid;
   await signOut(auth);
   outsiderUser = (await createUserWithEmailAndPassword(auth, outsiderEmail, TEST_PASSWORD)).user;
   await signOut(auth);
 
   const rulesSource = await readFile(new URL('../firestore.rules', import.meta.url), 'utf8');
-  const rules = rulesSource.replaceAll('N9fh9kr98neSYBSNdyDHBZn9IGv1', ownerUid);
+  const rules = rulesSource
+    .replaceAll(PRIMARY_OWNER_UID, ownerUid)
+    .replaceAll(SECONDARY_OWNER_UID, secondOwnerUid);
   testEnvironment = await initializeTestEnvironment({
     projectId: PROJECT_ID,
     firestore: { rules }
@@ -109,9 +120,10 @@ after(async () => {
   if (app) await deleteApp(app);
 });
 
-test('only the configured owner can read workspace collections', async () => {
+test('both configured owners can read workspace collections while outsiders cannot', async () => {
   const now = Math.floor(Date.now() / 1000);
   const owner = testContext(ownerUid, now);
+  const secondOwner = testContext(secondOwnerUid, now);
   const outsider = testContext('unrelated-user', now);
   const unauthenticated = testEnvironment.unauthenticatedContext().firestore();
 
@@ -120,17 +132,22 @@ test('only the configured owner can read workspace collections', async () => {
   });
   await assertSucceeds(getDoc(doc(owner, 'employees', 'seed')));
   await assertSucceeds(getDocs(collection(owner, 'employees')));
+  await assertSucceeds(getDoc(doc(secondOwner, 'employees', 'seed')));
+  await assertSucceeds(getDocs(collection(secondOwner, 'employees')));
   await assertFails(getDoc(doc(outsider, 'employees', 'seed')));
   await assertFails(getDocs(collection(outsider, 'employees')));
   await assertFails(getDoc(doc(unauthenticated, 'employees', 'seed')));
 });
 
 test('fresh owner authentication can write every protected workspace collection', async () => {
-  const owner = testContext(ownerUid, Math.floor(Date.now() / 1000));
-  for (const collectionName of ['employees', 'customers', 'payments', 'invoices', 'ledgerRows', 'planned']) {
-    await assertSucceeds(setDoc(doc(owner, collectionName, `fresh-${collectionName}`), { marker: true }));
+  const now = Math.floor(Date.now() / 1000);
+  for (const uid of [ownerUid, secondOwnerUid]) {
+    const owner = testContext(uid, now);
+    for (const collectionName of ['employees', 'customers', 'payments', 'invoices', 'ledgerRows', 'planned']) {
+      await assertSucceeds(setDoc(doc(owner, collectionName, `fresh-${collectionName}-${uid}`), { marker: true }));
+    }
+    await assertFails(setDoc(doc(owner, 'unlistedCollection', `blocked-${uid}`), { marker: true }));
   }
-  await assertFails(setDoc(doc(owner, 'unlistedCollection', 'blocked'), { marker: true }));
 });
 
 test('stale owner authentication and non-owner direct writes are denied', async () => {

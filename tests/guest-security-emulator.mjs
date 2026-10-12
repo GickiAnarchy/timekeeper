@@ -18,13 +18,16 @@ import {
 } from '@firebase/rules-unit-testing';
 
 const PROJECT_ID = 'demo-timekeeper-guest-proposal';
-const OWNER_UID = 'N9fh9kr98neSYBSNdyDHBZn9IGv1';
+const OWNER_UIDS = [
+  'N9fh9kr98neSYBSNdyDHBZn9IGv1',
+  'S7v71Kjhesf4oWv1qTzsN8zcIZm1'
+];
 const firestoreHost = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
 const [firestoreHostname, firestorePortText] = firestoreHost.split(':');
 let environment;
 
-function ownerContext(authTime = Math.floor(Date.now() / 1000)) {
-  return environment.authenticatedContext(OWNER_UID, { auth_time: authTime }).firestore();
+function ownerContext(authTime = Math.floor(Date.now() / 1000), uid = OWNER_UIDS[0]) {
+  return environment.authenticatedContext(uid, { auth_time: authTime }).firestore();
 }
 
 function guestContext() {
@@ -124,7 +127,9 @@ test('guest-created change requests are inert and readable/resolvable only by a 
 
   const staleOwner = ownerContext(Math.floor(Date.now() / 1000) - 600);
   const freshOwner = ownerContext();
+  const freshSecondOwner = ownerContext(undefined, OWNER_UIDS[1]);
   assert.equal((await assertSucceeds(getDoc(doc(freshOwner, 'changeRequests', 'request-1')))).data().status, 'pending');
+  assert.equal((await assertSucceeds(getDoc(doc(freshSecondOwner, 'changeRequests', 'request-1')))).data().status, 'pending');
   await assertFails(updateDoc(doc(staleOwner, 'changeRequests', 'request-1'), {
     status: 'approved', reviewedAt: new Date().toISOString(), reviewerNote: ''
   }));
@@ -141,7 +146,9 @@ test('guest-created change requests are inert and readable/resolvable only by a 
 test('only owners can publish safe directory projections; numbered street addresses are rejected', async () => {
   const guest = guestContext();
   const owner = ownerContext();
+  const secondOwner = ownerContext(undefined, OWNER_UIDS[1]);
   await assertFails(setDoc(doc(guest, 'publicEmployees', 'guest-created'), { name: 'Guest' }));
   await assertFails(setDoc(doc(owner, 'publicCustomers', 'unsafe-address'), { name: 'Client', location: '123 Main Street' }));
   await assertSucceeds(setDoc(doc(owner, 'publicCustomers', 'safe-location'), { name: 'Client', location: 'Oak Park' }));
+  await assertSucceeds(setDoc(doc(secondOwner, 'publicEmployees', 'second-owner-created'), { name: 'Second Owner' }));
 });

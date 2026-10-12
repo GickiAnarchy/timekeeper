@@ -11,9 +11,15 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Replace this fail-closed placeholder with the owner's Firebase Auth UID in
-// both this file and firestore.rules before any future production deployment.
-export const OWNER_UID = "N9fh9kr98neSYBSNdyDHBZn9IGv1";
+// Keep this allowlist aligned with both deployed and canonical Firestore rules.
+export const OWNER_UIDS = Object.freeze([
+  "N9fh9kr98neSYBSNdyDHBZn9IGv1",
+  "S7v71Kjhesf4oWv1qTzsN8zcIZm1"
+]);
+
+export function isOwnerUid(uid) {
+  return OWNER_UIDS.includes(uid);
+}
 
 const firebaseConfig = {
   apiKey: "AIzaSyDn_y846YGhK689a3-2S6VvO46uElD1JXw",
@@ -50,7 +56,7 @@ export async function getCurrentOwner() {
   await initialAuthState;
   const user = auth.currentUser;
   if (!user) return null;
-  if (user.uid !== OWNER_UID) {
+  if (!isOwnerUid(user.uid)) {
     await signOut(auth);
     return null;
   }
@@ -60,7 +66,7 @@ export async function getCurrentOwner() {
 export async function signInOwner(email, password) {
   const result = await signInWithEmailAndPassword(auth, String(email || "").trim(), password);
   lastPasswordReauthenticationAt = 0;
-  if (result.user.uid !== OWNER_UID) {
+  if (!isOwnerUid(result.user.uid)) {
     await signOut(auth);
     throw new Error("This account is not authorized to use this workspace.");
   }
@@ -165,7 +171,7 @@ function showPasswordReauthenticationDialog(user, reason) {
 export async function requireRecentOwnerReauthentication(reason = "This change is protected.") {
   await initialAuthState;
   const user = auth.currentUser;
-  if (!user || user.uid !== OWNER_UID) {
+  if (!user || !isOwnerUid(user.uid)) {
     throw new Error("Sign in with the owner account before changing workspace data.");
   }
   if (!user.email || !user.providerData.some(provider => provider.providerId === "password")) {

@@ -1,4 +1,4 @@
-import { OWNER_UID, observeAuthState, signInOwner, signOutOwner } from './firebase.js';
+import { isOwnerUid, observeAuthState, signInOwner, signOutOwner } from './firebase.js';
 
 const THEME_KEY = 'timekeeper-theme';
 const FONT_SCALE_KEY = 'timekeeper-font-scale';
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function showWorkspace(user) {
-    const isOwner = Boolean(user && user.uid === OWNER_UID);
+    const isOwner = Boolean(user && isOwnerUid(user.uid));
     if (appShell) appShell.dataset.owner = String(isOwner);
     if (authError) authError.textContent = '';
     if (signedInEmail) signedInEmail.textContent = isOwner ? (user.email || 'Owner') : '';
@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   observeAuthState(user => {
-    if (user && user.uid !== OWNER_UID) {
+    if (user && !isOwnerUid(user.uid)) {
       signOutOwner().catch(error => console.error('Unable to end a non-owner session.', error));
       showGuestWorkspace('This account is not authorized to use the owner workspace.');
       return;
