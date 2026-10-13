@@ -160,6 +160,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     return String(id).slice(-6);
   }
 
+  function formatCurrency(value) {
+    const amount = Number(value);
+    if (!Number.isFinite(amount)) return '$0.00';
+    return amount < 0 ? `-$${Math.abs(amount).toFixed(2)}` : `$${amount.toFixed(2)}`;
+  }
+
   function formatInvoiceDate(date) {
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return 'Date not set';
     const [year, month, day] = date.split('-').map(Number);
@@ -193,12 +199,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const list = makeElement('ul', 'open-invoice-list');
     openInvoices.forEach(invoice => {
       const item = document.createElement('li');
-      const total = Number(invoice.totalBill()).toFixed(2);
+      const total = formatCurrency(invoice.totalBill());
       const button = makeElement('button', 'open-invoice-button',
-        `#${shortInvoiceId(invoice.id)} · ${invoice.customer?.name || 'Customer'} · ${formatInvoiceDate(invoice.date)} · $${total}`);
+        `#${shortInvoiceId(invoice.id)} · ${invoice.customer?.name || 'Customer'} · ${formatInvoiceDate(invoice.date)} · ${total}`);
       button.type = 'button';
       button.dataset.invoiceId = invoice.id;
-      button.setAttribute('aria-label', `Open invoice ${shortInvoiceId(invoice.id)} for ${invoice.customer?.name || 'customer'}, dated ${formatInvoiceDate(invoice.date)}, total $${total}`);
+      button.setAttribute('aria-label', `Open invoice ${shortInvoiceId(invoice.id)} for ${invoice.customer?.name || 'customer'}, dated ${formatInvoiceDate(invoice.date)}, total ${total}`);
       if (String(getSelectedInvoice()?.id) === String(invoice.id)) button.setAttribute('aria-current', 'true');
       item.appendChild(button);
       list.appendChild(item);
@@ -427,7 +433,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         if (totalCell) {
-          totalCell.textContent = `Total: $${invoice.totalBill()}`;
+          totalCell.textContent = `Total: ${formatCurrency(invoice.totalBill())}`;
         }
     
         if (paidLabel) {
@@ -489,7 +495,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         }
         const valueCell = document.createElement('td');
-        valueCell.textContent = `$${Number(item.value || 0).toFixed(2)}`;
+        valueCell.textContent = formatCurrency(item.value || 0);
         row.append(nameCell, valueCell);
         invoiceBody.appendChild(row);
       });
@@ -539,8 +545,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const name = nameInput.value.trim();
       const value = Number(valueInput.value);
-      if (!name || !Number.isFinite(value) || value < 0) {
-        formError.textContent = 'Enter an item name and a valid value of zero or more.';
+      if (!name || !Number.isFinite(value)) {
+        formError.textContent = 'Enter an item name and a valid amount.';
         formError.hidden = false;
         return;
       }
