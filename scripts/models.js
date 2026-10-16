@@ -4,7 +4,9 @@ import {
   roundDown15Minutes,
   roundTo15Minutes,
   roundUp15Minutes,
-  shiftIsAttachedElsewhere
+  shiftIsAttachedElsewhere,
+  makeShiftLedgerEntryData,
+  ledgerBalanceCents
 } from './domain.mjs';
 
 /*
@@ -319,7 +321,8 @@ export class Ledger {
       type: data.type ?? null,
       hours: data.hours ?? null,
       amount: data.amount ?? null,
-      notes: data.notes ?? null
+      notes: data.notes ?? null,
+      sourceShiftId: data.sourceShiftId ? String(data.sourceShiftId) : null
     };
     
     this.entries.push(entry);
@@ -403,6 +406,10 @@ export class AppDataStore {
     this.shifts = [];
     this.invoices = [];
     this.ledger = new Ledger();
+    this.ledgerArchives = [];
+    this.ledgerArchiveRows = [];
+    this.pendingLedgerSettlements = new Set();
+    this.recentlyArchivedLedgerIds = [];
     this.plannedJobs = [];
     this.loadFailures = [];
     this.isAdmin = null;
@@ -410,12 +417,24 @@ export class AppDataStore {
   
   async init() {
     this.loadFailures = [];
+    this.pendingLedgerSettlements.clear();
+    this.recentlyArchivedLedgerIds = [];
     await this.loadEmployees();
     await this.loadCustomers();
     await this.loadShifts();
     await this.loadPayments();
     await this.loadInvoices();
     await this.loadLedger();
+    await this.loadLedgerArchives();
+    if (!this.loadFailures.length) {
+      try {
+        await this.resumePendingLedgerArchives();
+        await this.archiveAlreadySettledLedgers();
+      } catch (error) {
+        console.error('Unable to finish a settled ledger archive:', error);
+        this.loadFailures.push(error);
+      }
+    }
     await this.loadPlanned();
   }
   
@@ -439,12 +458,168 @@ export class AppDataStore {
       this.loadFailures.push(e);
     }
   }
+
+  async loadLedgerArchives() {
+    this.ledgerArchives = [];
+    this.ledgerArchiveRows = [];
+    try {
+      const [archivesSnapshot, rowsSnapshot] = await Promise.all([
+        getDocs(collection(db, 'ledgerArchives')),
+        getDocs(collection(db, 'ledgerArchiveRows'))
+      ]);
+      archivesSnapshot.forEach(docSnap => {
+        this.ledgerArchives.push({ ...docSnap.data(), id: docSnap.id });
+      });
+      rowsSnapshot.forEach(docSnap => {
+        this.ledgerArchiveRows.push({ ...docSnap.data(), id: docSnap.id });
+      });
+    } catch (error) {
+      console.error('Error loading archived ledger history from Firestore:', error);
+      this.loadFailures.push(error);
+    }
+  }
+
+  async writeLedgerArchiveRows(rows) {
+    for (let offset = 0; offset < rows.length; offset += 500) {
+      const batch = writeBatch(db);
+      const chunk = rows.slice(offset, offset + 500);
+      chunk.forEach(row => batch.set(doc(db, 'ledgerArchiveRows', row.id), row));
+      await commitBatch(batch, 'Saving archived ledger history failed.');
+      const savedIds = new Set(chunk.map(row => row.id));
+      this.ledgerArchiveRows = [
+        ...this.ledgerArchiveRows.filter(row => !savedIds.has(row.id)),
+        ...chunk
+      ];
+    }
+  }
+
+  makeLedgerArchiveRow(archive, entry) {
+    return {
+      id: `${archive.id}--${entry.id}`,
+      archiveId: archive.id,
+      sourceEntryId: entry.id,
+      employeeId: entry.employeeId,
+      index: entry.index,
+      date: entry.date,
+      type: entry.type,
+      hours: entry.hours,
+      amount: entry.amount,
+      notes: entry.notes,
+      sourceShiftId: entry.sourceShiftId || null
+    };
+  }
+
+  async completePendingLedgerArchive(archive) {
+    const entryIds = (archive.entryIds || []).map(String);
+    const archivedByEntryId = new Map(this.ledgerArchiveRows
+      .filter(row => row.archiveId === archive.id)
+      .map(row => [String(row.sourceEntryId), row]));
+    const activeById = new Map(this.ledger.entries.map(entry => [String(entry.id), entry]));
+    const rowsToWrite = [];
+    for (const entryId of entryIds) {
+      if (archivedByEntryId.has(entryId)) continue;
+      const activeEntry = activeById.get(entryId);
+      if (!activeEntry) {
+        throw new Error(`Ledger archive ${archive.id} is missing entry ${entryId}; active data was left unchanged.`);
+      }
+      rowsToWrite.push(this.makeLedgerArchiveRow(archive, activeEntry));
+    }
+
+    await this.writeLedgerArchiveRows(rowsToWrite);
+    for (let offset = 0; offset < entryIds.length; offset += 500) {
+      const batch = writeBatch(db);
+      entryIds.slice(offset, offset + 500).forEach(entryId => {
+        batch.delete(doc(db, 'ledgerRows', entryId));
+      });
+      await commitBatch(batch, 'Clearing a settled ledger after archiving failed.');
+    }
+
+    const archivedIds = new Set(entryIds);
+    this.ledger.entries = this.ledger.entries.filter(entry => !archivedIds.has(String(entry.id)));
+    await updateDoc(doc(db, 'ledgerArchives', archive.id), { status: 'archived' });
+    archive.status = 'archived';
+    if (!this.recentlyArchivedLedgerIds.includes(archive.id)) this.recentlyArchivedLedgerIds.push(archive.id);
+    this.pendingLedgerSettlements.delete(String(archive.employeeId));
+    return archive;
+  }
+
+  async resumePendingLedgerArchives() {
+    const pending = this.ledgerArchives.filter(archive => archive.status === 'pending');
+    for (const archive of pending) await this.completePendingLedgerArchive(archive);
+    return pending.length;
+  }
+
+  async archiveSettledLedger(employeeId) {
+    const id = String(employeeId);
+    const entries = this.ledger.entries
+      .filter(entry => String(entry.employeeId || '') === id)
+      .sort((a, b) => Number(a.index || 0) - Number(b.index || 0));
+    if (!entries.length || ledgerBalanceCents(entries) !== 0) {
+      this.pendingLedgerSettlements.delete(id);
+      return null;
+    }
+
+    const entryIds = entries.map(entry => String(entry.id));
+    const sameEntries = archive => archive.employeeId === id && archive.status === 'pending' &&
+      Array.isArray(archive.entryIds) && archive.entryIds.length === entryIds.length &&
+      archive.entryIds.every((entryId, index) => String(entryId) === entryIds[index]);
+    let archive = this.ledgerArchives.find(sameEntries);
+    if (!archive) {
+      archive = {
+        id: crypto.randomUUID(),
+        employeeId: id,
+        employeeName: this.employees.get(id)?.name || 'Unknown employee',
+        archivedAt: new Date().toISOString(),
+        balanceCents: 0,
+        entryCount: entries.length,
+        entryIds,
+        status: 'pending'
+      };
+      await setDoc(doc(db, 'ledgerArchives', archive.id), archive);
+      this.ledgerArchives.unshift(archive);
+    }
+
+    const result = await this.completePendingLedgerArchive(archive);
+    entries.forEach(entry => {
+      entry.archivedOnZero = true;
+      entry.archiveId = result.id;
+    });
+    this.pendingLedgerSettlements.delete(id);
+    return result;
+  }
+
+  async archiveAlreadySettledLedgers() {
+    const employeeIds = new Set(this.ledger.entries.map(entry => String(entry.employeeId || '')).filter(Boolean));
+    for (const employeeId of employeeIds) {
+      const entries = this.ledger.entries.filter(entry => String(entry.employeeId || '') === employeeId);
+      const hasNonZeroAmount = entries.some(entry => Number(entry.amount || 0) !== 0);
+      if (hasNonZeroAmount && ledgerBalanceCents(entries) === 0) {
+        await this.archiveSettledLedger(employeeId);
+      }
+    }
+  }
+
+  async archiveLedgerIfSettled(employeeId, previousBalanceCents, { defer = false } = {}) {
+    const id = String(employeeId || '');
+    const entries = this.ledger.entries.filter(entry => String(entry.employeeId || '') === id);
+    if (previousBalanceCents === 0 || !entries.length || ledgerBalanceCents(entries) !== 0) {
+      if (ledgerBalanceCents(entries) !== 0) this.pendingLedgerSettlements.delete(id);
+      return null;
+    }
+    if (defer) {
+      this.pendingLedgerSettlements.add(id);
+      return null;
+    }
+    return this.archiveSettledLedger(id);
+  }
   
-  async saveLedgerEntry(data) {
+  async saveLedgerEntry(data, { deferZeroArchive = false } = {}) {
+    await this.resumePendingLedgerArchives();
     const employeeId = data.employeeId || null;
     if (!employeeId || !this.employees.has(employeeId)) {
       throw new Error("Choose an employee for this ledger entry.");
     }
+    const previousBalanceCents = ledgerBalanceCents(this.ledger.entries.filter(candidate => candidate.employeeId === employeeId));
     const entry = this.ledger.addEntry({ ...data, employeeId });
     try {
       await setDoc(doc(db, "ledgerRows", entry.id), entry);
@@ -452,12 +627,36 @@ export class AppDataStore {
       this.ledger.deleteEntry(entry.id);
       throw error;
     }
+    try {
+      const archive = await this.archiveLedgerIfSettled(employeeId, previousBalanceCents, { defer: deferZeroArchive });
+      if (archive) {
+        entry.archivedOnZero = true;
+        entry.archiveId = archive.id;
+      }
+    } catch (error) {
+      error.entrySaved = true;
+      error.message = `Entry saved, but archiving the settled ledger is still pending. ${error.message}`;
+      throw error;
+    }
     return entry;
+  }
+
+  async saveShiftToLedger(shiftId) {
+    await this.resumePendingLedgerArchives();
+    const shift = this.shifts.find(candidate => String(candidate.id) === String(shiftId));
+    if (!shift) throw new Error('The selected shift could not be found.');
+    if (this.ledger.entries.some(entry => String(entry.sourceShiftId || '') === String(shift.id))) {
+      throw new Error('This shift has already been added to the ledger.');
+    }
+    return this.saveLedgerEntry(makeShiftLedgerEntryData(shift), { deferZeroArchive: true });
   }
   
   async updateLedgerEntry(entryId, updates) {
+    await this.resumePendingLedgerArchives();
     const current = this.ledger.getEntry(entryId);
     if (!current) throw new Error("Ledger entry not found.");
+    const employeeId = current.employeeId;
+    const previousBalanceCents = ledgerBalanceCents(this.ledger.entries.filter(candidate => candidate.employeeId === employeeId));
     const previous = { ...current };
     const entry = this.ledger.updateEntry(entryId, updates);
     try {
@@ -467,12 +666,32 @@ export class AppDataStore {
       Object.assign(entry, previous);
       throw error;
     }
+    try {
+      const pendingSettlement = this.pendingLedgerSettlements.has(String(employeeId || ''));
+      const balanceCents = ledgerBalanceCents(this.ledger.entries.filter(candidate => candidate.employeeId === employeeId));
+      const archive = balanceCents === 0 && (previousBalanceCents !== 0 || pendingSettlement)
+        ? await this.archiveSettledLedger(employeeId)
+        : null;
+      if (archive) {
+        entry.archivedOnZero = true;
+        entry.archiveId = archive.id;
+      } else if (balanceCents !== 0) {
+        this.pendingLedgerSettlements.delete(String(employeeId || ''));
+      }
+    } catch (error) {
+      error.entrySaved = true;
+      error.message = `Entry updated, but archiving the settled ledger is still pending. ${error.message}`;
+      throw error;
+    }
     return entry;
   }
   
   async deleteLedgerEntry(entryId) {
+    await this.resumePendingLedgerArchives();
     const entry = this.ledger.getEntry(entryId);
     if (!entry) return;
+    const employeeId = entry.employeeId;
+    const previousBalanceCents = ledgerBalanceCents(this.ledger.entries.filter(candidate => candidate.employeeId === employeeId));
     const isDeleted = this.ledger.deleteEntry(entryId);
     if (!isDeleted) return;
     
@@ -486,6 +705,13 @@ export class AppDataStore {
       batch.update(ref, { index: candidate.index });
     });
     if (affectedEntries.length) await commitBatch(batch);
+    try {
+      await this.archiveLedgerIfSettled(employeeId, previousBalanceCents);
+    } catch (error) {
+      error.entrySaved = true;
+      error.message = `Entry deleted, but archiving the settled ledger is still pending. ${error.message}`;
+      throw error;
+    }
   }
   
   // INVOICE --
@@ -1026,7 +1252,9 @@ export class AppDataStore {
           isComplete: Boolean(job.isComplete),
           scheduledDate: job.scheduledDate?.toISOString?.() || null
         })),
-        ledger: this.ledger.entries.map(entry => ({ ...entry }))
+        ledger: this.ledger.entries.map(entry => ({ ...entry })),
+        ledgerArchives: this.ledgerArchives.map(archive => ({ ...archive, entryIds: [...(archive.entryIds || [])] })),
+        ledgerArchiveRows: this.ledgerArchiveRows.map(row => ({ ...row }))
       }
     };
   }
@@ -1039,7 +1267,15 @@ export class AppDataStore {
     if (!backup.data || typeof backup.data !== 'object' || keys.some(key => !Array.isArray(backup.data[key]))) {
       throw new Error('The backup is incomplete. It must contain employees, customers, shifts, invoices, payments, planned jobs, and ledger records.');
     }
-    for (const key of keys) {
+    const hasArchiveHeaders = Object.prototype.hasOwnProperty.call(backup.data, 'ledgerArchives');
+    const hasArchiveRows = Object.prototype.hasOwnProperty.call(backup.data, 'ledgerArchiveRows');
+    if (hasArchiveHeaders !== hasArchiveRows ||
+      (hasArchiveHeaders && (!Array.isArray(backup.data.ledgerArchives) || !Array.isArray(backup.data.ledgerArchiveRows)))) {
+      throw new Error('The archived-ledger data is incomplete. Include both archive headers and archive entries.');
+    }
+    const archiveKeys = hasArchiveHeaders ? ['ledgerArchives', 'ledgerArchiveRows'] : [];
+    const validatedKeys = [...keys, ...archiveKeys];
+    for (const key of validatedKeys) {
       const ids = new Set();
       for (const [index, record] of backup.data[key].entries()) {
         if (!record || typeof record !== 'object' || typeof record.id !== 'string' || !record.id.trim() || record.id.includes('/')) {
@@ -1105,17 +1341,52 @@ export class AppDataStore {
         throw new Error(`Planned job ${job.id} has invalid description or date data.`);
       }
     }
+
+    if (hasArchiveHeaders) {
+      const archiveById = new Map();
+      for (const archive of backup.data.ledgerArchives) {
+        if (typeof archive.employeeId !== 'string' || typeof archive.employeeName !== 'string' ||
+          !validDateOrNull(archive.archivedAt) || typeof archive.balanceCents !== 'number' ||
+          !Number.isFinite(archive.balanceCents) || archive.balanceCents !== 0 || !Number.isInteger(archive.entryCount) ||
+          archive.entryCount < 1 || !Array.isArray(archive.entryIds) ||
+          !['pending', 'archived'].includes(archive.status) || archive.entryIds.length !== archive.entryCount ||
+          new Set(archive.entryIds.map(String)).size !== archive.entryIds.length) {
+          throw new Error(`Ledger archive ${archive.id} has invalid summary data.`);
+        }
+        archiveById.set(archive.id, archive);
+      }
+      const entryIdsByArchive = new Map([...archiveById].map(([id, archive]) => [id, new Set(archive.entryIds.map(String))]));
+      const archivedEntryIds = new Map();
+      for (const row of backup.data.ledgerArchiveRows) {
+        const archive = archiveById.get(row.archiveId);
+        if (!archive || typeof row.sourceEntryId !== 'string' || row.employeeId !== archive.employeeId ||
+          !entryIdsByArchive.get(row.archiveId).has(row.sourceEntryId) || !Number.isFinite(Number(row.amount)) ||
+          !Number.isFinite(Number(row.hours))) {
+          throw new Error(`Archived ledger entry ${row.id} has invalid or unmatched data.`);
+        }
+        const key = `${row.archiveId}:${row.sourceEntryId}`;
+        if (archivedEntryIds.has(key)) throw new Error(`Ledger archive ${row.archiveId} contains duplicate entry ${row.sourceEntryId}.`);
+        archivedEntryIds.set(key, true);
+      }
+      for (const archive of backup.data.ledgerArchives) {
+        const storedCount = archive.entryIds.filter(entryId => archivedEntryIds.has(`${archive.id}:${String(entryId)}`)).length;
+        if (archive.status === 'archived' && storedCount !== archive.entryCount) {
+          throw new Error(`Ledger archive ${archive.id} is missing archived entries.`);
+        }
+      }
+    }
     
     return {
       format: backup.format,
       schemaVersion: backup.schemaVersion,
       exportedAt: validDateOrNull(backup.exportedAt) ? backup.exportedAt : null,
-      counts: Object.fromEntries(keys.map(key => [key, backup.data[key].length]))
+      counts: Object.fromEntries(validatedKeys.map(key => [key, backup.data[key].length])),
+      archiveHistoryIncluded: hasArchiveHeaders
     };
   }
   
   async restoreFullBackup(backup) {
-    this.previewFullBackup(backup);
+    const preview = this.previewFullBackup(backup);
     const collectionByKey = {
       employees: 'employees',
       customers: 'customers',
@@ -1125,6 +1396,10 @@ export class AppDataStore {
       plannedJobs: 'planned',
       ledger: 'ledgerRows'
     };
+    if (preview.archiveHistoryIncluded) {
+      collectionByKey.ledgerArchives = 'ledgerArchives';
+      collectionByKey.ledgerArchiveRows = 'ledgerArchiveRows';
+    }
     const snapshots = await Promise.all(Object.values(collectionByKey).map(name => getDocs(collection(db, name))));
     const batch = writeBatch(db);
     let operationCount = 0;

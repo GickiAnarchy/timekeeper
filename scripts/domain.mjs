@@ -24,6 +24,16 @@ export function sumLedgerHours(entries = []) {
   }, 0);
 }
 
+export function ledgerBalanceCents(entries = []) {
+  return (Array.isArray(entries) ? entries : []).reduce((balance, entry) => {
+    const amount = Number(entry?.amount || 0);
+    if (!Number.isFinite(amount)) return balance;
+    const cents = Math.round(amount * 100);
+    const type = String(entry?.type || '').toLowerCase();
+    return balance + (type === 'advance' ? -cents : cents);
+  }, 0);
+}
+
 export function sortTableRows(rows = [], { key, direction = 'ascending', type = 'text', getValue = row => row?.[key] } = {}) {
   const source = Array.isArray(rows) ? rows : [];
   if (!key || !['ascending', 'descending'].includes(direction)) return [...source];
@@ -161,6 +171,47 @@ export function makeShiftInvoiceLine(shift, billingRate) {
     billedHours: snapshot.billedHours,
     billingRate: rate,
     shiftSnapshot: snapshot
+  };
+}
+
+export function makeShiftLedgerEntryData(shift) {
+  const start = asValidDate(shift?.clockInTime);
+  const end = asValidDate(shift?.clockOutTime);
+  const employeeId = shift?.employee?.id;
+  const shiftId = shift?.id;
+  const hours = Number(typeof shift?.getPaidHours === 'function'
+    ? shift.getPaidHours()
+    : Number.isFinite(shift?.paidHours)
+      ? shift.paidHours
+      : actualShiftHours(start, end, shift?.breaks));
+  const wage = Number(shift?.employee?.wage);
+
+  if (!start || !end || end <= start || !employeeId || !shiftId) {
+    throw new TypeError('A completed shift with an employee is required.');
+  }
+  if (!Number.isFinite(hours) || hours < 0 || !Number.isFinite(wage) || wage < 0) {
+    throw new TypeError('The shift must have valid non-negative paid hours and an employee wage.');
+  }
+
+  const year = start.getFullYear();
+  const month = String(start.getMonth() + 1).padStart(2, '0');
+  const day = String(start.getDate()).padStart(2, '0');
+  const customerName = String(shift.customer?.name || '').trim();
+  const shiftNote = String(shift.note || '').trim();
+  const notes = [customerName ? `Shift · ${customerName}` : 'Shift pay', shiftNote]
+    .filter(Boolean)
+    .join(' — ');
+  const amount = Number((wage * hours).toFixed(2));
+  if (!Number.isFinite(amount)) throw new TypeError('The shift pay amount is not valid.');
+
+  return {
+    employeeId: String(employeeId),
+    date: `${year}-${month}-${day}`,
+    type: 'normal',
+    hours,
+    amount,
+    notes,
+    sourceShiftId: String(shiftId)
   };
 }
 

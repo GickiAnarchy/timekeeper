@@ -29,6 +29,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const amountInput = document.getElementById('amount');
   const employeeSelect = document.getElementById('employee-select');
   const ledgerFilter = document.getElementById('ledger-employee-filter');
+  const shiftLedgerForm = document.getElementById('shift-ledger-form');
+  const shiftSelect = document.getElementById('ledger-shift-select');
+  const shiftLedgerStatus = document.getElementById('shift-ledger-status');
+  const addShiftButton = document.getElementById('add-shift-to-ledger');
+  const ledgerEntryStatus = document.getElementById('ledger-entry-status');
   const ledgerOwner = document.getElementById('ledger-owner');
   const tableBody = document.getElementById('ledger-body');
   const totalRow = document.getElementById('ledger-total');
@@ -46,6 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const editAmount = document.getElementById('edit-ledger-amount');
   const editNotes = document.getElementById('edit-ledger-notes');
   let editingEntryId = null;
+  let editingEntryEmployeeId = null;
   let editTrigger = null;
   let ledgerSort = { key: 'date', direction: 'descending', type: 'date' };
 
@@ -113,7 +119,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     editAmount.disabled = isHourlyPay;
   }
 
+  function renderShiftOptions(preserveStatus = false) {
+    const employeeId = ledgerFilter.value;
+    const employee = store.employees.get(employeeId);
+    const ledgeredShiftIds = new Set(store.ledger.entries
+      .map(entry => String(entry.sourceShiftId || ''))
+      .filter(Boolean));
+    const availableShifts = employee
+      ? store.shifts
+        .filter(shift => shift.isComplete && shift.employee?.id === employeeId && !ledgeredShiftIds.has(String(shift.id)))
+        .sort((a, b) => (b.clockInTime?.getTime() || 0) - (a.clockInTime?.getTime() || 0))
+      : [];
+
+    shiftSelect.replaceChildren(new Option('Choose a completed shift', ''));
+    for (const shift of availableShifts) {
+      const date = shift.clockInTime?.toLocaleDateString() || 'Unknown date';
+      const customer = shift.customer?.name || 'Unknown customer';
+      const hours = Number(shift.getPaidHours());
+      const hoursLabel = Number.isFinite(hours) ? hours.toFixed(2) : '0.00';
+      shiftSelect.add(new Option(`${date} · ${customer} · ${hoursLabel} paid hours`, shift.id));
+    }
+
+    shiftSelect.disabled = !employee || availableShifts.length === 0;
+    addShiftButton.disabled = shiftSelect.disabled;
+    if (!preserveStatus) {
+      shiftLedgerStatus.textContent = !employee
+        ? 'Choose an employee above to find completed shifts.'
+        : availableShifts.length
+          ? `${availableShifts.length} completed shift${availableShifts.length === 1 ? '' : 's'} available to add.`
+          : 'No completed shifts are available to add for this employee.';
+    }
+  }
+
   function renderLedger() {
+    renderShiftOptions();
     tableBody.replaceChildren();
     const filterValue = ledgerFilter.value;
     if (!filterValue) {
@@ -145,7 +184,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const row = document.createElement('tr');
         const type = String(entry.type || '').toLowerCase();
         const amount = Number(entry.amount || 0);
-        const typeLabel = type ? type.charAt(0).toUpperCase() + type.slice(1) : '';
+        const typeLabel = entry.sourceShiftId && type === 'normal'
+          ? 'Shift pay'
+          : type ? type.charAt(0).toUpperCase() + type.slice(1) : '';
         const amountCell = makeCell(type === 'advance'
           ? `-$${Math.abs(amount).toFixed(2)}`
           : `$${amount.toFixed(2)}`);
@@ -193,12 +234,64 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (store.employees.has(ledgerFilter.value)) employeeSelect.value = ledgerFilter.value;
     renderLedger();
   });
+
+  if (store.recentlyArchivedLedgerIds.length) {
+    ledgerEntryStatus.textContent = 'A zero-balance ledger was archived. View archived ledger history to review it.';
+  }
+
+  shiftLedgerForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (!shiftLedgerForm.reportValidity()) return;
+
+    const shiftId = shiftSelect.value;
+    ledgerEntryStatus.textContent = '';
+    addShiftButton.disabled = true;
+    addShiftButton.textContent = 'Adding…';
+    shiftLedgerStatus.textContent = 'Adding the shift to the ledger…';
+    let entryWasSaved = false;
+    try {
+      const entry = await store.saveShiftToLedger(shiftId);
+      entryWasSaved = true;
+      if (ledgerFilter.value !== entry.employeeId) ledgerFilter.value = entry.employeeId;
+      employeeSelect.value = entry.employeeId;
+      renderLedger();
+      shiftLedgerForm.reset();
+      shiftLedgerStatus.textContent = 'Shift added to the ledger.';
+      if (window.confirm('Shift added to the ledger. Would you like to adjust this ledger entry?')) {
+        const trigger = [...tableBody.querySelectorAll('.edit-ledger-btn[data-id]')]
+          .find(button => button.dataset.id === entry.id);
+        openEditDialog(entry, trigger);
+      } else {
+        const archive = await store.archiveSettledLedger(entry.employeeId);
+        if (archive) {
+          renderLedger();
+          shiftLedgerStatus.textContent = 'The balance is $0.00. Ledger history was archived.';
+          ledgerEntryStatus.textContent = 'Balance settled at $0.00. View archived ledger history to review it.';
+        }
+      }
+    } catch (error) {
+      console.error('Unable to add shift to ledger:', error);
+      entryWasSaved ||= Boolean(error.entrySaved);
+      if (entryWasSaved) {
+        shiftLedgerForm.reset();
+        renderLedger();
+        shiftLedgerStatus.textContent = `Shift was added, but its settled ledger could not be fully archived. ${error.message || ''}`.trim();
+      } else {
+        shiftLedgerStatus.textContent = error.message || 'Unable to add this shift to the ledger. Please try again.';
+      }
+    } finally {
+      addShiftButton.textContent = 'Add shift to ledger';
+      renderShiftOptions(true);
+    }
+  });
+
   renderLedger();
   updateTypeInputs();
 
   function openEditDialog(entry, trigger) {
     if (!editDialog || !editForm || !entry) return;
     editingEntryId = entry.id;
+    editingEntryEmployeeId = entry.employeeId;
     editTrigger = trigger;
     editError.textContent = '';
     editTitle.textContent = `Edit ledger entry ${entry.index}`;
@@ -214,17 +307,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   editType.addEventListener('change', updateEditTypeInputs);
   editCancel.addEventListener('click', () => editDialog.close());
-  editDialog.addEventListener('close', () => {
+  editDialog.addEventListener('close', async () => {
     const entryId = editingEntryId;
+    const employeeId = editingEntryEmployeeId;
     const trigger = editTrigger;
     editingEntryId = null;
+    editingEntryEmployeeId = null;
     editTrigger = null;
+    if (employeeId && store.pendingLedgerSettlements.has(String(employeeId))) {
+      try {
+        const archive = await store.archiveSettledLedger(employeeId);
+        if (archive) {
+          renderLedger();
+          ledgerEntryStatus.textContent = 'Balance settled at $0.00. Ledger history was archived; view it in Ledger archive.';
+        }
+      } catch (error) {
+        console.error('Unable to archive the settled ledger:', error);
+        ledgerEntryStatus.textContent = error.message || 'The ledger is settled, but archiving is pending. Retry from Ledger archive.';
+      }
+    }
     if (trigger?.isConnected) {
       trigger.focus();
       return;
     }
-    [...tableBody.querySelectorAll('.edit-ledger-btn[data-id]')]
-      .find(button => button.dataset.id === entryId)?.focus();
+    const replacementTrigger = [...tableBody.querySelectorAll('.edit-ledger-btn[data-id]')]
+      .find(button => button.dataset.id === entryId);
+    (replacementTrigger || ledgerFilter).focus();
   });
 
   editForm.addEventListener('submit', async event => {
@@ -268,11 +376,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     editSave.disabled = true;
     editSave.textContent = 'Saving…';
     try {
-      await store.updateLedgerEntry(editingEntryId, updates);
+      const updatedEntry = await store.updateLedgerEntry(editingEntryId, updates);
       renderLedger();
+      if (updatedEntry.archivedOnZero) {
+        ledgerEntryStatus.textContent = 'Balance settled at $0.00. Ledger history was archived; view it in Ledger archive.';
+      }
       editDialog.close();
     } catch (error) {
       console.error('Unable to update ledger entry:', error);
+      if (error.entrySaved) {
+        renderLedger();
+        ledgerEntryStatus.textContent = error.message;
+        editDialog.close();
+        return;
+      }
       editError.textContent = error.message || 'Unable to save changes. Please try again.';
     } finally {
       editSave.disabled = false;
@@ -282,6 +399,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   form.addEventListener('submit', async event => {
     event.preventDefault();
+    ledgerEntryStatus.textContent = '';
     const employeeId = employeeSelect.value;
     const employee = store.employees.get(employeeId);
     if (!employee) {
@@ -311,7 +429,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const submitButton = form.querySelector('button[type="submit"]');
     submitButton.disabled = true;
     try {
-      await store.saveLedgerEntry({
+      const entry = await store.saveLedgerEntry({
         employeeId,
         date: dateInput.value,
         type,
@@ -326,8 +444,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       typeSelect.value = 'normal';
       updateTypeInputs();
       employeeSelect.value = employeeId;
+      ledgerEntryStatus.textContent = entry.archivedOnZero
+        ? 'Balance settled at $0.00. Ledger history was archived; view it in Ledger archive.'
+        : '';
     } catch (error) {
       console.error('Unable to save ledger entry:', error);
+      if (error.entrySaved) {
+        form.reset();
+        dateInput.value = localDateInputValue();
+        typeSelect.value = 'normal';
+        updateTypeInputs();
+        employeeSelect.value = employeeId;
+        if (ledgerFilter.value !== employeeId) ledgerFilter.value = employeeId;
+        renderLedger();
+        ledgerEntryStatus.textContent = error.message;
+        return;
+      }
       window.alert(error.message || 'Unable to save this ledger entry. Please try again.');
     } finally {
       submitButton.disabled = false;
@@ -344,11 +476,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const button = event.target.closest('.delete-btn[data-id]');
     if (!button) return;
     button.disabled = true;
+    const previousArchiveCount = store.recentlyArchivedLedgerIds.length;
     try {
       await store.deleteLedgerEntry(button.dataset.id);
       renderLedger();
+      if (store.recentlyArchivedLedgerIds.length > previousArchiveCount) {
+        ledgerEntryStatus.textContent = 'Balance settled at $0.00. Ledger history was archived; view it in Ledger archive.';
+      }
     } catch (error) {
       console.error('Unable to delete ledger entry:', error);
+      if (error.entrySaved) {
+        renderLedger();
+        ledgerEntryStatus.textContent = error.message;
+        return;
+      }
       button.disabled = false;
       window.alert('This ledger entry could not be deleted. Please try again.');
     }

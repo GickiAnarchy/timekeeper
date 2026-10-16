@@ -74,7 +74,7 @@
           <span class="settings-icon" aria-hidden="true">⇄</span>
           <div>
             <h2 id="backup-title">Full backup and restore</h2>
-            <p>Download or restore all employees, customers, shifts, invoices, payments, planned jobs, and ledger entries.</p>
+            <p>Download or restore employees, customers, shifts, invoices, payments, planned jobs, active ledger entries, and archived ledger history.</p>
           </div>
         </div>
         <button class="backup-button" id="download-backup-btn" type="button" disabled>Download full backup</button>
@@ -83,7 +83,7 @@
           <input id="backup-file" type="file" accept="application/json,.json">
         </label>
         <div id="backup-preview" class="backup-preview" aria-live="polite">No backup selected.</div>
-        <p class="settings-warning">Restore replaces the current records in all seven data groups. Review the preview carefully before continuing. One atomic restore is limited to 500 Firestore writes; larger restores are rejected before changing data.</p>
+        <p class="settings-warning">Restore replaces the current records included in the backup. Backups with archived-ledger data replace archive history; older backups leave the current archive collections unchanged. Review the preview carefully before continuing. One atomic restore is limited to 500 Firestore writes; larger restores are rejected before changing data.</p>
         <button class="backup-button backup-restore-button" id="restore-backup-btn" type="button" disabled>Restore backup</button>
         <p class="settings-help" id="backup-status" role="status" aria-live="polite">Loading workspace data…</p>
       </section>

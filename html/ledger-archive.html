@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <link rel="stylesheet" href="../styles/ledger-archive.css">
+    <script type="module" src="../scripts/keyboard.mjs" defer></script>
+    <script type="module" src="../scripts/ledger-archive.js" defer></script>
+    <title>Ledger Archive · Timekeeper</title>
+  </head>
+  <body>
+    <main class="archive-section">
+      <header class="archive-heading">
+        <div>
+          <p class="archive-eyebrow">PAYROLL HISTORY</p>
+          <h1>Ledger Archive</h1>
+          <p class="archive-description">Settled ledgers are kept here so the active ledger can start fresh.</p>
+        </div>
+        <label class="archive-filter" for="archive-employee-filter">
+          Employee
+          <select id="archive-employee-filter">
+            <option value="">All employees</option>
+          </select>
+        </label>
+      </header>
+      <div class="archive-toolbar">
+        <p id="archive-status" role="status" aria-live="polite">Loading archived ledgers…</p>
+        <button id="retry-archive-button" type="button" hidden>Retry pending archive</button>
+      </div>
+      <div id="ledger-archive-list" class="archive-list" aria-live="polite"></div>
+    </main>
+  </body>
+</html>

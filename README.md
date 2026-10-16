@@ -1,6 +1,6 @@
 # Timekeeper
 
-A JavaScript app for tracking work hours. The workspace includes clock in/out, breaks, shift history, employee and customer records, invoices, an employee ledger, and planned jobs. The Home dashboard summarizes today's and this week's break-adjusted hours, highlights active shifts and upcoming jobs, and updates active totals every minute. Themes and text-size preferences are saved in the current browser.
+A JavaScript app for tracking work hours. The workspace includes clock in/out, breaks, shift history, employee and customer records, invoices, an employee ledger with completed-shift entry, settled-ledger archives, and planned jobs. When an employee ledger reaches a zero balance, its entries are archived and the active ledger is cleared. The Home dashboard summarizes today's and this week's break-adjusted hours, highlights active shifts and upcoming jobs, and updates active totals every minute. Themes and text-size preferences are saved in the current browser.
 
 > **Access model:** This app intentionally uses a fully public shared workflow. Firestore rules allow anyone—signed in or not—to read, create, update, and delete every document in every collection and subcollection. Do not put confidential or sensitive information in this Firebase project while these rules are deployed.
 

@@ -126,6 +126,7 @@ backupFileInput?.addEventListener('change', async () => {
       `File: ${file.name}`,
       `Format: ${preview.format} · schema ${preview.schemaVersion}`,
       `Exported: ${preview.exportedAt || 'timestamp not available'}`,
+      preview.archiveHistoryIncluded ? 'Archived ledger history: included' : 'Archived ledger history: not included (current archives will be preserved)',
       ...Object.entries(preview.counts).map(([name, count]) => `${name}: ${count}`)
     ].join('\n');
     restoreBackupButton.disabled = false;
@@ -140,8 +141,11 @@ restoreBackupButton?.addEventListener('click', async () => {
   if (!pendingBackup) return;
   const preview = store.previewFullBackup(pendingBackup);
   const counts = Object.entries(preview.counts).map(([name, count]) => `${name}: ${count}`).join('\n');
+  const archiveHandling = preview.archiveHistoryIncluded
+    ? 'This backup includes archived ledger history, which will be replaced.'
+    : 'This older backup has no archived ledger history; current archives will be preserved.';
   const confirmed = window.confirm(
-    `Restore this Timekeeper backup? This replaces all current employees, customers, shifts, invoices, payments, planned jobs, and ledger entries.\n\n${counts}\n\nThis cannot be undone unless you first download a backup of the current data.`
+    `Restore this Timekeeper backup? This replaces the current records in the included data groups. ${archiveHandling}\n\n${counts}\n\nThis cannot be undone unless you first download a backup of the current data.`
   );
   if (!confirmed) return;
 

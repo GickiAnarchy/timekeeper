@@ -16,6 +16,10 @@ th { font-size: 9px; font-weight: 750; letter-spacing: .07em; text-transform: up
 tbody tr:hover { background: var(--surface-hover); }
 .advance-amount { color: var(--red); font-weight: 700; }
 tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight: 700; }
+.ledger-archive-notice, .ledger-archive-link { width: min(100%, 1060px); margin: 0 auto; color: var(--muted); font-size: 11px; }
+.ledger-archive-notice:empty { display: none; }
+.ledger-archive-link a { color: var(--green-deep); font-weight: 700; text-decoration: none; }
+.ledger-archive-link a:hover { text-decoration: underline; }
 .ledger-row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .edit-ledger-btn, .delete-btn { min-height: 32px; padding: 0 10px; font-size: 10px; font-weight: 650; }
 .edit-ledger-btn { color: var(--green-deep); background: var(--green-soft); }
@@ -29,6 +33,18 @@ tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight
 #ledger-form button[type="submit"] { min-height: 38px; padding: 0 13px; color: #fff; background: var(--green); font-size: 10px; font-weight: 700; }
 #ledger-form button[type="submit"]:hover { background: var(--green-deep); }
 #ledger-form button:disabled { opacity: .6; cursor: wait; }
+
+.shift-ledger-container { display: grid; gap: 12px; }
+.shift-ledger-heading { display: grid; gap: 5px; }
+.shift-ledger-heading h2 { margin: 0; color: var(--ink); font-size: 15px; letter-spacing: -.025em; }
+.shift-ledger-heading p, #shift-ledger-status { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+#shift-ledger-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 11px; align-items: end; }
+#shift-ledger-form label { display: grid; gap: 5px; color: var(--ink-soft); font-size: 10px; font-weight: 650; }
+#shift-ledger-form select, #shift-ledger-form button { min-height: 38px; padding: 7px 11px; font-size: 10px; }
+#shift-ledger-form button { color: #fff; background: var(--green); font-weight: 700; }
+#shift-ledger-form button:hover { background: var(--green-deep); }
+#shift-ledger-form button:disabled { opacity: .6; cursor: not-allowed; }
+#shift-ledger-status:empty { display: none; }
 
 .ledger-edit-modal {
   width: min(calc(100% - 24px), 560px);
@@ -73,6 +89,7 @@ tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight
 }
 @media (max-width: 480px) {
   #ledger-form { grid-template-columns: 1fr; }
+  #shift-ledger-form { grid-template-columns: 1fr; }
   .ledger-edit-modal { width: calc(100% - 16px); max-height: calc(100dvh - 16px); border-radius: 14px; }
   .ledger-edit-form { gap: 16px; padding: 20px 16px; }
   .ledger-edit-fields { grid-template-columns: 1fr; gap: 12px; }

@@ -38,7 +38,7 @@ after(async () => {
 
 test('unauthenticated users can read, create, update, and delete all established app collections', async () => {
   const anonymous = environment.unauthenticatedContext().firestore();
-  const collections = ['employees', 'customers', 'payments', 'invoices', 'ledgerRows', 'planned', 'shifts'];
+  const collections = ['employees', 'customers', 'payments', 'invoices', 'ledgerRows', 'ledgerArchives', 'ledgerArchiveRows', 'planned', 'shifts'];
 
   await environment.withSecurityRulesDisabled(async context => {
     const adminDb = context.firestore();

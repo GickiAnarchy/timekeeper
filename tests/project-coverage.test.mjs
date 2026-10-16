@@ -62,6 +62,40 @@ test('employee ledger footer includes a separate total-hours summary after the b
   assert.match(script, /sumLedgerHours\(entries\)/);
 });
 
+test('employee ledger can add completed shifts and offer adjustments to the new entry', () => {
+  const markup = readProjectFile('html', 'payledger.html');
+  const script = readProjectFile('scripts', 'ledger.js');
+  const model = readProjectFile('scripts', 'models.js');
+  const domain = readProjectFile('scripts', 'domain.mjs');
+  assert.match(markup, /id="shift-ledger-form"/);
+  assert.match(markup, /id="ledger-shift-select"/);
+  assert.match(script, /Would you like to adjust this ledger entry\?/);
+  assert.match(script, /openEditDialog\(entry/);
+  assert.match(model, /async saveShiftToLedger\(shiftId\)/);
+  assert.match(model, /already been added to the ledger/);
+  assert.match(domain, /sourceShiftId: String\(shiftId\)/);
+});
+
+test('settled employee ledgers are archived and browsable without losing backup coverage', () => {
+  const shell = readProjectFile('index.html');
+  const archiveMarkup = readProjectFile('html', 'ledger-archive.html');
+  const archiveScript = readProjectFile('scripts', 'ledger-archive.js');
+  const model = readProjectFile('scripts', 'models.js');
+  const domain = readProjectFile('scripts', 'domain.mjs');
+  const settings = readProjectFile('html', 'settings.html');
+
+  assert.match(shell, /data-page="html\/ledger-archive\.html" data-title="Ledger archive"/);
+  assert.match(archiveMarkup, /id="archive-employee-filter"/);
+  assert.match(archiveScript, /store\.ledgerArchiveRows/);
+  assert.match(domain, /export function ledgerBalanceCents/);
+  assert.match(model, /async archiveSettledLedger\(employeeId\)/);
+  assert.match(model, /ledgerArchives/);
+  assert.match(model, /ledgerArchiveRows/);
+  assert.match(model, /resumePendingLedgerArchives/);
+  assert.match(model, /ledgerArchiveRows: this\.ledgerArchiveRows/);
+  assert.match(settings, /archived ledger history/);
+});
+
 test('the workspace opens directly to Home without authentication UI or owner-only gates', () => {
   const markup = readProjectFile('index.html');
   const shellScript = readProjectFile('scripts', 'index.js');

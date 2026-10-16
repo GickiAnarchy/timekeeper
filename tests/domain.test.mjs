@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   actualShiftHours,
+  ledgerBalanceCents,
+  makeShiftLedgerEntryData,
   makeShiftInvoiceLine,
   plannedDateStatus,
   roundDown15Minutes,
@@ -56,6 +58,53 @@ test('ledger hour totals exclude advances and ignore invalid hour values', () =>
     { type: 'general', hours: 2 },
     { type: 'normal', hours: 'not a number' }
   ]), 5.5);
+});
+
+test('ledger balances are calculated in integer cents using existing credit and advance signs', () => {
+  assert.equal(ledgerBalanceCents([
+    { type: 'normal', amount: 10.10 },
+    { type: 'general', amount: 2.25 },
+    { type: 'advance', amount: 12.35 }
+  ]), 0);
+  assert.equal(ledgerBalanceCents([
+    { type: 'normal', amount: 0.1 },
+    { type: 'advance', amount: 0.09 }
+  ]), 1);
+});
+
+test('completed shifts can be converted to payroll ledger entries without changing the source shift', () => {
+  const start = new Date(2026, 9, 9, 9, 0);
+  const end = new Date(2026, 9, 9, 12, 0);
+  const shift = {
+    id: 'shift-payroll-1',
+    employee: { id: 'employee-1', wage: 23.5 },
+    customer: { name: 'Oak Street' },
+    clockInTime: start,
+    clockOutTime: end,
+    paidHours: 2.5,
+    breaks: [],
+    note: 'Front lawn'
+  };
+
+  assert.deepEqual(makeShiftLedgerEntryData(shift), {
+    employeeId: 'employee-1',
+    date: `${start.getFullYear()}-10-09`,
+    type: 'normal',
+    hours: 2.5,
+    amount: 58.75,
+    notes: 'Shift · Oak Street — Front lawn',
+    sourceShiftId: 'shift-payroll-1'
+  });
+  assert.equal(shift.isPaid, undefined);
+});
+
+test('an incomplete or invalid shift cannot be converted to a ledger entry', () => {
+  assert.throws(() => makeShiftLedgerEntryData({
+    id: 'open-shift',
+    employee: { id: 'employee-1', wage: 20 },
+    clockInTime: new Date(2026, 9, 9, 9, 0),
+    clockOutTime: null
+  }), /completed shift with an employee/);
 });
 
 test('quarter-hour rounding preserves the nearest/down/up behavior at boundaries', () => {
