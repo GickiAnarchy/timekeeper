@@ -70,15 +70,13 @@
         </tfoot>
       </table>
       </div>
-      <section class="shift-link-panel" aria-labelledby="shift-link-heading">
-        <div>
-          <h2 id="shift-link-heading">Work shifts and labor</h2>
-          <p>Attach completed shifts for this customer. Each labor line snapshots the customer rate and saved break-adjusted hours. Clock In/Out and break buttons round recorded times to the nearest 15 minutes; manually edited shift times are used as saved. Hours are stored to 2 decimals and the line total is rounded to cents. Later shift or customer-rate edits do not change the billed snapshot; changed source shifts are flagged below.</p>
-        </div>
+      <details class="shift-link-panel">
+        <summary id="shift-link-heading"><span class="shift-link-title">Work shifts and labor</span></summary>
+        <p class="shift-link-description">Attach completed shifts for this customer. Each labor line snapshots the customer rate and saved break-adjusted hours. Clock In/Out and break buttons round recorded times to the nearest 15 minutes; manually edited shift times are used as saved. Hours are stored to 2 decimals and the line total is rounded to cents. Later shift or customer-rate edits do not change the billed snapshot; changed source shifts are flagged below.</p>
         <div id="shift-link-list" class="shift-link-list" aria-live="polite"></div>
         <p id="shift-link-error" class="form-error" role="alert" aria-live="polite"></p>
         <button id="save-shift-links-btn" type="button" disabled>Update linked shifts</button>
-      </section>
+      </details>
     </main>
     
     <dialog class="modal" id="item-modal">

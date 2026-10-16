@@ -27,6 +27,9 @@ tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight
 .delete-btn { color: var(--red); background: var(--red-soft); }
 .delete-btn:hover { color: #fff; background: #b84e4e; }
 .form-container { padding: 17px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-soft); }
+.form-container > summary { color: var(--ink-soft); cursor: pointer; font-size: 12px; font-weight: 750; }
+.form-container > summary:focus-visible { border-radius: 4px; }
+.form-container[open] > summary { margin-bottom: 13px; padding-bottom: 9px; border-bottom: 1px solid var(--border-soft); }
 #ledger-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; align-items: end; }
 #ledger-form label { display: grid; gap: 5px; color: var(--ink-soft); font-size: 10px; font-weight: 650; }
 #ledger-form input, #ledger-form select { width: 100%; min-height: 38px; padding: 7px 9px; font-size: 10px; }
@@ -34,10 +37,10 @@ tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight
 #ledger-form button[type="submit"]:hover { background: var(--green-deep); }
 #ledger-form button:disabled { opacity: .6; cursor: wait; }
 
-.shift-ledger-container { display: grid; gap: 12px; }
-.shift-ledger-heading { display: grid; gap: 5px; }
-.shift-ledger-heading h2 { margin: 0; color: var(--ink); font-size: 15px; letter-spacing: -.025em; }
-.shift-ledger-heading p, #shift-ledger-status { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.shift-ledger-container { display: block; }
+.shift-ledger-summary { font-size: 15px !important; letter-spacing: -.025em; }
+.shift-ledger-content { display: grid; gap: 12px; }
+.shift-ledger-description, #shift-ledger-status { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
 #shift-ledger-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 11px; align-items: end; }
 #shift-ledger-form label { display: grid; gap: 5px; color: var(--ink-soft); font-size: 10px; font-weight: 650; }
 #shift-ledger-form select, #shift-ledger-form button { min-height: 38px; padding: 7px 11px; font-size: 10px; }

@@ -53,23 +53,24 @@
     <p class="ledger-archive-notice" id="ledger-entry-status" role="status" aria-live="polite"></p>
     <p class="ledger-archive-link"><a href="ledger-archive.html">View archived ledger history</a></p>
 
-    <section class="form-container shift-ledger-container" aria-labelledby="shift-ledger-title">
-      <div class="shift-ledger-heading">
-        <h2 id="shift-ledger-title">Add a completed shift</h2>
-        <p>Adds the shift’s paid hours at the employee’s current wage. This does not change the shift or mark it paid.</p>
+    <details class="form-container shift-ledger-container">
+      <summary class="shift-ledger-summary" id="shift-ledger-title">Add a completed shift</summary>
+      <div class="shift-ledger-content">
+        <p class="shift-ledger-description">Adds the shift’s paid hours at the employee’s current wage. This does not change the shift or mark it paid.</p>
+        <form id="shift-ledger-form">
+          <label for="ledger-shift-select">Completed shifts not yet in this ledger
+            <select id="ledger-shift-select" required>
+              <option value="">Choose an employee above first</option>
+            </select>
+          </label>
+          <button type="submit" id="add-shift-to-ledger" disabled>Add shift to ledger</button>
+        </form>
+        <p id="shift-ledger-status" role="status" aria-live="polite">Choose an employee above to find completed shifts.</p>
       </div>
-      <form id="shift-ledger-form">
-        <label for="ledger-shift-select">Completed shifts not yet in this ledger
-          <select id="ledger-shift-select" required>
-            <option value="">Choose an employee above first</option>
-          </select>
-        </label>
-        <button type="submit" id="add-shift-to-ledger" disabled>Add shift to ledger</button>
-      </form>
-      <p id="shift-ledger-status" role="status" aria-live="polite">Choose an employee above to find completed shifts.</p>
-    </section>
+    </details>
 
-    <div class="form-container">
+    <details class="form-container ledger-add-container">
+      <summary>Add ledger entry</summary>
       <form id="ledger-form">
         <label for="employee-select">Employee
           <select id="employee-select" required>
@@ -97,7 +98,7 @@
         </label>
         <button type="submit">Add Entry</button>
       </form>
-    </div>
+    </details>
 
     <dialog class="ledger-edit-modal" id="ledger-edit-modal" aria-labelledby="ledger-edit-title" aria-describedby="ledger-edit-help ledger-edit-error">
       <form class="ledger-edit-form" id="ledger-edit-form">

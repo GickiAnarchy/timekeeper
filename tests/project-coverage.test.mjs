@@ -142,3 +142,18 @@ test('Firestore rules intentionally grant public read/write access recursively',
   assert.match(rules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if true;\s*\}/);
   assert.doesNotMatch(rules, /request\.auth|isOwner|isGuest|hasRecentOwnerAuthentication/);
 });
+
+test('inline add forms and shift-management sections use collapsed native disclosures', () => {
+  const people = readProjectFile('html', 'basic-data.html');
+  const ledger = readProjectFile('html', 'payledger.html');
+  const invoice = readProjectFile('html', 'invoice.html');
+  const sharedStyles = readProjectFile('styles', 'ui.css');
+
+  assert.match(people, /<details class="form-container add-form-disclosure">\s*<summary>Add Employee<\/summary>\s*<form class="add-form" id="add-emp-form">/);
+  assert.match(people, /<details class="form-container add-form-disclosure">\s*<summary>Add Customer<\/summary>\s*<form class="add-form" id="add-cust-form">/);
+  assert.match(ledger, /<details class="form-container shift-ledger-container">\s*<summary[^>]*>Add a completed shift<\/summary>[\s\S]*?<form id="shift-ledger-form">/);
+  assert.match(ledger, /<details class="form-container ledger-add-container">\s*<summary>Add ledger entry<\/summary>\s*<form id="ledger-form">/);
+  assert.doesNotMatch(ledger, /<details\b[^>]*\bopen(?:\s|>)/i);
+  assert.match(invoice, /<details class="shift-link-panel">\s*<summary[^>]*>[\s\S]*?Work shifts and labor[\s\S]*?<\/summary>[\s\S]*?id="shift-link-list"/);
+  assert.match(sharedStyles, /summary:focus-visible/);
+});
