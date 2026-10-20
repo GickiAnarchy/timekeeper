@@ -4,6 +4,7 @@ import {
   populateCustomerDropdowns
 } from './models.js';
 import { asValidDate, plannedDateStatus } from './domain.mjs';
+import { plannedJobUrgency, updatePlannedAlert, watchPlannedDayChange } from './planned-urgency.mjs';
 
 const formatJobDate = new Intl.DateTimeFormat(undefined, {
   weekday: 'long',
@@ -69,10 +70,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('open-count').textContent = openJobs.length;
     document.getElementById('today-count').textContent = dueToday.length;
     document.getElementById('completed-count').textContent = completedJobs.length;
+    updatePlannedAlert(document.getElementById('planned-overdue-alert'), store.plannedJobs);
   }
 
   function createJobCard(job) {
-    const item = makeElement('li', `job-card${job.isComplete ? ' is-complete' : ''}`);
+    const urgency = plannedJobUrgency(job);
+    const item = makeElement('li', `job-card urgency-${urgency.level}${job.isComplete ? ' is-complete' : ''}`);
     const date = asDate(job.scheduledDate);
 
     const dateTile = makeElement('div', 'date-tile');
@@ -86,28 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const titleRow = makeElement('div', 'job-title-row');
     titleRow.appendChild(makeElement('h3', 'job-description', job.description || 'Scheduled job'));
 
-    let statusText = 'Upcoming';
-    let statusClass = 'status-pill';
-    if (job.isComplete) {
-      statusText = 'Completed';
-      statusClass += ' status-complete';
-    } else if (plannedDateStatus(job.scheduledDate) === 'tbd') {
-      statusText = 'Date TBD';
-      statusClass += ' status-upcoming';
-    } else if (plannedDateStatus(job.scheduledDate) === 'due-today') {
-      statusText = 'Due today';
-      statusClass += ' status-today';
-    } else if (plannedDateStatus(job.scheduledDate) === 'tomorrow') {
-      statusText = 'Tomorrow';
-      statusClass += ' status-upcoming';
-    } else if (plannedDateStatus(job.scheduledDate) === 'overdue') {
-      statusText = 'Overdue';
-      statusClass += ' status-overdue';
-    } else {
-      statusText = 'Upcoming';
-      statusClass += ' status-upcoming';
-    }
-    titleRow.appendChild(makeElement('span', statusClass, statusText));
+    titleRow.appendChild(makeElement('span', 'status-pill urgency-label', urgency.label));
 
     content.append(
       titleRow,
@@ -139,6 +121,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderJobs() {
+    // List updates must not strand keyboard users on the page body.
+    const focusedButton = plannedList.contains(document.activeElement) ? document.activeElement : null;
+    const focusedId = focusedButton?.dataset.id;
+    const focusedAction = focusedButton?.dataset.action;
     updateSummary();
     const visibleJobs = sortedJobs().filter(job => {
       if (activeFilter === 'open') return !job.isComplete;
@@ -159,10 +145,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         : 'Add a planned job to keep upcoming work in view.');
       empty.append(icon, heading, message);
       plannedList.appendChild(empty);
+      if (focusedId) filterButtons.find(button => button.dataset.filter === activeFilter)?.focus({ preventScroll: true });
       return;
     }
 
     visibleJobs.forEach(job => plannedList.appendChild(createJobCard(job)));
+    if (focusedId) {
+      const replacement = [...plannedList.querySelectorAll('button[data-action]')]
+        .find(button => button.dataset.id === focusedId && button.dataset.action === focusedAction);
+      (replacement || filterButtons.find(button => button.dataset.filter === activeFilter))?.focus({ preventScroll: true });
+    }
   }
 
   function setActiveFilter(filter) {
@@ -309,4 +301,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   renderJobs();
+  watchPlannedDayChange(renderJobs);
 });

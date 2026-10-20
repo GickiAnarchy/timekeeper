@@ -1,5 +1,6 @@
 import { store } from './models.js';
 import { selectDailyQuote } from './daily-quotes.mjs';
+import { plannedJobUrgency, updatePlannedAlert, watchPlannedDayChange } from './planned-urgency.mjs';
 
 const hourFormat = new Intl.NumberFormat(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const timeFormat = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
@@ -52,10 +53,6 @@ function elapsedLabel(milliseconds) {
 
 function isActive(shift) {
   return Boolean(validDate(shift.clockInTime) && !validDate(shift.clockOutTime));
-}
-
-function calendarDayNumber(date) {
-  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000;
 }
 
 function makeLink(text, href) {
@@ -128,7 +125,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderPlannedJobs() {
     upcomingList.replaceChildren();
-    const todayNumber = calendarDayNumber(new Date());
+    updatePlannedAlert(document.getElementById('planned-overdue-alert'), store.plannedJobs);
     const jobs = store.plannedJobs
       .filter(job => !job.isComplete)
       .sort((a, b) => {
@@ -149,16 +146,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     jobs.forEach(job => {
       const date = validDate(job.scheduledDate);
-      const daysAway = date ? calendarDayNumber(date) - todayNumber : null;
-      const item = makeElement('li', 'planned-job-item');
+      const urgency = plannedJobUrgency(job);
+      const item = makeElement('li', `planned-job-item urgency-${urgency.level}`);
       const dateTile = makeElement('span', 'job-date-tile', date ? jobDateFormat.format(date) : 'Date TBD');
       const copy = makeElement('div', 'job-copy');
       copy.append(
         makeElement('strong', 'job-title', job.description || 'Scheduled job'),
         makeElement('small', 'job-meta', job.customer?.name || 'Customer not available')
       );
-      const timing = daysAway === null ? 'Unscheduled' : daysAway < 0 ? 'Overdue' : daysAway === 0 ? 'Today' : daysAway === 1 ? 'Tomorrow' : `In ${daysAway} days`;
-      item.append(dateTile, copy, makeElement('span', `job-timing${daysAway !== null && daysAway < 0 ? ' is-overdue' : ''}`, timing));
+      item.append(dateTile, copy, makeElement('span', 'job-timing urgency-label', urgency.label));
       upcomingList.appendChild(item);
     });
   }
@@ -171,6 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderOverview();
     renderPlannedJobs();
     window.setInterval(renderOverview, 60_000);
+    watchPlannedDayChange(renderPlannedJobs);
   } catch (error) {
     console.error('Unable to load the Timekeeper dashboard.', error);
     todayHours.textContent = '—';
