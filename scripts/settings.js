@@ -141,22 +141,22 @@ restoreBackupButton?.addEventListener('click', async () => {
   if (!pendingBackup) return;
   const preview = store.previewFullBackup(pendingBackup);
   const counts = Object.entries(preview.counts).map(([name, count]) => `${name}: ${count}`).join('\n');
-  const archiveHandling = preview.archiveHistoryIncluded
-    ? 'This backup includes archived ledger history, which will be replaced.'
-    : 'This older backup has no archived ledger history; current archives will be preserved.';
+  const archiveHandling = preview.archiveHistoryIncluded ?
+    'This backup includes archived ledger history, which will be replaced.' :
+    'This older backup has no archived ledger history; current archives will be preserved.';
   const confirmed = window.confirm(
     `Restore this Timekeeper backup? This replaces the current records in the included data groups. ${archiveHandling}\n\n${counts}\n\nThis cannot be undone unless you first download a backup of the current data.`
   );
   if (!confirmed) return;
-
+  
   restoreBackupButton.disabled = true;
   downloadBackupButton.disabled = true;
   backupStatus.textContent = 'Restoring all workspace data…';
   try {
     await store.restoreFullBackup(pendingBackup);
-    backupStatus.textContent = store.loadFailures.length
-      ? 'Restore was written, but the workspace could not confirm every collection after reloading. Retry the Firestore warning.'
-      : 'Restore completed and the workspace reloaded.';
+    backupStatus.textContent = store.loadFailures.length ?
+      'Restore was written, but the workspace could not confirm every collection after reloading. Retry the Firestore warning.' :
+      'Restore completed and the workspace reloaded.';
     pendingBackup = null;
     backupFileInput.value = '';
     backupPreview.textContent = 'No backup selected.';

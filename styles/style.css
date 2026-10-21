@@ -176,9 +176,9 @@ body.app-body.keyboard-open { height: var(--app-visible-height, 100vh); min-heig
   bottom: 0;
   right: 0;
   z-index: 5000;
-  background-color: rgba(66, 90, 86, 0.55);
-  color: #FFFFFF;
-  font-size: 0.75rem;
+  background-color: var(--canvas);
+  color: var(--muted);
+  font-size: 0.70rem;
 }
 
 @media (max-width: 820px) {
