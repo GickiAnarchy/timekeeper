@@ -222,7 +222,6 @@ h1, h2, h3 { color: var(--ink); letter-spacing: -0.035em; }
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 
-
 .table-sort-button {
   display: inline-flex;
   align-items: center;

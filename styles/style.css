@@ -169,6 +169,18 @@ body.app-body.keyboard-open { height: var(--app-visible-height, 100vh); min-heig
 .home-benefits li { color: var(--muted); font-size: 11px; }
 .home-benefits strong { display: block; margin-bottom: 4px; color: var(--ink-soft); font-size: 12px; }
 
+.version-badge {
+  position: fixed;
+  margin-right: 3px;
+  padding: 1px;
+  bottom: 0;
+  right: 0;
+  z-index: 5000;
+  background-color: rgba(66, 90, 86, 0.55);
+  color: #FFFFFF;
+  font-size: 0.75rem;
+}
+
 @media (max-width: 820px) {
   body.app-body { overflow: auto; }
   .app-shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 10px; height: auto; min-height: 100vh; min-height: 100dvh; padding: 10px; }
