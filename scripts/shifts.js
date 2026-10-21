@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const addBreakButton = document.getElementById('add-break-button');
   let activeShift = null;
   let isNewShift = false;
+  let duplicateSource = null;
   const syncModalViewport = () => syncShiftDialogViewport(modal, window);
 
   modal.addEventListener('focusin', syncModalViewport);
@@ -158,11 +159,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateActualHours();
   });
 
-  function showViewModal(shift) {
+  function showViewModal(shift, source = null) {
     activeShift = shift;
+    duplicateSource = source;
     isNewShift = !store.shifts.some(candidate => candidate.id === shift.id);
+    document.getElementById('shift-modal-title').textContent = source ? 'Duplicate work shift for…' : 'Shift Details';
+    const duplicateHint = document.getElementById('shift-duplicate-hint');
+    duplicateHint.hidden = !source;
+    duplicateHint.textContent = source
+      ? `Copy of ${source.employee?.name || 'another employee'}’s shift. Choose the employee who worked the same shift, review the details, then save. The copy starts unpaid.`
+      : '';
+    for (const option of empSelect.options) {
+      option.disabled = Boolean(source && option.value === source.employee?.id);
+    }
     formError.textContent = '';
-    empSelect.value = shift.employee?.id || '';
+    empSelect.value = source ? '' : shift.employee?.id || '';
     custSelect.value = shift.customer?.id || '';
     timeIn.value = formatForDateTimeLocal(shift.clockInTime);
     timeOut.value = formatForDateTimeLocal(shift.clockOutTime);
@@ -174,15 +185,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateActualHours();
     modal.showModal();
     syncModalViewport();
+    if (source) empSelect.focus();
   }
 
   okBtn.addEventListener('click', async () => {
-    if (!activeShift) return;
+    if (!activeShift || okBtn.disabled) return;
     formError.textContent = '';
     const employee = store.employees.get(empSelect.value);
     const customer = store.customers.get(custSelect.value);
     if (!employee || !customer) {
       formError.textContent = 'Choose an employee and customer.';
+      return;
+    }
+    if (duplicateSource && employee.id === duplicateSource.employee?.id) {
+      formError.textContent = 'Choose a different employee for the duplicate shift.';
       return;
     }
     if (!timeIn.value || !timeOut.value) {
@@ -248,6 +264,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           paidHoursValue
         );
       }
+      // Keep the new employee’s shift visible even when the source was filtered.
+      if (duplicateSource) empFilter.value = employee.id;
       modal.close();
       activeShift = null;
       renderList();
@@ -267,6 +285,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   modal.addEventListener('close', () => {
     resetShiftDialogViewport(modal);
     activeShift = null;
+    duplicateSource = null;
   });
 
   function renderList() {
@@ -307,10 +326,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const editButton = makeElement('button', 'view-btn', 'Edit');
       editButton.type = 'button';
       editButton.dataset.id = shift.id;
+      const duplicateButton = makeElement('button', 'duplicate-btn', 'Duplicate work shift for…');
+      duplicateButton.type = 'button';
+      duplicateButton.dataset.id = shift.id;
       const deleteButton = makeElement('button', 'delete-btn', 'Delete');
       deleteButton.type = 'button';
       deleteButton.dataset.id = shift.id;
-      actions.append(editButton, deleteButton);
+      actions.append(editButton, duplicateButton, deleteButton);
       item.append(date, summary, actions);
       shiftList.appendChild(item);
     });
@@ -324,6 +346,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (button.classList.contains('view-btn')) {
       showViewModal(shift);
+      return;
+    }
+    if (button.classList.contains('duplicate-btn')) {
+      const employee = [...store.employees.values()].find(candidate => candidate.id !== shift.employee?.id);
+      if (!employee) {
+        window.alert('Add another employee before duplicating this shift.');
+        return;
+      }
+      try {
+        showViewModal(shift.duplicateFor(employee), shift);
+      } catch (error) {
+        window.alert(error.message || 'This shift could not be duplicated.');
+      }
       return;
     }
     if (button.classList.contains('delete-btn') && window.confirm('Are you sure you want to delete this shift?')) {

@@ -22,7 +22,7 @@ body { padding: clamp(14px, 3vw, 26px); }
 .emp-cust-div { min-width: 0; color: var(--ink-soft); font-size: 11px; }
 .emp-cust-div strong { color: var(--ink); font-size: 12px; }
 .time-small { color: var(--muted); font-size: 9px; }
-.list-item-buttons { display: flex; gap: 5px; }
+.list-item-buttons { display: flex; flex-wrap: wrap; gap: 5px; max-width: 240px; }
 .list-item-buttons button { min-height: 31px; padding: 0 9px; color: var(--green-deep); background: var(--green-soft); font-size: 9px; font-weight: 650; }
 .list-item-buttons .delete-btn { color: var(--red); background: var(--red-soft); }
 .list-item-buttons button:hover { filter: brightness(.97); }

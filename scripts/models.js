@@ -244,6 +244,25 @@ export class WorkShift {
     return Boolean(this.clockInTime && this.clockOutTime);
   }
   
+  duplicateFor(employee) {
+    if (!employee?.id || employee.id === this.employee?.id) {
+      throw new Error('Choose a different employee for the duplicate shift.');
+    }
+    if (!this.isComplete || !(this.clockInTime instanceof Date) ||
+        !(this.clockOutTime instanceof Date) || !Number.isFinite(this.clockInTime.getTime()) ||
+        !Number.isFinite(this.clockOutTime.getTime()) || this.clockOutTime <= this.clockInTime) {
+      throw new Error('Only a completed shift with valid start and end times can be duplicated.');
+    }
+    const breaks = this.breaks.map(item => ({
+      start: item.start ? new Date(item.start.getTime()) : null,
+      end: item.end ? new Date(item.end.getTime()) : null
+    }));
+    const duplicate = new WorkShift(employee, this.customer, null, this.note, false, breaks, this.paidHours);
+    duplicate.clockInTime = new Date(this.clockInTime.getTime());
+    duplicate.clockOutTime = new Date(this.clockOutTime.getTime());
+    return duplicate;
+  }
+
   getHoursWorked() {
     if (!this.isComplete) return 0;
     return actualShiftHours(this.clockInTime, this.clockOutTime, this.breaks);
