@@ -6,6 +6,12 @@ A JavaScript app for tracking work hours. The workspace includes clock in/out, b
 
 The hosted app is available at [GickiAnarchy.github.io/timekeeper](https://www.gickianarchy.github.io/timekeeper/).
 
+## Pay-period review
+
+The **Pay-period review** navigation item opens a read-only view with inclusive custom dates, employee filtering, and this/previous-week shortcuts. Completed shifts are attributed in full to their local clock-in date. Actual hours subtract breaks; pay hours honor the shift's paid-hours override (including zero), while payment status is shown separately. Current ledger balances include all active entries, not just the selected period, and are never added to unpaid shift hours as an amount due. Active and archived shift links are distinguished. Invoice-ready estimates use actual hours and customer billing rates, excluding shifts linked through either invoice shift IDs or line items.
+
+The review deliberately loads data without `store.init()`, so opening or refreshing it cannot resume pending archives or archive zero-balance ledgers. It cannot pay, save, close, invoice, or modify shifts. Incomplete data loads hide all results rather than presenting partial balances. Local review tests use synthetic data and do not access production Firestore.
+
 ## Tests
 
 Run the local Node test suite (Node.js 18 or newer):

@@ -27,11 +27,14 @@ test('the parent shell monitors keyboard focus and viewport changes in its activ
   assert.match(script, /visualViewport\?\.addEventListener\('resize'/);
 });
 
-test('the footer copyright line links to the requested GitHub profile and preserves footer styling', () => {
+test('the footer links to the GitHub profile and centers the Android download link', () => {
   const markup = readProjectFile('index.html');
   const stylesheet = readProjectFile('styles', 'style.css');
   assert.match(markup, /<a class="site-footer-link" href="https:\/\/github\.com\/GickiAnarchy"[^>]*>© 2026 GickiStudios<\/a>/);
+  assert.match(markup, /<a class="site-footer-app-link" href="https:\/\/github\.com\/GickiAnarchy\/timekeeper\/releases\/download\/[^"]+"[^>]*>Get the Android app here<\/a>/);
+  assert.match(markup, /<div class="site-footer-meta">[\s\S]*?Timekeeping made simple[\s\S]*?version-badge/);
   assert.match(stylesheet, /\.site-footer-link\s*\{\s*color:\s*inherit;\s*text-decoration:\s*none;/);
+  assert.match(stylesheet, /\.site-footer-app-link\s*\{[^}]*justify-self:\s*center;[^}]*\}/);
 });
 
 test('every native data table has accessible sortable controls for each sortable column', () => {
