@@ -1,3 +1,5 @@
+import { setupNavigationGroups } from './navigation-groups.mjs';
+
 const THEME_KEY = 'timekeeper-theme';
 const FONT_SCALE_KEY = 'timekeeper-font-scale';
 const THEMES = new Set(['forest', 'coastal', 'harvest', 'midnight', 'lavender', 'rose', 'slate']);
@@ -84,6 +86,7 @@ function applyTextScaleToDocument(doc, scale) {
 
 document.addEventListener('DOMContentLoaded', () => {
   const navigation = [...document.querySelectorAll('.nav-link[data-page]')];
+  const revealNavigationGroup = setupNavigationGroups(document.querySelector('.sidebar-nav'));
   const mainIframe = document.querySelector('iframe[name="main-content"]');
   const title = document.getElementById('active-page-title');
   const dateLabel = document.getElementById('topbar-date');
@@ -143,6 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
       else item.removeAttribute('aria-current');
     });
     if (title) title.textContent = button.dataset.title || 'Timekeeper';
+    revealNavigationGroup(button);
   }
 
   function applyTheme(theme) {
@@ -190,11 +194,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  activate(navigation.find(button => button.getAttribute('aria-current') === 'page'));
+
   if (mainIframe) {
     mainIframe.addEventListener('load', () => {
       watchFrameFocus();
       try {
-        const currentPath = new URL(mainIframe.src, window.location.href).pathname;
+        // In-frame links and the brand target do not update the iframe's src attribute.
+        const currentPath = new URL(mainIframe.contentWindow.location.href, window.location.href).pathname;
         const activeButton = navigation.find(button =>
           new URL(button.dataset.page, window.location.href).pathname === currentPath
         );
