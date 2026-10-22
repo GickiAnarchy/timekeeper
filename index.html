@@ -4,9 +4,9 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <link rel="stylesheet" href="./styles/style.css">
+    <link rel="stylesheet" href="./styles/style.css?v=compact-nav-1">
     <title>Mosher Lawns · Timekeeper</title>
-    <script type="module" src="./scripts/index.js?v=grouped-nav-2" defer></script>
+    <script type="module" src="./scripts/index.js?v=compact-nav-1" defer></script>
   </head>
   <body class="app-body">
     <div class="app-shell">
@@ -20,7 +20,12 @@
           <span class="nav-accent" aria-hidden="true"></span>
         </div>
 
-        <nav class="sidebar-nav" aria-label="Main navigation">
+        <button class="nav-picker-toggle" type="button" aria-expanded="false" aria-controls="navigation-pages" aria-label="Pages, current page: Home">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <span class="nav-picker-copy"><span class="nav-picker-caption">Pages</span><span class="nav-picker-label">Home</span></span>
+          <span class="nav-picker-chevron" aria-hidden="true">⌄</span>
+        </button>
+        <nav class="sidebar-nav" id="navigation-pages" aria-label="Main navigation" hidden>
           <section class="nav-group" aria-labelledby="nav-workspace-toggle">
             <h2 class="nav-group-heading">
               <button class="nav-group-toggle" id="nav-workspace-toggle" type="button" aria-expanded="true" aria-controls="nav-workspace-pages">
@@ -81,10 +86,6 @@
           </section>
         </nav>
 
-        <div class="sidebar-footnote">
-          <span class="connection-dot" aria-hidden="true"></span>
-          <span>Work tracking<br><strong>Keep the crew moving</strong></span>
-        </div>
       </aside>
 
       <div class="app-main">

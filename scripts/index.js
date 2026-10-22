@@ -1,14 +1,13 @@
 // Keep navigation in the shell's single asset: a missing separately deployed
 // module must not prevent every click handler from being registered.
 // Native buttons retain Enter/Space activation and the shared focus-visible ring.
-// The current page's category stays open; other categories can be browsed freely.
+// Categories remain grouped, but only one list is expanded at a time.
 export function setupNavigationGroups(root) {
   const groups = [...(root?.querySelectorAll('.nav-group') || [])].map(group => ({
     group,
     toggle: group.querySelector('.nav-group-toggle'),
     panel: group.querySelector('.nav-group-pages')
   }));
-  let activeGroup = null;
 
   function setExpanded(entry, expanded) {
     entry.toggle.setAttribute('aria-expanded', String(expanded));
@@ -18,26 +17,64 @@ export function setupNavigationGroups(root) {
   for (const entry of groups) {
     setExpanded(entry, entry.toggle.getAttribute('aria-expanded') === 'true');
     entry.toggle.addEventListener('click', () => {
-      if (entry === activeGroup) return;
-      setExpanded(entry, entry.panel.hidden);
+      const expand = entry.panel.hidden;
+      groups.forEach(item => setExpanded(item, item === entry && expand));
     });
   }
 
   return function reveal(button) {
-    const nextGroup = groups.find(entry => entry.group.contains(button));
-    if (!nextGroup) return;
-    activeGroup = nextGroup;
+    const activeGroup = groups.find(entry => entry.group.contains(button));
+    if (!activeGroup) return;
     for (const entry of groups) {
       const isActive = entry === activeGroup;
       setExpanded(entry, isActive);
-      if (isActive) {
-        entry.toggle.setAttribute('aria-disabled', 'true');
-        entry.toggle.setAttribute('title', 'Contains the current page; stays expanded');
-      } else {
-        entry.toggle.removeAttribute('aria-disabled');
-        entry.toggle.removeAttribute('title');
-      }
+      if (isActive) entry.toggle.setAttribute('data-current', 'true');
+      else entry.toggle.removeAttribute('data-current');
     }
+  };
+}
+
+// A disclosure, not an ARIA menu: ordinary buttons keep native Tab/Enter/Space.
+export function setupNavigationPicker(root) {
+  const toggle = root?.querySelector('.nav-picker-toggle');
+  const panel = root?.querySelector('.sidebar-nav');
+  const label = root?.querySelector('.nav-picker-label');
+  if (!toggle || !panel) return () => {};
+  const doc = root.ownerDocument;
+
+  function close(restoreFocus = false) {
+    panel.hidden = true;
+    toggle.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) toggle.focus();
+  }
+  close();
+  toggle.addEventListener('click', () => {
+    const open = panel.hidden;
+    panel.hidden = !open;
+    toggle.setAttribute('aria-expanded', String(open));
+  });
+  root.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !panel.hidden) {
+      event.preventDefault();
+      close(true);
+    }
+  });
+  doc?.addEventListener('pointerdown', event => {
+    if (!root.contains(event.target)) close();
+  });
+  // Pointer events inside the workspace iframe do not bubble to this document.
+  // Entering that frame blurs the shell window; dismiss without stealing focus.
+  doc?.defaultView?.addEventListener('blur', () => close());
+  root.addEventListener('focusout', event => {
+    if (event.relatedTarget && !root.contains(event.relatedTarget)) close();
+  });
+
+  return function select(button) {
+    if (!button) return;
+    const title = button.dataset.title || 'Timekeeper';
+    if (label) label.textContent = title;
+    toggle.setAttribute('aria-label', `Pages, current page: ${title}`);
+    close(panel.contains(doc?.activeElement));
   };
 }
 
@@ -128,6 +165,7 @@ function applyTextScaleToDocument(doc, scale) {
 export function initializeShell() {
   const navigation = [...document.querySelectorAll('.nav-link[data-page]')];
   const revealNavigationGroup = setupNavigationGroups(document.querySelector('.sidebar-nav'));
+  const selectNavigationPage = setupNavigationPicker(document.querySelector('.sidebar'));
   const mainIframe = document.querySelector('iframe[name="main-content"]');
   const title = document.getElementById('active-page-title');
   const dateLabel = document.getElementById('topbar-date');
@@ -188,6 +226,7 @@ export function initializeShell() {
     });
     if (title) title.textContent = button.dataset.title || 'Timekeeper';
     revealNavigationGroup(button);
+    selectNavigationPage(button);
   }
 
   function applyTheme(theme) {
