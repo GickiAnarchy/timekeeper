@@ -1,4 +1,45 @@
-import { setupNavigationGroups } from './navigation-groups.mjs';
+// Keep navigation in the shell's single asset: a missing separately deployed
+// module must not prevent every click handler from being registered.
+// Native buttons retain Enter/Space activation and the shared focus-visible ring.
+// The current page's category stays open; other categories can be browsed freely.
+export function setupNavigationGroups(root) {
+  const groups = [...(root?.querySelectorAll('.nav-group') || [])].map(group => ({
+    group,
+    toggle: group.querySelector('.nav-group-toggle'),
+    panel: group.querySelector('.nav-group-pages')
+  }));
+  let activeGroup = null;
+
+  function setExpanded(entry, expanded) {
+    entry.toggle.setAttribute('aria-expanded', String(expanded));
+    entry.panel.hidden = !expanded;
+  }
+
+  for (const entry of groups) {
+    setExpanded(entry, entry.toggle.getAttribute('aria-expanded') === 'true');
+    entry.toggle.addEventListener('click', () => {
+      if (entry === activeGroup) return;
+      setExpanded(entry, entry.panel.hidden);
+    });
+  }
+
+  return function reveal(button) {
+    const nextGroup = groups.find(entry => entry.group.contains(button));
+    if (!nextGroup) return;
+    activeGroup = nextGroup;
+    for (const entry of groups) {
+      const isActive = entry === activeGroup;
+      setExpanded(entry, isActive);
+      if (isActive) {
+        entry.toggle.setAttribute('aria-disabled', 'true');
+        entry.toggle.setAttribute('title', 'Contains the current page; stays expanded');
+      } else {
+        entry.toggle.removeAttribute('aria-disabled');
+        entry.toggle.removeAttribute('title');
+      }
+    }
+  };
+}
 
 const THEME_KEY = 'timekeeper-theme';
 const FONT_SCALE_KEY = 'timekeeper-font-scale';
@@ -84,7 +125,7 @@ function applyTextScaleToDocument(doc, scale) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+export function initializeShell() {
   const navigation = [...document.querySelectorAll('.nav-link[data-page]')];
   const revealNavigationGroup = setupNavigationGroups(document.querySelector('.sidebar-nav'));
   const mainIframe = document.querySelector('iframe[name="main-content"]');
@@ -255,4 +296,12 @@ document.addEventListener('DOMContentLoaded', () => {
       weekday: 'short', month: 'short', day: 'numeric'
     }).format(new Date());
   }
-});
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeShell, { once: true });
+  } else {
+    initializeShell();
+  }
+}

@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { setupNavigationGroups } from '../scripts/navigation-groups.mjs';
+import vm from 'node:vm';
+import { setupNavigationGroups } from '../scripts/index.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(here, '..');
@@ -25,6 +26,12 @@ class ClassList {
 
   contains(value) {
     return this.#values.has(value);
+  }
+
+  toggle(value, enabled) {
+    if (enabled) this.add(value);
+    else this.remove(value);
+    return enabled;
   }
 }
 
@@ -248,4 +255,79 @@ test('navigation styles include hidden panels and a mobile navigation layout', (
   const css = fs.readFileSync(path.join(projectRoot, 'styles/style.css'), 'utf8');
   assert.match(css, /(?:\.nav-group-pages|\.nav-group)[^{}]*\[hidden\]|\[hidden\][^{}]*\.nav-group-pages|\.nav-group-pages\[hidden\]/s);
   assert.match(css, /@media[^{]*(?:max-width|min-width)[^{]*\{[\s\S]*?nav-group/s);
+});
+
+function shellFixture(readyState = 'loading') {
+  const html = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8');
+  const shell = fs.readFileSync(path.join(projectRoot, 'scripts/index.js'), 'utf8');
+  const { root, groups, toggles, panels } = fixture();
+  panels.forEach(panel => { panel.children = []; });
+  const routes = [...html.matchAll(/data-page="([^"]+)" data-title="([^"]+)"/g)];
+  const navigation = routes.map(([, page, title], index) => {
+    const button = new StubElement({ classes: ['nav-link'] });
+    button.dataset = { page, title };
+    if (!index) button.setAttribute('aria-current', 'page');
+    panels[index < 4 ? 0 : index < 9 ? 1 : 2].append(button);
+    return button;
+  });
+  const title = { textContent: 'Home' };
+  const date = { textContent: '' };
+  const frame = new StubElement();
+  frame.src = 'html/home.html';
+  frame.contentWindow = {
+    location: { href: 'https://local.test/timekeeper/html/home.html' },
+    postMessage() {}
+  };
+  const document = new StubElement();
+  document.readyState = readyState;
+  document.documentElement = { style: { setProperty() {} }, dataset: {}, clientHeight: 800 };
+  document.body = { classList: new ClassList() };
+  document.querySelectorAll = selector => selector === '.nav-link[data-page]' ? navigation : [];
+  document.querySelector = selector => selector === '.sidebar-nav' ? root : frame;
+  document.getElementById = id => id === 'active-page-title' ? title : date;
+  const window = {
+    innerHeight: 800,
+    location: { href: 'https://local.test/timekeeper/', origin: 'https://local.test' },
+    localStorage: { getItem() { return null; } },
+    addEventListener() {}
+  };
+  // Execute the shipped entry point itself with no module resolver or network.
+  // A new mandatory import would fail here, just like a missing deployed helper.
+  vm.runInNewContext(shell.replace(/^export /gm, ''), { document, window, Intl, URL, console });
+  return { document, frame, navigation, title, date, groups, toggles, panels };
+}
+
+test('self-contained shell boots and every route updates the frame, title and active group', () => {
+  const { document, frame, navigation, title, date, toggles, panels } = shellFixture();
+  assert.equal(date.textContent, '');
+  document.dispatchEvent({ type: 'DOMContentLoaded' });
+  assert.notEqual(date.textContent, '');
+  assert.equal(navigation.length, 10);
+  for (const [index, button] of navigation.entries()) {
+    const groupIndex = index < 4 ? 0 : index < 9 ? 1 : 2;
+    if (panels[groupIndex].hidden) toggles[groupIndex].click();
+    button.click();
+    assert.equal(frame.src, button.dataset.page);
+    assert.equal(title.textContent, button.dataset.title);
+    assert.equal(button.getAttribute('aria-current'), 'page');
+    assert.equal(navigation.filter(item => item.getAttribute('aria-current') === 'page').length, 1);
+    assert.equal(panels[groupIndex].hidden, false);
+    assert.equal(toggles[groupIndex].getAttribute('aria-disabled'), 'true');
+  }
+});
+
+test('shell initializes when loaded after DOMContentLoaded and follows in-frame navigation', () => {
+  const { frame, navigation, title, date, panels } = shellFixture('complete');
+  assert.notEqual(date.textContent, '');
+  frame.contentWindow.location.href = 'https://local.test/timekeeper/html/settings.html';
+  frame.dispatchEvent({ type: 'load' });
+  assert.equal(title.textContent, 'Settings');
+  assert.equal(navigation[9].getAttribute('aria-current'), 'page');
+  assert.equal(panels[2].hidden, false);
+  assert.equal(panels[0].hidden, true);
+});
+
+test('redesigned markup requests a versioned self-contained shell asset', () => {
+  const html = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8');
+  assert.match(html, /src="\.\/scripts\/index\.js\?v=grouped-nav-2"/);
 });
