@@ -121,7 +121,8 @@ body.app-body.keyboard-open { height: var(--app-visible-height, 100vh); min-heig
 /* Three footer columns keep the Android download centered on wide screens. */
 .site-footer {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  /*grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);*/
+  grid-template-columns:  auto auto auto;
   align-items: center;
   gap: 12px;
   padding: 9px 5px 0;
@@ -182,7 +183,7 @@ body.app-body.keyboard-open { height: var(--app-visible-height, 100vh); min-heig
 .home-benefits strong { display: block; margin-bottom: 4px; color: var(--ink-soft); font-size: 12px; }
 
 /* Keep the build number in normal footer flow so it cannot cover other content. */
-.version-badge { margin: 0; padding: 0; color: var(--muted); font-size: 0.70rem; line-height: 1; white-space: nowrap; }
+.version-badge { margin: 0; padding: 0; color: var(--muted); font-size: 0.70rem; line-height: 1; white-space: nowrap; position: fixed; right: 0; bottom: 0; opacity: 0.6; }
 
 @media (max-width: 820px) {
   body.app-body { overflow: auto; }
@@ -214,7 +215,7 @@ body.app-body.keyboard-open { height: var(--app-visible-height, 100vh); min-heig
   .topbar-eyebrow { font-size: 8px; }
   .home-benefits { grid-template-columns: 1fr; gap: 13px; }
   .site-footer { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); row-gap: 6px; }
-  .site-footer-app-link { grid-column: 1 / -1; grid-row: 1; }
+  .site-footer-app-link { grid-column: 1 / -1; grid-row: 2; }
   .site-footer-link { grid-column: 1; grid-row: 2; }
   .site-footer-meta { grid-column: 2; grid-row: 2; gap: 6px; }
 }
