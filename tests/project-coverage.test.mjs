@@ -31,7 +31,7 @@ test('the footer links to the GitHub profile and centers the Android download li
   const markup = readProjectFile('index.html');
   const stylesheet = readProjectFile('styles', 'style.css');
   assert.match(markup, /<a class="site-footer-link" href="https:\/\/github\.com\/GickiAnarchy"[^>]*>© 2026 GickiStudios<\/a>/);
-  assert.match(markup, /<a class="site-footer-app-link" href="https:\/\/github\.com\/GickiAnarchy\/timekeeper\/releases\/download\/[^"]+"[^>]*>Get the Android app here<\/a>/);
+  assert.match(markup, /<a class="site-footer-app-link" href="https:\/\/github\.com\/GickiAnarchy\/timekeeper\/releases\/download\/[^"]+"[^>]*><u>Get the app<\/u><\/a>/);
   assert.match(markup, /<div class="site-footer-meta">[\s\S]*?Timekeeping made simple[\s\S]*?version-badge/);
   assert.match(stylesheet, /\.site-footer-link\s*\{\s*color:\s*inherit;\s*text-decoration:\s*none;/);
   assert.match(stylesheet, /\.site-footer-app-link\s*\{[^}]*justify-self:\s*center;[^}]*\}/);
