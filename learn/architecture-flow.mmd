@@ -1,0 +1,13 @@
+flowchart TB
+  B[Browser opens index.html] --> S[Shell navigation: scripts/index.js]
+  S --> F[Feature page inside an iframe]
+  F --> H[Page HTML: controls, forms and tables]
+  H --> C[Shared and page-specific CSS]
+  H --> P[Page JavaScript: events and rendering]
+  P --> D[Pure calculations: domain and helper modules]
+  P --> M[Shared models.js store and model methods]
+  M --> DB[(Cloud Firestore documents)]
+  R[firestore.rules: server-side permission policy] -. gates reads and writes .-> DB
+  T[Node tests: pure rules, UI contracts and mocks] -. checks .-> D
+  T -. checks .-> P
+  E[Separate local emulator security test] -. checks rule behavior .-> R

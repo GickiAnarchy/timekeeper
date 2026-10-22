@@ -1,0 +1,413 @@
+# styles/pay-period-review.css
+
+[Exact copy](../../original/styles/pay-period-review.css)
+
+Line numbers refer to the original file, before teaching comments.
+
+### Line 1
+
+```text
+@import url('./ui.css');
+```
+
+Imports shared design rules from the referenced stylesheet so this page reuses the app-wide tokens/base UI.
+
+### Line 2
+
+```text
+
+```
+
+Blank line separates related rules for readability.
+
+### Line 3
+
+```text
+.review-page { max-width: 1440px; margin: 0 auto; padding: 28px; }
+```
+
+Selects '.review-page'; declarations on this line style matching Timekeeper elements. max-width caps horizontal size; value '1440px' sets the caps horizontal size to 1440px. margin sets outside spacing around the box; value '0 auto' sets sets outside spacing around the box to 0 auto. padding sets inside spacing between border and content; value '28px' sets the sets inside spacing between border and content to 28px.
+
+### Line 4
+
+```text
+.review-heading { position: relative; margin-bottom: 24px; }
+```
+
+Selects '.review-heading'; declarations on this line style matching Timekeeper elements. position chooses the positioning scheme relative to normal flow; value 'relative' sets chooses the positioning scheme relative to normal flow to relative. margin-bottom adds outside space below the element; value '24px' sets the adds outside space below the element to 24px.
+
+### Line 5
+
+```text
+.review-kicker { color: var(--green); font-size: .72rem; font-weight: 800; letter-spacing: .12em; }
+```
+
+Selects '.review-kicker'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--green)' uses theme custom property var(--green), so the shared design token controls this value. font-size sets text size; value '.72rem' sets the sets text size to .72rem. font-weight sets text stroke emphasis; value '800' sets sets text stroke emphasis to 800. letter-spacing adjusts spacing between glyphs; value '.12em' sets the adjusts spacing between glyphs to .12em.
+
+### Line 6
+
+```text
+.review-heading h1 { margin: 8px 0; font-size: clamp(1.7rem, 4vw, 2.3rem); }
+```
+
+Selects '.review-heading h1'; declarations on this line style matching Timekeeper elements. margin sets outside spacing around the box; value '8px 0' sets sets outside spacing around the box to 8px 0. font-size sets text size; value 'clamp(1.7rem, 4vw, 2.3rem)' uses a responsive clamped value that grows/shrinks within the given minimum and maximum.
+
+### Line 7
+
+```text
+.review-heading > p:not(.review-kicker) { color: var(--ink-soft); line-height: 1.6; max-width: 720px; }
+```
+
+Selects '.review-heading > p:not(.review-kicker)'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--ink-soft)' uses theme custom property var(--ink-soft), so the shared design token controls this value. line-height sets line box height and text rhythm; value '1.6' sets sets line box height and text rhythm to 1.6. max-width caps horizontal size; value '720px' sets the caps horizontal size to 720px.
+
+### Line 8
+
+```text
+.read-only-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; background: var(--green-soft); color: var(--green-deep); font-size: .8rem; font-weight: 700; }
+```
+
+Selects '.read-only-badge'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'inline-block' sets chooses the layout model or visibility behavior to inline-block. padding sets inside spacing between border and content; value '6px 12px' sets the sets inside spacing between border and content to 6px 12px. border-radius rounds box corners; value '20px' sets the rounds box corners to 20px. background sets the full background paint; value 'var(--green-soft)' uses theme custom property var(--green-soft), so the shared design token controls this value. color sets foreground text/icon color; value 'var(--green-deep)' uses theme custom property var(--green-deep), so the shared design token controls this value. font-size sets text size; value '.8rem' sets the sets text size to .8rem. font-weight sets text stroke emphasis; value '700' bold emphasis.
+
+### Line 9
+
+```text
+.review-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin: 20px 0; box-shadow: var(--shadow-soft); }
+```
+
+Selects '.review-panel'; declarations on this line style matching Timekeeper elements. background sets the full background paint; value 'var(--surface)' uses theme custom property var(--surface), so the shared design token controls this value. border sets border width/style/color; value '1px solid var(--border)' sets sets border width/style/color to 1px solid var(--border). border-radius rounds box corners; value '16px' sets the rounds box corners to 16px. padding sets inside spacing between border and content; value '22px' sets the sets inside spacing between border and content to 22px. margin sets outside spacing around the box; value '20px 0' sets sets outside spacing around the box to 20px 0. box-shadow draws depth/shadow around a component; value 'var(--shadow-soft)' uses theme custom property var(--shadow-soft), so the shared design token controls this value.
+
+### Line 10
+
+```text
+.review-panel h2 { font-size: 1.1rem; margin: 0 0 12px; }
+```
+
+Selects '.review-panel h2'; declarations on this line style matching Timekeeper elements. font-size sets text size; value '1.1rem' sets the sets text size to 1.1rem. margin sets outside spacing around the box; value '0 0 12px' sets the sets outside spacing around the box to 0 0 12px.
+
+### Line 11
+
+```text
+.review-filters { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; }
+```
+
+Selects '.review-filters'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'flex' uses Flexbox for one-dimensional child alignment. flex-wrap allows flex children to wrap onto additional lines; value 'wrap' allows children to continue on another line. gap sets spacing between flex/grid children; value '16px' sets the sets spacing between flex/grid children to 16px. align-items aligns children across the cross axis; value 'end' sets aligns children across the cross axis to end.
+
+### Line 12
+
+```text
+.filter-field { display: flex; flex: 1 1 170px; flex-direction: column; gap: 7px; }
+```
+
+Selects '.filter-field'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'flex' uses Flexbox for one-dimensional child alignment. flex controls this CSS property; value '1 1 170px' sets the flex to 1 1 170px. flex-direction sets the main-axis direction for flex children; value 'column' stacks children vertically. gap sets spacing between flex/grid children; value '7px' sets the sets spacing between flex/grid children to 7px.
+
+### Line 13
+
+```text
+.filter-field label { font-size: .8rem; font-weight: 700; }
+```
+
+Selects '.filter-field label'; declarations on this line style matching Timekeeper elements. font-size sets text size; value '.8rem' sets the sets text size to .8rem. font-weight sets text stroke emphasis; value '700' bold emphasis.
+
+### Line 14
+
+```text
+.review-filters input, .review-filters select { min-width: 0; width: 100%; height: 44px; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; background: var(--control-surface); color: var(--ink); font: inherit; }
+```
+
+Selects '.review-filters input, .review-filters select'; declarations on this line style matching Timekeeper elements. min-width sets the smallest allowed horizontal size; value '0' sets sets the smallest allowed horizontal size to 0. width sets horizontal size; value '100%' sets the sets horizontal size to 100%. height sets vertical size; value '44px' sets the sets vertical size to 44px. border sets border width/style/color; value '1px solid var(--border)' sets sets border width/style/color to 1px solid var(--border). border-radius rounds box corners; value '8px' sets the rounds box corners to 8px. padding sets inside spacing between border and content; value '8px 12px' sets the sets inside spacing between border and content to 8px 12px. background sets the full background paint; value 'var(--control-surface)' uses theme custom property var(--control-surface), so the shared design token controls this value. color sets foreground text/icon color; value 'var(--ink)' uses theme custom property var(--ink), so the shared design token controls this value. font sets inherited font shorthand; value 'inherit' sets sets inherited font shorthand to inherit.
+
+### Line 15
+
+```text
+.review-filters button { min-height: 44px; border: 1px solid var(--green); border-radius: 8px; padding: 9px 16px; font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer; background: var(--green); color: var(--surface); }
+```
+
+Selects '.review-filters button'; declarations on this line style matching Timekeeper elements. min-height sets the smallest allowed control/region height; value '44px' sets the sets the smallest allowed control/region height to 44px. border sets border width/style/color; value '1px solid var(--green)' sets sets border width/style/color to 1px solid var(--green). border-radius rounds box corners; value '8px' sets the rounds box corners to 8px. padding sets inside spacing between border and content; value '9px 16px' sets the sets inside spacing between border and content to 9px 16px. font sets inherited font shorthand; value 'inherit' sets sets inherited font shorthand to inherit. font-size sets text size; value '.85rem' sets the sets text size to .85rem. font-weight sets text stroke emphasis; value '700' bold emphasis. cursor chooses pointer cursor presentation; value 'pointer' sets chooses pointer cursor presentation to pointer. background sets the full background paint; value 'var(--green)' uses theme custom property var(--green), so the shared design token controls this value. color sets foreground text/icon color; value 'var(--surface)' uses theme custom property var(--surface), so the shared design token controls this value.
+
+### Line 16
+
+```text
+.period-shortcuts { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+```
+
+Selects '.period-shortcuts'; declarations on this line style matching Timekeeper elements. flex-basis controls this CSS property; value '100%' sets the flex-basis to 100%. display chooses the layout model or visibility behavior; value 'flex' uses Flexbox for one-dimensional child alignment. flex-wrap allows flex children to wrap onto additional lines; value 'wrap' allows children to continue on another line. gap sets spacing between flex/grid children; value '8px' sets the sets spacing between flex/grid children to 8px.
+
+### Line 17
+
+```text
+.period-shortcuts button { background: var(--surface-muted); border-color: var(--border); color: var(--ink-soft); }
+```
+
+Selects '.period-shortcuts button'; declarations on this line style matching Timekeeper elements. background sets the full background paint; value 'var(--surface-muted)' uses theme custom property var(--surface-muted), so the shared design token controls this value. border-color controls this CSS property; value 'var(--border)' uses theme custom property var(--border), so the shared design token controls this value. color sets foreground text/icon color; value 'var(--ink-soft)' uses theme custom property var(--ink-soft), so the shared design token controls this value.
+
+### Line 18
+
+```text
+.review-filters button:disabled { opacity: .5; cursor: wait; }
+```
+
+Selects '.review-filters button:disabled'; declarations on this line style matching Timekeeper elements. opacity makes the element and its contents translucent; value '.5' sets makes the element and its contents translucent to .5. cursor chooses pointer cursor presentation; value 'wait' sets chooses pointer cursor presentation to wait.
+
+### Line 19
+
+```text
+.review-filters button:focus-visible, .review-filters input:focus-visible, .review-filters select:focus-visible, .review-table-wrap:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+```
+
+Selects '.review-filters button:focus-visible, .review-filters input:focus-visible, .review-filters select:focus-visible, .review-table-wrap:focus-visible'; declarations on this line style matching Timekeeper elements. outline draws focus/diagnostic ring outside the border; value '3px solid var(--focus-ring)' sets draws focus/diagnostic ring outside the border to 3px solid var(--focus-ring). outline-offset moves the outline away from the border; value '2px' sets the moves the outline away from the border to 2px.
+
+### Line 20
+
+```text
+.review-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 20px 0 12px; }
+```
+
+Selects '.review-metrics'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'grid' uses CSS Grid for two-dimensional placement. grid-template-columns defines grid tracks and their widths; value 'repeat(4, minmax(0, 1fr))' creates a responsive track with a minimum and flexible maximum size. gap sets spacing between flex/grid children; value '14px' sets the sets spacing between flex/grid children to 14px. margin sets outside spacing around the box; value '20px 0 12px' sets the sets outside spacing around the box to 20px 0 12px.
+
+### Line 21
+
+```text
+.review-metric { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+```
+
+Selects '.review-metric'; declarations on this line style matching Timekeeper elements. background sets the full background paint; value 'var(--surface)' uses theme custom property var(--surface), so the shared design token controls this value. border sets border width/style/color; value '1px solid var(--border)' sets sets border width/style/color to 1px solid var(--border). border-radius rounds box corners; value '14px' sets the rounds box corners to 14px. padding sets inside spacing between border and content; value '20px' sets the sets inside spacing between border and content to 20px.
+
+### Line 22
+
+```text
+.review-metric p { margin: 0 0 10px; font-size: .8rem; color: var(--ink-soft); font-weight: 600; }
+```
+
+Selects '.review-metric p'; declarations on this line style matching Timekeeper elements. margin sets outside spacing around the box; value '0 0 10px' sets the sets outside spacing around the box to 0 0 10px. font-size sets text size; value '.8rem' sets the sets text size to .8rem. color sets foreground text/icon color; value 'var(--ink-soft)' uses theme custom property var(--ink-soft), so the shared design token controls this value. font-weight sets text stroke emphasis; value '600' semibold emphasis.
+
+### Line 23
+
+```text
+.review-metric strong { display: block; color: var(--green-deep); font-size: 1.7rem; overflow-wrap: anywhere; }
+```
+
+Selects '.review-metric strong'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'block' takes a full available line. color sets foreground text/icon color; value 'var(--green-deep)' uses theme custom property var(--green-deep), so the shared design token controls this value. font-size sets text size; value '1.7rem' sets the sets text size to 1.7rem. overflow-wrap controls this CSS property; value 'anywhere' sets overflow-wrap to anywhere.
+
+### Line 24
+
+```text
+.review-metric small { display: block; color: var(--muted); font-size: .78rem; margin-top: 8px; line-height: 1.5; }
+```
+
+Selects '.review-metric small'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'block' takes a full available line. color sets foreground text/icon color; value 'var(--muted)' uses theme custom property var(--muted), so the shared design token controls this value. font-size sets text size; value '.78rem' sets the sets text size to .78rem. margin-top adds outside space above the element; value '8px' sets the adds outside space above the element to 8px. line-height sets line box height and text rhythm; value '1.5' sets sets line box height and text rhythm to 1.5.
+
+### Line 25
+
+```text
+.review-explainer, .review-footnote, #review-status { color: var(--ink-soft); font-size: .83rem; line-height: 1.65; }
+```
+
+Selects '.review-explainer, .review-footnote, #review-status'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--ink-soft)' uses theme custom property var(--ink-soft), so the shared design token controls this value. font-size sets text size; value '.83rem' sets the sets text size to .83rem. line-height sets line box height and text rhythm; value '1.65' sets sets line box height and text rhythm to 1.65.
+
+### Line 26
+
+```text
+.review-footnote { padding: 8px 0; }
+```
+
+Selects '.review-footnote'; declarations on this line style matching Timekeeper elements. padding sets inside spacing between border and content; value '8px 0' sets sets inside spacing between border and content to 8px 0.
+
+### Line 27
+
+```text
+.review-error, .review-warning { padding: 14px 16px; border-radius: 10px; line-height: 1.6; font-size: .85rem; }
+```
+
+Selects '.review-error, .review-warning'; declarations on this line style matching Timekeeper elements. padding sets inside spacing between border and content; value '14px 16px' sets the sets inside spacing between border and content to 14px 16px. border-radius rounds box corners; value '10px' sets the rounds box corners to 10px. line-height sets line box height and text rhythm; value '1.6' sets sets line box height and text rhythm to 1.6. font-size sets text size; value '.85rem' sets the sets text size to .85rem.
+
+### Line 28
+
+```text
+.review-error { background: var(--red-soft); color: var(--red); }
+```
+
+Selects '.review-error'; declarations on this line style matching Timekeeper elements. background sets the full background paint; value 'var(--red-soft)' uses theme custom property var(--red-soft), so the shared design token controls this value. color sets foreground text/icon color; value 'var(--red)' uses theme custom property var(--red), so the shared design token controls this value.
+
+### Line 29
+
+```text
+.review-warning { background: var(--amber-soft); color: var(--amber); }
+```
+
+Selects '.review-warning'; declarations on this line style matching Timekeeper elements. background sets the full background paint; value 'var(--amber-soft)' uses theme custom property var(--amber-soft), so the shared design token controls this value. color sets foreground text/icon color; value 'var(--amber)' uses theme custom property var(--amber), so the shared design token controls this value.
+
+### Line 30
+
+```text
+.review-table-wrap { overflow-x: auto; }
+```
+
+Selects '.review-table-wrap'; declarations on this line style matching Timekeeper elements. overflow-x controls horizontal overflow; value 'auto' sets controls horizontal overflow to auto.
+
+### Line 31
+
+```text
+.review-table-wrap table { width: 100%; border-collapse: collapse; font-size: .83rem; text-align: left; }
+```
+
+Selects '.review-table-wrap table'; declarations on this line style matching Timekeeper elements. width sets horizontal size; value '100%' sets the sets horizontal size to 100%. border-collapse controls this CSS property; value 'collapse' sets border-collapse to collapse. font-size sets text size; value '.83rem' sets the sets text size to .83rem. text-align aligns inline text; value 'left' aligns content to the left.
+
+### Line 32
+
+```text
+.review-table-wrap th { color: var(--muted); background: var(--surface-muted); font-size: .73rem; }
+```
+
+Selects '.review-table-wrap th'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--muted)' uses theme custom property var(--muted), so the shared design token controls this value. background sets the full background paint; value 'var(--surface-muted)' uses theme custom property var(--surface-muted), so the shared design token controls this value. font-size sets text size; value '.73rem' sets the sets text size to .73rem.
+
+### Line 33
+
+```text
+.review-table-wrap th, .review-table-wrap td { padding: 14px 12px; border-bottom: 1px solid var(--border-soft); white-space: nowrap; }
+```
+
+Selects '.review-table-wrap th, .review-table-wrap td'; declarations on this line style matching Timekeeper elements. padding sets inside spacing between border and content; value '14px 12px' sets the sets inside spacing between border and content to 14px 12px. border-bottom sets the bottom border; value '1px solid var(--border-soft)' sets sets the bottom border to 1px solid var(--border-soft). white-space controls wrapping of whitespace/text; value 'nowrap' keeps text on one line.
+
+### Line 34
+
+```text
+.review-table-wrap tbody tr:last-child td { border-bottom: 0; }
+```
+
+Selects '.review-table-wrap tbody tr:last-child td'; declarations on this line style matching Timekeeper elements. border-bottom sets the bottom border; value '0' sets sets the bottom border to 0.
+
+### Line 35
+
+```text
+.review-table-wrap td small { display: block; color: var(--muted); margin-top: 5px; }
+```
+
+Selects '.review-table-wrap td small'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'block' takes a full available line. color sets foreground text/icon color; value 'var(--muted)' uses theme custom property var(--muted), so the shared design token controls this value. margin-top adds outside space above the element; value '5px' sets the adds outside space above the element to 5px.
+
+### Line 36
+
+```text
+.review-table-wrap td.review-empty { white-space: normal; color: var(--muted); padding: 26px 12px; }
+```
+
+Selects '.review-table-wrap td.review-empty'; declarations on this line style matching Timekeeper elements. white-space controls wrapping of whitespace/text; value 'normal' sets controls wrapping of whitespace/text to normal. color sets foreground text/icon color; value 'var(--muted)' uses theme custom property var(--muted), so the shared design token controls this value. padding sets inside spacing between border and content; value '26px 12px' sets the sets inside spacing between border and content to 26px 12px.
+
+### Line 37
+
+```text
+.review-ready { color: var(--green-deep); font-weight: 700; }
+```
+
+Selects '.review-ready'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--green-deep)' uses theme custom property var(--green-deep), so the shared design token controls this value. font-weight sets text stroke emphasis; value '700' bold emphasis.
+
+### Line 38
+
+```text
+.review-needs-attention { color: var(--amber); }
+```
+
+Selects '.review-needs-attention'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--amber)' uses theme custom property var(--amber), so the shared design token controls this value.
+
+### Line 39
+
+```text
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+```
+
+Selects '.sr-only'; declarations on this line style matching Timekeeper elements. position chooses the positioning scheme relative to normal flow; value 'absolute' positions it against the nearest positioned ancestor. width sets horizontal size; value '1px' sets the sets horizontal size to 1px. height sets vertical size; value '1px' sets the sets vertical size to 1px. padding sets inside spacing between border and content; value '0' sets sets inside spacing between border and content to 0. margin sets outside spacing around the box; value '-1px' sets the sets outside spacing around the box to -1px. overflow controls content that exceeds the box, such as scrolling or clipping; value 'hidden' clips content outside the box. clip controls this CSS property; value 'rect(0, 0, 0, 0)' sets clip to rect(0, 0, 0, 0). white-space controls wrapping of whitespace/text; value 'nowrap' keeps text on one line. border sets border width/style/color; value '0' sets sets border width/style/color to 0.
+
+### Line 40
+
+```text
+[hidden] { display: none !important; }
+```
+
+Selects '[hidden]'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'none !important' sets chooses the layout model or visibility behavior to none !important.
+
+### Line 41
+
+```text
+@media (max-width: 1000px) { .review-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+```
+
+Begins a responsive media query: the nested overrides apply when (max-width: 1000px) { .review-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }.
+
+### Line 42
+
+```text
+@media (max-width: 560px) {
+```
+
+Begins a responsive media query: the nested overrides apply when (max-width: 560px) {.
+
+### Line 43
+
+```text
+  .review-page { padding: 18px 12px; }
+```
+
+Selects '.review-page'; declarations on this line style matching Timekeeper elements. padding sets inside spacing between border and content; value '18px 12px' sets the sets inside spacing between border and content to 18px 12px.
+
+### Line 44
+
+```text
+  .review-panel { padding: 16px; }
+```
+
+Selects '.review-panel'; declarations on this line style matching Timekeeper elements. padding sets inside spacing between border and content; value '16px' sets the sets inside spacing between border and content to 16px.
+
+### Line 45
+
+```text
+  .review-filters { gap: 12px; }
+```
+
+Selects '.review-filters'; declarations on this line style matching Timekeeper elements. gap sets spacing between flex/grid children; value '12px' sets the sets spacing between flex/grid children to 12px.
+
+### Line 46
+
+```text
+  .filter-field { flex-basis: 100%; }
+```
+
+Selects '.filter-field'; declarations on this line style matching Timekeeper elements. flex-basis controls this CSS property; value '100%' sets the flex-basis to 100%.
+
+### Line 47
+
+```text
+  .review-filters > button { width: 100%; }
+```
+
+Selects '.review-filters > button'; declarations on this line style matching Timekeeper elements. width sets horizontal size; value '100%' sets the sets horizontal size to 100%.
+
+### Line 48
+
+```text
+  .review-metrics { gap: 10px; }
+```
+
+Selects '.review-metrics'; declarations on this line style matching Timekeeper elements. gap sets spacing between flex/grid children; value '10px' sets the sets spacing between flex/grid children to 10px.
+
+### Line 49
+
+```text
+  .review-metric { padding: 14px; }
+```
+
+Selects '.review-metric'; declarations on this line style matching Timekeeper elements. padding sets inside spacing between border and content; value '14px' sets the sets inside spacing between border and content to 14px.
+
+### Line 50
+
+```text
+  .review-metric strong { font-size: 1.35rem; }
+```
+
+Selects '.review-metric strong'; declarations on this line style matching Timekeeper elements. font-size sets text size; value '1.35rem' sets the sets text size to 1.35rem.
+
+### Line 51
+
+```text
+}
+```
+
+Closes the current CSS rule or media-query block.

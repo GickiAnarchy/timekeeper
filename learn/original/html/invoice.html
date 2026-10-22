@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <link rel="stylesheet" href="../styles/invoices.css"/>
+    <script type="module" src="../scripts/keyboard.mjs" defer></script>
+    <script type="module" src="../scripts/invoice.js" defer></script>
+    <title>Mosher Lawms</title>
+  </head>
+  
+  <body>
+    <header class="invoice-header">
+     
+     <div class="inv-dropdowns">
+       <div class="select-div">
+          <label for="cust-select">Customer:</label>
+          <select class="sel" id="cust-select">
+            <option value=""></option>
+          </select>
+        </div>
+        <div class="select-div">
+          <label for="inv-select">Invoice:</label>
+          <select class="sel" id="inv-select">
+            <option value=""></option>
+          </select>
+        </div> 
+       <div class="invoice-actions">
+         <button id="add-inv-btn">Create Invoice</button>
+         <button id="delete-inv-btn" type="button">Delete Invoice</button>
+       </div>
+      </div>
+      <div class="item-btns">
+        <button id="add-item-btn">Add Item</button>
+        <button id="edit-item-btn" type="button" disabled>Edit Item</button>
+        <button id="remove-item-btn" type="button">Remove Item</button>
+      </div>
+      <section class="open-div" id="open-div" aria-label="All open invoices"></section>
+      
+    </header>
+    <main>
+      <div class="table-box">
+      <table id="inv-table">
+        <thead>
+          <tr>
+            <th colspan="3" id="date-head">
+              <label for="invoice-date">Invoice date</label>
+              <input id="invoice-date" type="date" aria-label="Invoice date" disabled>
+            </th>
+          </tr>
+          <tr>
+            <th scope="col" colspan="2" data-sort-key="item" data-sort-type="text"><button class="table-sort-button" type="button"><span class="table-sort-label">Item</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+            <th scope="col" data-sort-key="value" data-sort-type="number"><button class="table-sort-button" type="button"><span class="table-sort-label">Value</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+          </tr>
+        </thead>
+        <tbody id="invoice-table-body">
+          <tr>
+            <td colspan="3">No invoice selected</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">
+              <strong>Total:</strong>
+            </td>
+          </tr>
+          <tr class="paid-notice" id="paid-notice">
+          </tr>
+        </tfoot>
+      </table>
+      </div>
+      <details class="shift-link-panel">
+        <summary id="shift-link-heading"><span class="shift-link-title">Work shifts and labor</span></summary>
+        <p class="shift-link-description">Attach completed shifts for this customer. Each labor line snapshots the customer rate and saved break-adjusted hours. Clock In/Out and break buttons round recorded times to the nearest 15 minutes; manually edited shift times are used as saved. Hours are stored to 2 decimals and the line total is rounded to cents. Later shift or customer-rate edits do not change the billed snapshot; changed source shifts are flagged below.</p>
+        <div id="shift-link-list" class="shift-link-list" aria-live="polite"></div>
+        <p id="shift-link-error" class="form-error" role="alert" aria-live="polite"></p>
+        <button id="save-shift-links-btn" type="button" disabled>Update linked shifts</button>
+      </details>
+    </main>
+    
+    <dialog class="modal" id="item-modal">
+      <form id="add-item-form">
+        <h2 id="item-modal-title">Add invoice item</h2>
+        <label for="name-input">Item name</label>
+        <input id="name-input" placeholder="Item name" type="text" required>
+        <label for="value-input">Item value</label>
+        <input id="value-input" placeholder="Item value" type="number" step="0.01" required>
+        <p id="item-form-error" class="form-error" aria-live="polite" hidden></p>
+        <div class="modal-btns">
+          <button type="submit" id="submit-btn">Add</button>
+          <button type="reset" id="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </dialog>
+    
+  </body>
+  
+</html>

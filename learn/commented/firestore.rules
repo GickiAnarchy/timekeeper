@@ -1,0 +1,20 @@
+// Original L1: Selects Firestore Rules language version 2, enabling the current recursive-match semantics.
+rules_version = '2';
+// Original L2: Opens the Cloud Firestore service rules block.
+service cloud.firestore {
+// Original L3: Matches every database name and binds it to the variable database.
+  match /databases/{database}/documents {
+// Original L4: Comment states the intentional security posture: any caller may read and edit all data.
+    // Intentional shared-workspace mode: anyone can read and edit all Firestore data.
+// Original L5: Comment explains that the recursive wildcard covers current and future collections plus nested subcollections.
+    // This recursive rule covers every existing and future collection and subcollection.
+// Original L6: Matches every document path below the selected database, including arbitrary depth.
+    match /{document=**} {
+// Original L7: Allows both read and write operations whenever the condition is true.
+      allow read, write: if true;
+// Original L8: The literal true condition imposes no authentication or data restriction; this makes the entire Firestore database publicly readable and writable.
+    }
+// Original L9: Closes the recursive document match.
+  }
+// Original L10: Closes the database match/service rules block.
+}

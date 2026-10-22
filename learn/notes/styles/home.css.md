@@ -1,0 +1,725 @@
+# styles/home.css
+
+[Exact copy](../../original/styles/home.css)
+
+Line numbers refer to the original file, before teaching comments.
+
+### Line 1
+
+```text
+@import url("./ui.css");
+```
+
+Imports shared design rules from the referenced stylesheet so this page reuses the app-wide tokens/base UI.
+
+### Line 2
+
+```text
+@import url("./planned-urgency.css");
+```
+
+Imports shared design rules from the referenced stylesheet so this page reuses the app-wide tokens/base UI.
+
+### Line 3
+
+```text
+
+```
+
+Blank line separates related rules for readability.
+
+### Line 4
+
+```text
+.home-body { min-height: 100vh; min-height: 100dvh; padding: 0; }
+```
+
+Selects '.home-body'; declarations on this line style matching Timekeeper elements. min-height sets the smallest allowed control/region height; value '100vh' sets sets the smallest allowed control/region height to 100vh. min-height sets the smallest allowed control/region height; value '100dvh' sets sets the smallest allowed control/region height to 100dvh. padding sets inside spacing between border and content; value '0' sets sets inside spacing between border and content to 0.
+
+### Line 5
+
+```text
+.home-dashboard { width: min(100%, 1080px); margin: 0 auto; padding: clamp(18px, 3vw, 30px); }
+```
+
+Selects '.home-dashboard'; declarations on this line style matching Timekeeper elements. width sets horizontal size; value 'min(100%, 1080px)' sets sets horizontal size to min(100%, 1080px). margin sets outside spacing around the box; value '0 auto' sets sets outside spacing around the box to 0 auto. padding sets inside spacing between border and content; value 'clamp(18px, 3vw, 30px)' uses a responsive clamped value that grows/shrinks within the given minimum and maximum.
+
+### Line 6
+
+```text
+.dashboard-hero {
+```
+
+Selects '.dashboard-hero'; declarations inside change the layout/appearance of those matching Timekeeper elements.
+
+### Line 7
+
+```text
+  position: relative;
+```
+
+For selector '.dashboard-hero', position chooses the positioning scheme relative to normal flow; value 'relative' sets chooses the positioning scheme relative to normal flow to relative.
+
+### Line 8
+
+```text
+  display: flex;
+```
+
+For selector '.dashboard-hero', display chooses the layout model or visibility behavior; value 'flex' uses Flexbox for one-dimensional child alignment.
+
+### Line 9
+
+```text
+  align-items: flex-end;
+```
+
+For selector '.dashboard-hero', align-items aligns children across the cross axis; value 'flex-end' sets aligns children across the cross axis to flex-end.
+
+### Line 10
+
+```text
+  justify-content: space-between;
+```
+
+For selector '.dashboard-hero', justify-content aligns children along the main axis; value 'space-between' sets aligns children along the main axis to space-between.
+
+### Line 11
+
+```text
+  gap: 24px;
+```
+
+For selector '.dashboard-hero', gap sets spacing between flex/grid children; value '24px' sets the sets spacing between flex/grid children to 24px.
+
+### Line 12
+
+```text
+  overflow: hidden;
+```
+
+For selector '.dashboard-hero', overflow controls content that exceeds the box, such as scrolling or clipping; value 'hidden' clips content outside the box.
+
+### Line 13
+
+```text
+  padding: clamp(22px, 4vw, 38px);
+```
+
+For selector '.dashboard-hero', padding sets inside spacing between border and content; value 'clamp(22px, 4vw, 38px)' uses a responsive clamped value that grows/shrinks within the given minimum and maximum.
+
+### Line 14
+
+```text
+  background: linear-gradient(140deg, var(--surface) 0%, var(--surface-muted) 100%);
+```
+
+For selector '.dashboard-hero', background sets the full background paint; value 'linear-gradient(140deg, var(--surface) 0%, var(--surface-muted) 100%)' sets sets the full background paint to linear-gradient(140deg, var(--surface) 0%, var(--surface-muted) 100%).
+
+### Line 15
+
+```text
+  border: 1px solid var(--border);
+```
+
+For selector '.dashboard-hero', border sets border width/style/color; value '1px solid var(--border)' sets sets border width/style/color to 1px solid var(--border).
+
+### Line 16
+
+```text
+  border-radius: 20px;
+```
+
+For selector '.dashboard-hero', border-radius rounds box corners; value '20px' sets the rounds box corners to 20px.
+
+### Line 17
+
+```text
+  box-shadow: var(--shadow-soft);
+```
+
+For selector '.dashboard-hero', box-shadow draws depth/shadow around a component; value 'var(--shadow-soft)' uses theme custom property var(--shadow-soft), so the shared design token controls this value.
+
+### Line 18
+
+```text
+}
+```
+
+Closes the current CSS rule or media-query block.
+
+### Line 19
+
+```text
+.dashboard-hero::after { position: absolute; top: -95px; right: -85px; width: 270px; height: 270px; content: ""; background: radial-gradient(circle, color-mix(in srgb, var(--green) 16%, transparent), transparent 69%); pointer-events: none; }
+```
+
+Selects '.dashboard-hero::after'; declarations on this line style matching Timekeeper elements. position chooses the positioning scheme relative to normal flow; value 'absolute' positions it against the nearest positioned ancestor. top offsets a positioned element from the top edge; value '-95px' sets the offsets a positioned element from the top edge to -95px. right offsets a positioned element from the right edge; value '-85px' sets the offsets a positioned element from the right edge to -85px. width sets horizontal size; value '270px' sets the sets horizontal size to 270px. height sets vertical size; value '270px' sets the sets vertical size to 270px. content supplies generated pseudo-element content; value '""' sets supplies generated pseudo-element content to "". background sets the full background paint; value 'radial-gradient(circle, color-mix(in srgb, var(--green) 16%, transparent), transparent 69%)' sets sets the full background paint to radial-gradient(circle, color-mix(in srgb, var(--green) 16%, transparent), transparent 69%). pointer-events controls whether the element receives pointer input; value 'none' sets controls whether the element receives pointer input to none.
+
+### Line 20
+
+```text
+.hero-copy, .home-actions { position: relative; z-index: 1; }
+```
+
+Selects '.hero-copy, .home-actions'; declarations on this line style matching Timekeeper elements. position chooses the positioning scheme relative to normal flow; value 'relative' sets chooses the positioning scheme relative to normal flow to relative. z-index controls stacking order of positioned elements; value '1' sets controls stacking order of positioned elements to 1.
+
+### Line 21
+
+```text
+.hero-copy { max-width: 570px; }
+```
+
+Selects '.hero-copy'; declarations on this line style matching Timekeeper elements. max-width caps horizontal size; value '570px' sets the caps horizontal size to 570px.
+
+### Line 22
+
+```text
+.home-kicker, .panel-eyebrow { margin: 0 0 8px; color: var(--green); font-size: 9px; font-weight: 780; letter-spacing: .14em; }
+```
+
+Selects '.home-kicker, .panel-eyebrow'; declarations on this line style matching Timekeeper elements. margin sets outside spacing around the box; value '0 0 8px' sets the sets outside spacing around the box to 0 0 8px. color sets foreground text/icon color; value 'var(--green)' uses theme custom property var(--green), so the shared design token controls this value. font-size sets text size; value '9px' sets the sets text size to 9px. font-weight sets text stroke emphasis; value '780' sets sets text stroke emphasis to 780. letter-spacing adjusts spacing between glyphs; value '.14em' sets the adjusts spacing between glyphs to .14em.
+
+### Line 23
+
+```text
+.hero-copy h1 { margin: 0 0 9px; font-size: clamp(27px, 4vw, 36px); line-height: 1.12; letter-spacing: -.055em; }
+```
+
+Selects '.hero-copy h1'; declarations on this line style matching Timekeeper elements. margin sets outside spacing around the box; value '0 0 9px' sets the sets outside spacing around the box to 0 0 9px. font-size sets text size; value 'clamp(27px, 4vw, 36px)' uses a responsive clamped value that grows/shrinks within the given minimum and maximum. line-height sets line box height and text rhythm; value '1.12' sets sets line box height and text rhythm to 1.12. letter-spacing adjusts spacing between glyphs; value '-.055em' sets the adjusts spacing between glyphs to -.055em.
+
+### Line 24
+
+```text
+.hero-copy > p:last-child { max-width: 490px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+```
+
+Selects '.hero-copy > p:last-child'; declarations on this line style matching Timekeeper elements. max-width caps horizontal size; value '490px' sets the caps horizontal size to 490px. margin sets outside spacing around the box; value '0' sets sets outside spacing around the box to 0. color sets foreground text/icon color; value 'var(--muted)' uses theme custom property var(--muted), so the shared design token controls this value. font-size sets text size; value '12px' sets the sets text size to 12px. line-height sets line box height and text rhythm; value '1.65' sets sets line box height and text rhythm to 1.65.
+
+### Line 25
+
+```text
+.home-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+```
+
+Selects '.home-actions'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'flex' uses Flexbox for one-dimensional child alignment. flex-wrap allows flex children to wrap onto additional lines; value 'wrap' allows children to continue on another line. gap sets spacing between flex/grid children; value '8px' sets the sets spacing between flex/grid children to 8px.
+
+### Line 26
+
+```text
+.home-action { display: inline-flex; align-items: center; justify-content: center; min-height: 39px; padding: 0 13px; color: #fff; text-decoration: none; background: var(--green); border-radius: 10px; font-size: 10px; font-weight: 740; white-space: nowrap; transition: background 160ms ease, transform 160ms ease; }
+```
+
+Selects '.home-action'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'inline-flex' keeps the control inline while laying out children with flex. align-items aligns children across the cross axis; value 'center' sets aligns children across the cross axis to center. justify-content aligns children along the main axis; value 'center' sets aligns children along the main axis to center. min-height sets the smallest allowed control/region height; value '39px' sets the sets the smallest allowed control/region height to 39px. padding sets inside spacing between border and content; value '0 13px' sets the sets inside spacing between border and content to 0 13px. color sets foreground text/icon color; value '#fff' uses explicit color #fff. text-decoration adds/removes underlines or other decoration; value 'none' sets adds/removes underlines or other decoration to none. background sets the full background paint; value 'var(--green)' uses theme custom property var(--green), so the shared design token controls this value. border-radius rounds box corners; value '10px' sets the rounds box corners to 10px. font-size sets text size; value '10px' sets the sets text size to 10px. font-weight sets text stroke emphasis; value '740' sets sets text stroke emphasis to 740. white-space controls wrapping of whitespace/text; value 'nowrap' keeps text on one line. transition controls this CSS property; value 'background 160ms ease, transform 160ms ease' sets transition to background 160ms ease, transform 160ms ease.
+
+### Line 27
+
+```text
+.home-action:hover { background: var(--green-deep); transform: translateY(-1px); }
+```
+
+Selects '.home-action:hover'; declarations on this line style matching Timekeeper elements. background sets the full background paint; value 'var(--green-deep)' uses theme custom property var(--green-deep), so the shared design token controls this value. transform controls this CSS property; value 'translateY(-1px)' sets transform to translateY(-1px).
+
+### Line 28
+
+```text
+.home-action-secondary { color: var(--ink-soft); background: var(--surface); border: 1px solid var(--border); }
+```
+
+Selects '.home-action-secondary'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--ink-soft)' uses theme custom property var(--ink-soft), so the shared design token controls this value. background sets the full background paint; value 'var(--surface)' uses theme custom property var(--surface), so the shared design token controls this value. border sets border width/style/color; value '1px solid var(--border)' sets sets border width/style/color to 1px solid var(--border).
+
+### Line 29
+
+```text
+.home-action-secondary:hover { color: var(--green-deep); background: var(--surface-hover); }
+```
+
+Selects '.home-action-secondary:hover'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--green-deep)' uses theme custom property var(--green-deep), so the shared design token controls this value. background sets the full background paint; value 'var(--surface-hover)' uses theme custom property var(--surface-hover), so the shared design token controls this value.
+
+### Line 30
+
+```text
+.daily-quote { display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: start; gap: 12px; margin: 14px 0; padding: 15px 19px; background: linear-gradient(115deg, var(--surface) 0%, var(--surface-muted) 100%); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: 14px; box-shadow: 0 4px 14px rgba(28, 52, 40, .035); }
+```
+
+Selects '.daily-quote'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'grid' uses CSS Grid for two-dimensional placement. grid-template-columns defines grid tracks and their widths; value '30px minmax(0, 1fr)' creates a responsive track with a minimum and flexible maximum size. align-items aligns children across the cross axis; value 'start' sets aligns children across the cross axis to start. gap sets spacing between flex/grid children; value '12px' sets the sets spacing between flex/grid children to 12px. margin sets outside spacing around the box; value '14px 0' sets sets outside spacing around the box to 14px 0. padding sets inside spacing between border and content; value '15px 19px' sets the sets inside spacing between border and content to 15px 19px. background sets the full background paint; value 'linear-gradient(115deg, var(--surface) 0%, var(--surface-muted) 100%)' sets sets the full background paint to linear-gradient(115deg, var(--surface) 0%, var(--surface-muted) 100%). border sets border width/style/color; value '1px solid var(--border)' sets sets border width/style/color to 1px solid var(--border). border-left sets the left border; value '3px solid var(--green)' sets sets the left border to 3px solid var(--green). border-radius rounds box corners; value '14px' sets the rounds box corners to 14px. box-shadow draws depth/shadow around a component; value '0 4px 14px rgba(28, 52, 40, .035)' sets draws depth/shadow around a component to 0 4px 14px rgba(28, 52, 40, .035).
+
+### Line 31
+
+```text
+.quote-mark { color: var(--green); font-family: Georgia, serif; font-size: 45px; line-height: .95; }
+```
+
+Selects '.quote-mark'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--green)' uses theme custom property var(--green), so the shared design token controls this value. font-family selects the typeface stack; value 'Georgia, serif' sets selects the typeface stack to Georgia, serif. font-size sets text size; value '45px' sets the sets text size to 45px. line-height sets line box height and text rhythm; value '.95' sets sets line box height and text rhythm to .95.
+
+### Line 32
+
+```text
+.quote-content { min-width: 0; margin: 0; }
+```
+
+Selects '.quote-content'; declarations on this line style matching Timekeeper elements. min-width sets the smallest allowed horizontal size; value '0' sets sets the smallest allowed horizontal size to 0. margin sets outside spacing around the box; value '0' sets sets outside spacing around the box to 0.
+
+### Line 33
+
+```text
+.quote-eyebrow { margin: 0 0 5px; color: var(--green); font-size: 8px; font-weight: 780; letter-spacing: .14em; }
+```
+
+Selects '.quote-eyebrow'; declarations on this line style matching Timekeeper elements. margin sets outside spacing around the box; value '0 0 5px' sets the sets outside spacing around the box to 0 0 5px. color sets foreground text/icon color; value 'var(--green)' uses theme custom property var(--green), so the shared design token controls this value. font-size sets text size; value '8px' sets the sets text size to 8px. font-weight sets text stroke emphasis; value '780' sets sets text stroke emphasis to 780. letter-spacing adjusts spacing between glyphs; value '.14em' sets the adjusts spacing between glyphs to .14em.
+
+### Line 34
+
+```text
+.quote-content blockquote { margin: 0; }
+```
+
+Selects '.quote-content blockquote'; declarations on this line style matching Timekeeper elements. margin sets outside spacing around the box; value '0' sets sets outside spacing around the box to 0.
+
+### Line 35
+
+```text
+.quote-content blockquote p { margin: 0; color: var(--ink-soft); font-family: Georgia, serif; font-size: clamp(13px, 1.6vw, 16px); font-style: italic; line-height: 1.5; }
+```
+
+Selects '.quote-content blockquote p'; declarations on this line style matching Timekeeper elements. margin sets outside spacing around the box; value '0' sets sets outside spacing around the box to 0. color sets foreground text/icon color; value 'var(--ink-soft)' uses theme custom property var(--ink-soft), so the shared design token controls this value. font-family selects the typeface stack; value 'Georgia, serif' sets selects the typeface stack to Georgia, serif. font-size sets text size; value 'clamp(13px, 1.6vw, 16px)' uses a responsive clamped value that grows/shrinks within the given minimum and maximum. font-style selects normal/italic style; value 'italic' sets selects normal/italic style to italic. line-height sets line box height and text rhythm; value '1.5' sets sets line box height and text rhythm to 1.5.
+
+### Line 36
+
+```text
+.quote-content figcaption { display: flex; flex-wrap: wrap; gap: 0 4px; margin-top: 8px; color: var(--muted); font-size: 9px; line-height: 1.5; }
+```
+
+Selects '.quote-content figcaption'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'flex' uses Flexbox for one-dimensional child alignment. flex-wrap allows flex children to wrap onto additional lines; value 'wrap' allows children to continue on another line. gap sets spacing between flex/grid children; value '0 4px' sets the sets spacing between flex/grid children to 0 4px. margin-top adds outside space above the element; value '8px' sets the adds outside space above the element to 8px. color sets foreground text/icon color; value 'var(--muted)' uses theme custom property var(--muted), so the shared design token controls this value. font-size sets text size; value '9px' sets the sets text size to 9px. line-height sets line box height and text rhythm; value '1.5' sets sets line box height and text rhythm to 1.5.
+
+### Line 37
+
+```text
+.quote-content figcaption a { color: var(--green); text-decoration: none; }
+```
+
+Selects '.quote-content figcaption a'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--green)' uses theme custom property var(--green), so the shared design token controls this value. text-decoration adds/removes underlines or other decoration; value 'none' sets adds/removes underlines or other decoration to none.
+
+### Line 38
+
+```text
+.quote-content figcaption a:hover { color: var(--green-deep); text-decoration: underline; }
+```
+
+Selects '.quote-content figcaption a:hover'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--green-deep)' uses theme custom property var(--green-deep), so the shared design token controls this value. text-decoration adds/removes underlines or other decoration; value 'underline' sets adds/removes underlines or other decoration to underline.
+
+### Line 39
+
+```text
+.hours-overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
+```
+
+Selects '.hours-overview'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'grid' uses CSS Grid for two-dimensional placement. grid-template-columns defines grid tracks and their widths; value 'repeat(3, minmax(0, 1fr))' creates a responsive track with a minimum and flexible maximum size. gap sets spacing between flex/grid children; value '12px' sets the sets spacing between flex/grid children to 12px. margin sets outside spacing around the box; value '14px 0' sets sets outside spacing around the box to 14px 0.
+
+### Line 40
+
+```text
+.hours-card { display: flex; align-items: center; gap: 12px; min-width: 0; min-height: 92px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 15px; box-shadow: 0 4px 14px rgba(28, 52, 40, .035); }
+```
+
+Selects '.hours-card'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'flex' uses Flexbox for one-dimensional child alignment. align-items aligns children across the cross axis; value 'center' sets aligns children across the cross axis to center. gap sets spacing between flex/grid children; value '12px' sets the sets spacing between flex/grid children to 12px. min-width sets the smallest allowed horizontal size; value '0' sets sets the smallest allowed horizontal size to 0. min-height sets the smallest allowed control/region height; value '92px' sets the sets the smallest allowed control/region height to 92px. padding sets inside spacing between border and content; value '16px' sets the sets inside spacing between border and content to 16px. background sets the full background paint; value 'var(--surface)' uses theme custom property var(--surface), so the shared design token controls this value. border sets border width/style/color; value '1px solid var(--border)' sets sets border width/style/color to 1px solid var(--border). border-radius rounds box corners; value '15px' sets the rounds box corners to 15px. box-shadow draws depth/shadow around a component; value '0 4px 14px rgba(28, 52, 40, .035)' sets draws depth/shadow around a component to 0 4px 14px rgba(28, 52, 40, .035).
+
+### Line 41
+
+```text
+.metric-icon { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 38px; color: var(--green); background: var(--green-soft); border-radius: 12px; font-size: 19px; font-weight: 700; }
+```
+
+Selects '.metric-icon'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'grid' uses CSS Grid for two-dimensional placement. place-items sets both grid alignment axes; value 'center' sets sets both grid alignment axes to center. width sets horizontal size; value '38px' sets the sets horizontal size to 38px. height sets vertical size; value '38px' sets the sets vertical size to 38px. flex controls this CSS property; value '0 0 38px' sets the flex to 0 0 38px. color sets foreground text/icon color; value 'var(--green)' uses theme custom property var(--green), so the shared design token controls this value. background sets the full background paint; value 'var(--green-soft)' uses theme custom property var(--green-soft), so the shared design token controls this value. border-radius rounds box corners; value '12px' sets the rounds box corners to 12px. font-size sets text size; value '19px' sets the sets text size to 19px. font-weight sets text stroke emphasis; value '700' bold emphasis.
+
+### Line 42
+
+```text
+.metric-icon-week { font-size: 17px; }
+```
+
+Selects '.metric-icon-week'; declarations on this line style matching Timekeeper elements. font-size sets text size; value '17px' sets the sets text size to 17px.
+
+### Line 43
+
+```text
+.metric-icon-active { font-size: 12px; }
+```
+
+Selects '.metric-icon-active'; declarations on this line style matching Timekeeper elements. font-size sets text size; value '12px' sets the sets text size to 12px.
+
+### Line 44
+
+```text
+.hours-card p { margin: 0 0 2px; color: var(--muted); font-size: 10px; font-weight: 650; }
+```
+
+Selects '.hours-card p'; declarations on this line style matching Timekeeper elements. margin sets outside spacing around the box; value '0 0 2px' sets the sets outside spacing around the box to 0 0 2px. color sets foreground text/icon color; value 'var(--muted)' uses theme custom property var(--muted), so the shared design token controls this value. font-size sets text size; value '10px' sets the sets text size to 10px. font-weight sets text stroke emphasis; value '650' semibold emphasis.
+
+### Line 45
+
+```text
+.hours-card strong { display: block; color: var(--ink); font-size: 22px; line-height: 1.15; letter-spacing: -.04em; }
+```
+
+Selects '.hours-card strong'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'block' takes a full available line. color sets foreground text/icon color; value 'var(--ink)' uses theme custom property var(--ink), so the shared design token controls this value. font-size sets text size; value '22px' sets the sets text size to 22px. line-height sets line box height and text rhythm; value '1.15' sets sets line box height and text rhythm to 1.15. letter-spacing adjusts spacing between glyphs; value '-.04em' sets the adjusts spacing between glyphs to -.04em.
+
+### Line 46
+
+```text
+.hours-card small { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; line-height: 1.35; }
+```
+
+Selects '.hours-card small'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'block' takes a full available line. margin-top adds outside space above the element; value '4px' sets the adds outside space above the element to 4px. color sets foreground text/icon color; value 'var(--muted)' uses theme custom property var(--muted), so the shared design token controls this value. font-size sets text size; value '9px' sets the sets text size to 9px. line-height sets line box height and text rhythm; value '1.35' sets sets line box height and text rhythm to 1.35.
+
+### Line 47
+
+```text
+.dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 14px; }
+```
+
+Selects '.dashboard-grid'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'grid' uses CSS Grid for two-dimensional placement. grid-template-columns defines grid tracks and their widths; value 'minmax(0, 1.1fr) minmax(0, .9fr)' creates a responsive track with a minimum and flexible maximum size. gap sets spacing between flex/grid children; value '14px' sets the sets spacing between flex/grid children to 14px.
+
+### Line 48
+
+```text
+.dashboard-panel { min-width: 0; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-soft); }
+```
+
+Selects '.dashboard-panel'; declarations on this line style matching Timekeeper elements. min-width sets the smallest allowed horizontal size; value '0' sets sets the smallest allowed horizontal size to 0. overflow controls content that exceeds the box, such as scrolling or clipping; value 'hidden' clips content outside the box. background sets the full background paint; value 'var(--surface)' uses theme custom property var(--surface), so the shared design token controls this value. border sets border width/style/color; value '1px solid var(--border)' sets sets border width/style/color to 1px solid var(--border). border-radius rounds box corners; value '16px' sets the rounds box corners to 16px. box-shadow draws depth/shadow around a component; value 'var(--shadow-soft)' uses theme custom property var(--shadow-soft), so the shared design token controls this value.
+
+### Line 49
+
+```text
+.panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 67px; padding: 14px 17px; border-bottom: 1px solid var(--border-soft); }
+```
+
+Selects '.panel-heading'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'flex' uses Flexbox for one-dimensional child alignment. align-items aligns children across the cross axis; value 'center' sets aligns children across the cross axis to center. justify-content aligns children along the main axis; value 'space-between' sets aligns children along the main axis to space-between. gap sets spacing between flex/grid children; value '12px' sets the sets spacing between flex/grid children to 12px. min-height sets the smallest allowed control/region height; value '67px' sets the sets the smallest allowed control/region height to 67px. padding sets inside spacing between border and content; value '14px 17px' sets the sets inside spacing between border and content to 14px 17px. border-bottom sets the bottom border; value '1px solid var(--border-soft)' sets sets the bottom border to 1px solid var(--border-soft).
+
+### Line 50
+
+```text
+.panel-heading h2 { margin: 0; font-size: 15px; letter-spacing: -.035em; }
+```
+
+Selects '.panel-heading h2'; declarations on this line style matching Timekeeper elements. margin sets outside spacing around the box; value '0' sets sets outside spacing around the box to 0. font-size sets text size; value '15px' sets the sets text size to 15px. letter-spacing adjusts spacing between glyphs; value '-.035em' sets the adjusts spacing between glyphs to -.035em.
+
+### Line 51
+
+```text
+.panel-eyebrow { margin-bottom: 2px; font-size: 8px; }
+```
+
+Selects '.panel-eyebrow'; declarations on this line style matching Timekeeper elements. margin-bottom adds outside space below the element; value '2px' sets the adds outside space below the element to 2px. font-size sets text size; value '8px' sets the sets text size to 8px.
+
+### Line 52
+
+```text
+.panel-link { color: var(--green); text-decoration: none; font-size: 9px; font-weight: 720; white-space: nowrap; }
+```
+
+Selects '.panel-link'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--green)' uses theme custom property var(--green), so the shared design token controls this value. text-decoration adds/removes underlines or other decoration; value 'none' sets adds/removes underlines or other decoration to none. font-size sets text size; value '9px' sets the sets text size to 9px. font-weight sets text stroke emphasis; value '720' sets sets text stroke emphasis to 720. white-space controls wrapping of whitespace/text; value 'nowrap' keeps text on one line.
+
+### Line 53
+
+```text
+.panel-link:hover { color: var(--green-deep); text-decoration: underline; }
+```
+
+Selects '.panel-link:hover'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--green-deep)' uses theme custom property var(--green-deep), so the shared design token controls this value. text-decoration adds/removes underlines or other decoration; value 'underline' sets adds/removes underlines or other decoration to underline.
+
+### Line 54
+
+```text
+.dashboard-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+```
+
+Selects '.dashboard-list'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'grid' uses CSS Grid for two-dimensional placement. gap sets spacing between flex/grid children; value '0' sets sets spacing between flex/grid children to 0. margin sets outside spacing around the box; value '0' sets sets outside spacing around the box to 0. padding sets inside spacing between border and content; value '0' sets sets inside spacing between border and content to 0. list-style controls list markers; value 'none' sets controls list markers to none.
+
+### Line 55
+
+```text
+.active-shift-item, .planned-job-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 67px; padding: 12px 17px; border-bottom: 1px solid var(--border-soft); }
+```
+
+Selects '.active-shift-item, .planned-job-item'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'flex' uses Flexbox for one-dimensional child alignment. align-items aligns children across the cross axis; value 'center' sets aligns children across the cross axis to center. justify-content aligns children along the main axis; value 'space-between' sets aligns children along the main axis to space-between. gap sets spacing between flex/grid children; value '12px' sets the sets spacing between flex/grid children to 12px. min-height sets the smallest allowed control/region height; value '67px' sets the sets the smallest allowed control/region height to 67px. padding sets inside spacing between border and content; value '12px 17px' sets the sets inside spacing between border and content to 12px 17px. border-bottom sets the bottom border; value '1px solid var(--border-soft)' sets sets the bottom border to 1px solid var(--border-soft).
+
+### Line 56
+
+```text
+.active-shift-item:last-child, .planned-job-item:last-child { border-bottom: 0; }
+```
+
+Selects '.active-shift-item:last-child, .planned-job-item:last-child'; declarations on this line style matching Timekeeper elements. border-bottom sets the bottom border; value '0' sets sets the bottom border to 0.
+
+### Line 57
+
+```text
+.shift-copy, .job-copy { display: grid; gap: 3px; min-width: 0; }
+```
+
+Selects '.shift-copy, .job-copy'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'grid' uses CSS Grid for two-dimensional placement. gap sets spacing between flex/grid children; value '3px' sets the sets spacing between flex/grid children to 3px. min-width sets the smallest allowed horizontal size; value '0' sets sets the smallest allowed horizontal size to 0.
+
+### Line 58
+
+```text
+.shift-title, .job-title { overflow: hidden; color: var(--ink-soft); font-size: 10px; font-weight: 730; text-overflow: ellipsis; white-space: nowrap; }
+```
+
+Selects '.shift-title, .job-title'; declarations on this line style matching Timekeeper elements. overflow controls content that exceeds the box, such as scrolling or clipping; value 'hidden' clips content outside the box. color sets foreground text/icon color; value 'var(--ink-soft)' uses theme custom property var(--ink-soft), so the shared design token controls this value. font-size sets text size; value '10px' sets the sets text size to 10px. font-weight sets text stroke emphasis; value '730' sets sets text stroke emphasis to 730. text-overflow controls this CSS property; value 'ellipsis' sets text-overflow to ellipsis. white-space controls wrapping of whitespace/text; value 'nowrap' keeps text on one line.
+
+### Line 59
+
+```text
+.shift-meta, .job-meta { overflow: hidden; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+```
+
+Selects '.shift-meta, .job-meta'; declarations on this line style matching Timekeeper elements. overflow controls content that exceeds the box, such as scrolling or clipping; value 'hidden' clips content outside the box. color sets foreground text/icon color; value 'var(--muted)' uses theme custom property var(--muted), so the shared design token controls this value. font-size sets text size; value '9px' sets the sets text size to 9px. text-overflow controls this CSS property; value 'ellipsis' sets text-overflow to ellipsis. white-space controls wrapping of whitespace/text; value 'nowrap' keeps text on one line.
+
+### Line 60
+
+```text
+.shift-status, .job-timing { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; min-height: 23px; padding: 0 8px; color: var(--green-deep); background: var(--green-soft); border-radius: 999px; font-size: 8px; font-weight: 750; white-space: nowrap; }
+```
+
+Selects '.shift-status, .job-timing'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'inline-flex' keeps the control inline while laying out children with flex. align-items aligns children across the cross axis; value 'center' sets aligns children across the cross axis to center. justify-content aligns children along the main axis; value 'center' sets aligns children along the main axis to center. flex controls this CSS property; value '0 0 auto' sets flex to 0 0 auto. min-height sets the smallest allowed control/region height; value '23px' sets the sets the smallest allowed control/region height to 23px. padding sets inside spacing between border and content; value '0 8px' sets the sets inside spacing between border and content to 0 8px. color sets foreground text/icon color; value 'var(--green-deep)' uses theme custom property var(--green-deep), so the shared design token controls this value. background sets the full background paint; value 'var(--green-soft)' uses theme custom property var(--green-soft), so the shared design token controls this value. border-radius rounds box corners; value '999px' sets the rounds box corners to 999px. font-size sets text size; value '8px' sets the sets text size to 8px. font-weight sets text stroke emphasis; value '750' sets sets text stroke emphasis to 750. white-space controls wrapping of whitespace/text; value 'nowrap' keeps text on one line.
+
+### Line 61
+
+```text
+.shift-status::before { width: 6px; height: 6px; margin-right: 5px; content: ""; background: var(--green); border-radius: 50%; }
+```
+
+Selects '.shift-status::before'; declarations on this line style matching Timekeeper elements. width sets horizontal size; value '6px' sets the sets horizontal size to 6px. height sets vertical size; value '6px' sets the sets vertical size to 6px. margin-right adds outside space to the right; value '5px' sets the adds outside space to the right to 5px. content supplies generated pseudo-element content; value '""' sets supplies generated pseudo-element content to "". background sets the full background paint; value 'var(--green)' uses theme custom property var(--green), so the shared design token controls this value. border-radius rounds box corners; value '50%' sets the rounds box corners to 50%.
+
+### Line 62
+
+```text
+.shift-status.is-on-break { color: var(--amber); background: var(--amber-soft); }
+```
+
+Selects '.shift-status.is-on-break'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--amber)' uses theme custom property var(--amber), so the shared design token controls this value. background sets the full background paint; value 'var(--amber-soft)' uses theme custom property var(--amber-soft), so the shared design token controls this value.
+
+### Line 63
+
+```text
+.shift-status.is-on-break::before { background: var(--amber); }
+```
+
+Selects '.shift-status.is-on-break::before'; declarations on this line style matching Timekeeper elements. background sets the full background paint; value 'var(--amber)' uses theme custom property var(--amber), so the shared design token controls this value.
+
+### Line 64
+
+```text
+.planned-job-item { justify-content: flex-start; }
+```
+
+Selects '.planned-job-item'; declarations on this line style matching Timekeeper elements. justify-content aligns children along the main axis; value 'flex-start' sets aligns children along the main axis to flex-start.
+
+### Line 65
+
+```text
+.job-date-tile { flex: 0 0 66px; color: var(--ink-soft); font-size: 9px; font-weight: 660; }
+```
+
+Selects '.job-date-tile'; declarations on this line style matching Timekeeper elements. flex controls this CSS property; value '0 0 66px' sets the flex to 0 0 66px. color sets foreground text/icon color; value 'var(--ink-soft)' uses theme custom property var(--ink-soft), so the shared design token controls this value. font-size sets text size; value '9px' sets the sets text size to 9px. font-weight sets text stroke emphasis; value '660' sets sets text stroke emphasis to 660.
+
+### Line 66
+
+```text
+.job-copy { flex: 1 1 auto; }
+```
+
+Selects '.job-copy'; declarations on this line style matching Timekeeper elements. flex controls this CSS property; value '1 1 auto' sets flex to 1 1 auto.
+
+### Line 67
+
+```text
+.job-timing { min-height: 21px; padding: 0 7px; color: var(--muted); background: var(--surface-muted); font-size: 8px; }
+```
+
+Selects '.job-timing'; declarations on this line style matching Timekeeper elements. min-height sets the smallest allowed control/region height; value '21px' sets the sets the smallest allowed control/region height to 21px. padding sets inside spacing between border and content; value '0 7px' sets the sets inside spacing between border and content to 0 7px. color sets foreground text/icon color; value 'var(--muted)' uses theme custom property var(--muted), so the shared design token controls this value. background sets the full background paint; value 'var(--surface-muted)' uses theme custom property var(--surface-muted), so the shared design token controls this value. font-size sets text size; value '8px' sets the sets text size to 8px.
+
+### Line 68
+
+```text
+.job-timing.is-overdue { color: var(--amber); background: var(--amber-soft); }
+```
+
+Selects '.job-timing.is-overdue'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--amber)' uses theme custom property var(--amber), so the shared design token controls this value. background sets the full background paint; value 'var(--amber-soft)' uses theme custom property var(--amber-soft), so the shared design token controls this value.
+
+### Line 69
+
+```text
+.dashboard-empty { display: grid; justify-items: start; gap: 7px; min-height: 74px; padding: 17px; color: var(--muted); font-size: 10px; }
+```
+
+Selects '.dashboard-empty'; declarations on this line style matching Timekeeper elements. display chooses the layout model or visibility behavior; value 'grid' uses CSS Grid for two-dimensional placement. justify-items controls this CSS property; value 'start' sets justify-items to start. gap sets spacing between flex/grid children; value '7px' sets the sets spacing between flex/grid children to 7px. min-height sets the smallest allowed control/region height; value '74px' sets the sets the smallest allowed control/region height to 74px. padding sets inside spacing between border and content; value '17px' sets the sets inside spacing between border and content to 17px. color sets foreground text/icon color; value 'var(--muted)' uses theme custom property var(--muted), so the shared design token controls this value. font-size sets text size; value '10px' sets the sets text size to 10px.
+
+### Line 70
+
+```text
+.empty-state-link { color: var(--green); font-size: 9px; font-weight: 700; text-decoration: none; }
+```
+
+Selects '.empty-state-link'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--green)' uses theme custom property var(--green), so the shared design token controls this value. font-size sets text size; value '9px' sets the sets text size to 9px. font-weight sets text stroke emphasis; value '700' bold emphasis. text-decoration adds/removes underlines or other decoration; value 'none' sets adds/removes underlines or other decoration to none.
+
+### Line 71
+
+```text
+.empty-state-link:hover { color: var(--green-deep); text-decoration: underline; }
+```
+
+Selects '.empty-state-link:hover'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--green-deep)' uses theme custom property var(--green-deep), so the shared design token controls this value. text-decoration adds/removes underlines or other decoration; value 'underline' sets adds/removes underlines or other decoration to underline.
+
+### Line 72
+
+```text
+.dashboard-footnote { margin: 12px 2px 0; color: var(--muted); font-size: 9px; }
+```
+
+Selects '.dashboard-footnote'; declarations on this line style matching Timekeeper elements. margin sets outside spacing around the box; value '12px 2px 0' sets sets outside spacing around the box to 12px 2px 0. color sets foreground text/icon color; value 'var(--muted)' uses theme custom property var(--muted), so the shared design token controls this value. font-size sets text size; value '9px' sets the sets text size to 9px.
+
+### Line 73
+
+```text
+
+```
+
+Blank line separates related rules for readability.
+
+### Line 74
+
+```text
+@media (max-width: 760px) {
+```
+
+Begins a responsive media query: the nested overrides apply when (max-width: 760px) {.
+
+### Line 75
+
+```text
+  .dashboard-hero { align-items: flex-start; flex-direction: column; gap: 18px; }
+```
+
+Selects '.dashboard-hero'; declarations on this line style matching Timekeeper elements. align-items aligns children across the cross axis; value 'flex-start' sets aligns children across the cross axis to flex-start. flex-direction sets the main-axis direction for flex children; value 'column' stacks children vertically. gap sets spacing between flex/grid children; value '18px' sets the sets spacing between flex/grid children to 18px.
+
+### Line 76
+
+```text
+  .hours-card { align-items: flex-start; flex-direction: column; gap: 9px; min-height: 122px; }
+```
+
+Selects '.hours-card'; declarations on this line style matching Timekeeper elements. align-items aligns children across the cross axis; value 'flex-start' sets aligns children across the cross axis to flex-start. flex-direction sets the main-axis direction for flex children; value 'column' stacks children vertically. gap sets spacing between flex/grid children; value '9px' sets the sets spacing between flex/grid children to 9px. min-height sets the smallest allowed control/region height; value '122px' sets the sets the smallest allowed control/region height to 122px.
+
+### Line 77
+
+```text
+  .dashboard-grid { grid-template-columns: 1fr; }
+```
+
+Selects '.dashboard-grid'; declarations on this line style matching Timekeeper elements. grid-template-columns defines grid tracks and their widths; value '1fr' sets the defines grid tracks and their widths to 1fr.
+
+### Line 78
+
+```text
+}
+```
+
+Closes the current CSS rule or media-query block.
+
+### Line 79
+
+```text
+@media (max-width: 520px) {
+```
+
+Begins a responsive media query: the nested overrides apply when (max-width: 520px) {.
+
+### Line 80
+
+```text
+  .home-dashboard { padding: 14px; }
+```
+
+Selects '.home-dashboard'; declarations on this line style matching Timekeeper elements. padding sets inside spacing between border and content; value '14px' sets the sets inside spacing between border and content to 14px.
+
+### Line 81
+
+```text
+  .dashboard-hero { padding: 21px; border-radius: 16px; }
+```
+
+Selects '.dashboard-hero'; declarations on this line style matching Timekeeper elements. padding sets inside spacing between border and content; value '21px' sets the sets inside spacing between border and content to 21px. border-radius rounds box corners; value '16px' sets the rounds box corners to 16px.
+
+### Line 82
+
+```text
+  .daily-quote { grid-template-columns: 23px minmax(0, 1fr); gap: 9px; padding: 13px; }
+```
+
+Selects '.daily-quote'; declarations on this line style matching Timekeeper elements. grid-template-columns defines grid tracks and their widths; value '23px minmax(0, 1fr)' creates a responsive track with a minimum and flexible maximum size. gap sets spacing between flex/grid children; value '9px' sets the sets spacing between flex/grid children to 9px. padding sets inside spacing between border and content; value '13px' sets the sets inside spacing between border and content to 13px.
+
+### Line 83
+
+```text
+  .quote-mark { font-size: 37px; }
+```
+
+Selects '.quote-mark'; declarations on this line style matching Timekeeper elements. font-size sets text size; value '37px' sets the sets text size to 37px.
+
+### Line 84
+
+```text
+  .hours-overview { grid-template-columns: 1fr; gap: 8px; }
+```
+
+Selects '.hours-overview'; declarations on this line style matching Timekeeper elements. grid-template-columns defines grid tracks and their widths; value '1fr' sets the defines grid tracks and their widths to 1fr. gap sets spacing between flex/grid children; value '8px' sets the sets spacing between flex/grid children to 8px.
+
+### Line 85
+
+```text
+  .hours-card { align-items: center; flex-direction: row; min-height: 80px; padding: 12px; }
+```
+
+Selects '.hours-card'; declarations on this line style matching Timekeeper elements. align-items aligns children across the cross axis; value 'center' sets aligns children across the cross axis to center. flex-direction sets the main-axis direction for flex children; value 'row' lays children horizontally. min-height sets the smallest allowed control/region height; value '80px' sets the sets the smallest allowed control/region height to 80px. padding sets inside spacing between border and content; value '12px' sets the sets inside spacing between border and content to 12px.
+
+### Line 86
+
+```text
+  .hours-card strong { font-size: 19px; }
+```
+
+Selects '.hours-card strong'; declarations on this line style matching Timekeeper elements. font-size sets text size; value '19px' sets the sets text size to 19px.
+
+### Line 87
+
+```text
+  .panel-heading { align-items: flex-start; flex-direction: column; gap: 7px; }
+```
+
+Selects '.panel-heading'; declarations on this line style matching Timekeeper elements. align-items aligns children across the cross axis; value 'flex-start' sets aligns children across the cross axis to flex-start. flex-direction sets the main-axis direction for flex children; value 'column' stacks children vertically. gap sets spacing between flex/grid children; value '7px' sets the sets spacing between flex/grid children to 7px.
+
+### Line 88
+
+```text
+  .active-shift-item, .planned-job-item { padding-right: 12px; padding-left: 12px; }
+```
+
+Selects '.active-shift-item, .planned-job-item'; declarations on this line style matching Timekeeper elements. padding-right adds inside space to the right; value '12px' sets the adds inside space to the right to 12px. padding-left adds inside space to the left; value '12px' sets the adds inside space to the left to 12px.
+
+### Line 89
+
+```text
+  .job-date-tile { flex-basis: 56px; }
+```
+
+Selects '.job-date-tile'; declarations on this line style matching Timekeeper elements. flex-basis controls this CSS property; value '56px' sets the flex-basis to 56px.
+
+### Line 90
+
+```text
+}
+```
+
+Closes the current CSS rule or media-query block.

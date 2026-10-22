@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <link rel="stylesheet" href="../styles/ledger.css">
+    <script type="module" src="../scripts/keyboard.mjs" defer></script>
+    <script type="module" src="../scripts/ledger.js" defer></script>
+    <title>Employee Ledger · Timekeeper</title>
+  </head>
+  <body>
+    <section class="ledger-section">
+      <div class="ledger-heading">
+        <div>
+          <h1>Employee Ledger</h1>
+          <p id="ledger-owner" class="ledger-owner">Choose an employee to view their ledger.</p>
+        </div>
+        <label class="ledger-filter" for="ledger-employee-filter">
+          Ledger for
+          <select id="ledger-employee-filter">
+            <option value="">Choose an employee</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <div class="table-div">
+      <table id="ledger-table" aria-label="Employee ledger entries">
+        <thead>
+          <tr>
+            <th scope="col" data-sort-key="index" data-sort-type="number"><button class="table-sort-button" type="button"><span class="table-sort-label">Entry</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+            <th scope="col" data-sort-key="date" data-sort-type="date" aria-sort="descending"><button class="table-sort-button" type="button"><span class="table-sort-label">Date</span><span class="table-sort-indicator" aria-hidden="true">↓</span></button></th>
+            <th scope="col" data-sort-key="type" data-sort-type="text"><button class="table-sort-button" type="button"><span class="table-sort-label">Type</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+            <th scope="col" data-sort-key="hours" data-sort-type="number"><button class="table-sort-button" type="button"><span class="table-sort-label">Hours</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+            <th scope="col" data-sort-key="amount" data-sort-type="number"><button class="table-sort-button" type="button"><span class="table-sort-label">Amount</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+            <th scope="col" data-sort-key="notes" data-sort-type="text"><button class="table-sort-button" type="button"><span class="table-sort-label">Notes</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="ledger-body" aria-live="polite"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="7" id="ledger-total"><strong>Total: $0.00</strong></td>
+          </tr>
+          <tr>
+            <td colspan="3"><strong>Total hours</strong></td>
+            <td id="ledger-hours-total"><strong>0.00</strong></td>
+            <td colspan="3"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <p class="ledger-archive-notice" id="ledger-entry-status" role="status" aria-live="polite"></p>
+    <p class="ledger-archive-link"><a href="ledger-archive.html">View archived ledger history</a></p>
+
+    <details class="form-container shift-ledger-container">
+      <summary class="shift-ledger-summary" id="shift-ledger-title">Add a completed shift</summary>
+      <div class="shift-ledger-content">
+        <p class="shift-ledger-description">Adds the shift’s paid hours at the employee’s current wage. This does not change the shift or mark it paid.</p>
+        <form id="shift-ledger-form">
+          <label for="ledger-shift-select">Completed shifts not yet in this ledger
+            <select id="ledger-shift-select" required>
+              <option value="">Choose an employee above first</option>
+            </select>
+          </label>
+          <button type="submit" id="add-shift-to-ledger" disabled>Add shift to ledger</button>
+        </form>
+        <p id="shift-ledger-status" role="status" aria-live="polite">Choose an employee above to find completed shifts.</p>
+      </div>
+    </details>
+
+    <details class="form-container ledger-add-container">
+      <summary>Add ledger entry</summary>
+      <form id="ledger-form">
+        <label for="employee-select">Employee
+          <select id="employee-select" required>
+            <option value="">Choose an employee</option>
+          </select>
+        </label>
+        <label for="date">Date
+          <input type="date" id="date" required>
+        </label>
+        <label for="type">Type
+          <select id="type" required>
+            <option value="normal">Normal pay</option>
+            <option value="advance">Advance</option>
+            <option value="general">Other credit</option>
+          </select>
+        </label>
+        <label for="hours">Hours
+          <input type="number" id="hours" min="0" step="0.01" inputmode="decimal" value="0">
+        </label>
+        <label for="amount">Amount ($)
+          <input type="number" id="amount" min="0" step="0.01" inputmode="decimal" value="0" disabled>
+        </label>
+        <label for="notes">Notes
+          <input type="text" id="notes" placeholder="Optional notes">
+        </label>
+        <button type="submit">Add Entry</button>
+      </form>
+    </details>
+
+    <dialog class="ledger-edit-modal" id="ledger-edit-modal" aria-labelledby="ledger-edit-title" aria-describedby="ledger-edit-help ledger-edit-error">
+      <form class="ledger-edit-form" id="ledger-edit-form">
+        <div class="ledger-edit-heading">
+          <p class="ledger-edit-eyebrow">LEDGER ENTRY</p>
+          <h2 id="ledger-edit-title">Edit ledger entry</h2>
+          <p id="ledger-edit-help">Update the entry details. The employee assignment and entry number will stay unchanged.</p>
+        </div>
+        <div class="ledger-edit-fields">
+          <label for="edit-ledger-date">Date
+            <input type="date" id="edit-ledger-date" required>
+          </label>
+          <label for="edit-ledger-type">Type
+            <select id="edit-ledger-type" required>
+              <option value="normal">Normal pay</option>
+              <option value="advance">Advance</option>
+              <option value="general">Other credit</option>
+            </select>
+          </label>
+          <label for="edit-ledger-hours">Hours
+            <input type="number" id="edit-ledger-hours" min="0" step="0.01" inputmode="decimal" required>
+          </label>
+          <label for="edit-ledger-amount">Amount ($)
+            <input type="number" id="edit-ledger-amount" min="0" step="0.01" inputmode="decimal" required>
+          </label>
+          <label class="ledger-edit-notes" for="edit-ledger-notes">Notes
+            <textarea id="edit-ledger-notes" rows="3" placeholder="Optional notes"></textarea>
+          </label>
+        </div>
+        <p class="ledger-edit-error" id="ledger-edit-error" role="alert" aria-live="polite"></p>
+        <div class="ledger-edit-actions">
+          <button type="button" class="ledger-cancel-btn" id="ledger-edit-cancel">Cancel</button>
+          <button type="submit" class="ledger-save-btn" id="ledger-edit-save">Save changes</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>

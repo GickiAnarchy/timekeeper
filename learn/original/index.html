@@ -1,0 +1,117 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <link rel="stylesheet" href="./styles/style.css?v=compact-nav-1">
+    <title>Mosher Lawns · Timekeeper</title>
+    <script type="module" src="./scripts/index.js?v=compact-nav-1" defer></script>
+  </head>
+  <body class="app-body">
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Workspace navigation">
+        <div class="nav-banner" id="nav-banner">
+          <a class="brand" href="html/home.html" target="main-content" aria-label="Mosher Lawns home">
+            <span class="brand-mark"><img src="./imgs/logo_bw.jpg" alt=""></span>
+            <span class="brand-copy"><strong>Mosher Lawns</strong><small>Timekeeper</small></span>
+          </a>
+          <!-- Decorative theme-colored strip beside the brand; hidden from screen readers. -->
+          <span class="nav-accent" aria-hidden="true"></span>
+        </div>
+
+        <button class="nav-picker-toggle" type="button" aria-expanded="false" aria-controls="navigation-pages" aria-label="Pages, current page: Home">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <span class="nav-picker-copy"><span class="nav-picker-caption">Pages</span><span class="nav-picker-label">Home</span></span>
+          <span class="nav-picker-chevron" aria-hidden="true">⌄</span>
+        </button>
+        <nav class="sidebar-nav" id="navigation-pages" aria-label="Main navigation" hidden>
+          <section class="nav-group" aria-labelledby="nav-workspace-toggle">
+            <h2 class="nav-group-heading">
+              <button class="nav-group-toggle" id="nav-workspace-toggle" type="button" aria-expanded="true" aria-controls="nav-workspace-pages">
+                <span>Workspace</span><span class="nav-group-chevron" aria-hidden="true">›</span>
+              </button>
+            </h2>
+            <div class="nav-group-pages" id="nav-workspace-pages">
+              <button class="nav-link" type="button" data-page="html/home.html" data-title="Home" aria-current="page">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 10.7 8.5-7 8.5 7v9.1a1.2 1.2 0 0 1-1.2 1.2h-5.1v-6.2h-4.4V21H4.7a1.2 1.2 0 0 1-1.2-1.2z"/></svg><span>Home</span>
+              </button>
+              <button class="nav-link nav-link-primary" type="button" data-page="html/clock.html" data-title="Clock in / out">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.2 2"/></svg><span>Clock in / out</span><span class="nav-arrow" aria-hidden="true">›</span>
+              </button>
+              <button class="nav-link" type="button" data-page="html/viewshifts.html" data-title="Shift history">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16M4 12h16M4 18.5h10"/><circle cx="7" cy="5.5" r=".7"/><circle cx="7" cy="12" r=".7"/><circle cx="7" cy="18.5" r=".7"/></svg><span>Shift history</span>
+              </button>
+              <button class="nav-link" type="button" data-page="html/planned.html" data-title="Planned jobs">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M7.5 3.5v3M16.5 3.5v3M3.5 9.5h17M8 13h3M8 16.5h7"/></svg><span>Planned jobs</span>
+              </button>
+
+            </div>
+          </section>
+          <section class="nav-group" aria-labelledby="nav-manage-toggle">
+            <h2 class="nav-group-heading">
+              <button class="nav-group-toggle" id="nav-manage-toggle" type="button" aria-expanded="false" aria-controls="nav-manage-pages">
+                <span>Manage</span><span class="nav-group-chevron" aria-hidden="true">›</span>
+              </button>
+            </h2>
+            <div class="nav-group-pages" id="nav-manage-pages" hidden>
+              <button class="nav-link" type="button" data-page="html/pay-period-review.html" data-title="Pay-period review">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="17" rx="2"/><path d="M8 2v4M16 2v4M4 9h16M8 14l2 2 5-4"/></svg><span>Pay-period review</span>
+              </button>
+              <button class="nav-link" type="button" data-page="html/basic-data.html" data-title="People data">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20v-1.5a5.5 5.5 0 0 1 11 0V20zM16 5.3a3.1 3.1 0 0 1 0 6.1M17 14a4.5 4.5 0 0 1 3.5 4.4V20h-4"/></svg><span>People data</span>
+              </button>
+              <button class="nav-link" type="button" data-page="html/payledger.html" data-title="Employee ledger">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3.5h10l4 4V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1zM14.5 3.5V8h4.2M8 12h8M8 16h8"/></svg><span>Ledger</span>
+              </button>
+              <button class="nav-link" type="button" data-page="html/ledger-archive.html" data-title="Ledger archive">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v4H4zM6 8v12h12V8M9 12h6M9 15h6M9 18h3"/></svg><span>Ledger archive</span>
+              </button>
+              <button class="nav-link" type="button" data-page="html/invoice.html" data-title="Invoices">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12v17l-2.5-1.8-3.5 1.8-3.5-1.8L6 20.5zM9 8h6M9 12h6M9 16h3"/></svg><span>Invoices</span>
+              </button>
+            </div>
+          </section>
+          <section class="nav-group" aria-labelledby="nav-preferences-toggle">
+            <h2 class="nav-group-heading">
+              <button class="nav-group-toggle" id="nav-preferences-toggle" type="button" aria-expanded="false" aria-controls="nav-preferences-pages">
+                <span>Preferences</span><span class="nav-group-chevron" aria-hidden="true">›</span>
+              </button>
+            </h2>
+            <div class="nav-group-pages" id="nav-preferences-pages" hidden>
+              <button class="nav-link" type="button" data-page="html/settings.html" data-title="Settings">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a7.8 7.8 0 0 0 0-3l1.5-1.2-1.6-2.8-1.8.7a7.6 7.6 0 0 0-2.6-1.5L14.6 4h-3.2l-.3 1.8a7.6 7.6 0 0 0-2.6 1.5l-1.8-.7-1.6 2.8 1.5 1.2a7.8 7.8 0 0 0 0 3l-1.5 1.2 1.6 2.8 1.8-.7a7.6 7.6 0 0 0 2.6 1.5l.3 1.8h3.2l.3-1.8a7.6 7.6 0 0 0 2.6-1.5l1.8.7 1.6-2.8z"/></svg><span>Settings</span>
+              </button>
+            </div>
+          </section>
+        </nav>
+
+      </aside>
+
+      <div class="app-main">
+        <header class="topbar">
+          <div>
+            <p class="topbar-eyebrow">MOSHER LAWNS <span aria-hidden="true">/</span> WORKSPACE</p>
+            <h1 id="active-page-title">Home</h1>
+          </div>
+          <div class="topbar-tools">
+            <div class="topbar-date" id="topbar-date"></div>
+          </div>
+        </header>
+
+        <main class="workspace-frame">
+          <iframe name="main-content" title="Timekeeper workspace" src="html/home.html"></iframe>
+        </main>
+        <footer class="site-footer">
+          <a class="site-footer-link" href="https://github.com/GickiAnarchy" target="_blank" rel="noopener noreferrer">© 2026 GickiStudios</a>
+          <a class="site-footer-app-link" href="https://github.com/GickiAnarchy/timekeeper/releases/download/v1.5/Mosher_Lawns_Time_v1.5.1_1792472720850.apk" target="_blank" rel="noopener noreferrer" download><u>Get the app</u></a>
+          <div class="site-footer-meta">
+            <span>Timekeeping made simple</span>
+          </div>
+        <span class="version-badge" id="version-badge">v1.5.1</span>
+        </footer>
+      </div>
+    </div>  
+    
+  </body>
+</html>

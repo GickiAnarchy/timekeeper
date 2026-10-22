@@ -1,0 +1,293 @@
+/* Original L1: Selects ':root'; declarations inside change the layout/appearance of those matching Timekeeper elements. */:root {
+/* Original L2: For selector ':root', color-scheme controls this CSS property; value 'light' sets color-scheme to light. */  color-scheme: light;
+/* Original L3: For selector ':root', --ink controls this CSS property; value '#18231f' uses explicit color #18231f. */  --ink: #18231f;
+/* Original L4: For selector ':root', --ink-soft controls this CSS property; value '#31413a' uses explicit color #31413a. */  --ink-soft: #31413a;
+/* Original L5: For selector ':root', --muted controls this CSS property; value '#718078' uses explicit color #718078. */  --muted: #718078;
+/* Original L6: For selector ':root', --canvas controls this CSS property; value '#f3f6f4' uses explicit color #f3f6f4. */  --canvas: #f3f6f4;
+/* Original L7: For selector ':root', --surface controls this CSS property; value '#ffffff' uses explicit color #ffffff. */  --surface: #ffffff;
+/* Original L8: For selector ':root', --surface-muted controls this CSS property; value '#f8faf9' uses explicit color #f8faf9. */  --surface-muted: #f8faf9;
+/* Original L9: For selector ':root', --surface-hover controls this CSS property; value '#f4f8f5' uses explicit color #f4f8f5. */  --surface-hover: #f4f8f5;
+/* Original L10: For selector ':root', --control-surface controls this CSS property; value '#ffffff' uses explicit color #ffffff. */  --control-surface: #ffffff;
+/* Original L11: For selector ':root', --border controls this CSS property; value '#e2e9e5' uses explicit color #e2e9e5. */  --border: #e2e9e5;
+/* Original L12: For selector ':root', --border-soft controls this CSS property; value '#edf1ee' uses explicit color #edf1ee. */  --border-soft: #edf1ee;
+/* Original L13: For selector ':root', --green controls this CSS property; value '#24764f' uses explicit color #24764f. */  --green: #24764f;
+/* Original L14: For selector ':root', --green-deep controls this CSS property; value '#195f3e' uses explicit color #195f3e. */  --green-deep: #195f3e;
+/* Original L15: For selector ':root', --green-soft controls this CSS property; value '#eaf4ee' uses explicit color #eaf4ee. */  --green-soft: #eaf4ee;
+/* Original L16: For selector ':root', --green-line controls this CSS property; value '#cce3d5' uses explicit color #cce3d5. */  --green-line: #cce3d5;
+/* Original L17: For selector ':root', --amber controls this CSS property; value '#a96912' uses explicit color #a96912. */  --amber: #a96912;
+/* Original L18: For selector ':root', --amber-soft controls this CSS property; value '#fff4dc' uses explicit color #fff4dc. */  --amber-soft: #fff4dc;
+/* Original L19: For selector ':root', --red controls this CSS property; value '#b34343' uses explicit color #b34343. */  --red: #b34343;
+/* Original L20: For selector ':root', --red-soft controls this CSS property; value '#fff0ee' uses explicit color #fff0ee. */  --red-soft: #fff0ee;
+/* Original L21: For selector ':root', --focus-ring controls this CSS property; value 'rgba(36, 118, 79, 0.24)' uses translucent color rgba(36, 118, 79, 0.24) to soften the surface/shadow. */  --focus-ring: rgba(36, 118, 79, 0.24);
+/* Original L22: For selector ':root', --shadow-soft controls this CSS property; value '0 10px 28px rgba(28, 52, 40, 0.06)' sets --shadow-soft to 0 10px 28px rgba(28, 52, 40, 0.06). */  --shadow-soft: 0 10px 28px rgba(28, 52, 40, 0.06);
+/* Original L23: For selector ':root', font-family selects the typeface stack; value 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' sets selects the typeface stack to Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif. */  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+/* Original L24: For selector ':root', color sets foreground text/icon color; value 'var(--ink)' uses theme custom property var(--ink), so the shared design token controls this value. */  color: var(--ink);
+/* Original L25: For selector ':root', background sets the full background paint; value 'var(--canvas)' uses theme custom property var(--canvas), so the shared design token controls this value. */  background: var(--canvas);
+/* Original L26: Closes the current CSS rule or media-query block. */}
+/* Original L27: Blank line separates related rules for readability. */
+/* Original L28: Selects ':root[data-theme="coastal"]'; declarations inside change the layout/appearance of those matching Timekeeper elements. */:root[data-theme="coastal"] {
+/* Original L29: For selector ':root[data-theme="coastal"]', --ink controls this CSS property; value '#172a35' uses explicit color #172a35. */  --ink: #172a35;
+/* Original L30: For selector ':root[data-theme="coastal"]', --ink-soft controls this CSS property; value '#35515e' uses explicit color #35515e. */  --ink-soft: #35515e;
+/* Original L31: For selector ':root[data-theme="coastal"]', --muted controls this CSS property; value '#708792' uses explicit color #708792. */  --muted: #708792;
+/* Original L32: For selector ':root[data-theme="coastal"]', --canvas controls this CSS property; value '#edf4f8' uses explicit color #edf4f8. */  --canvas: #edf4f8;
+/* Original L33: For selector ':root[data-theme="coastal"]', --surface controls this CSS property; value '#ffffff' uses explicit color #ffffff. */  --surface: #ffffff;
+/* Original L34: For selector ':root[data-theme="coastal"]', --surface-muted controls this CSS property; value '#f5f9fb' uses explicit color #f5f9fb. */  --surface-muted: #f5f9fb;
+/* Original L35: For selector ':root[data-theme="coastal"]', --surface-hover controls this CSS property; value '#edf5f9' uses explicit color #edf5f9. */  --surface-hover: #edf5f9;
+/* Original L36: For selector ':root[data-theme="coastal"]', --control-surface controls this CSS property; value '#ffffff' uses explicit color #ffffff. */  --control-surface: #ffffff;
+/* Original L37: For selector ':root[data-theme="coastal"]', --border controls this CSS property; value '#d8e5ec' uses explicit color #d8e5ec. */  --border: #d8e5ec;
+/* Original L38: For selector ':root[data-theme="coastal"]', --border-soft controls this CSS property; value '#eaf1f5' uses explicit color #eaf1f5. */  --border-soft: #eaf1f5;
+/* Original L39: For selector ':root[data-theme="coastal"]', --green controls this CSS property; value '#2c6d96' uses explicit color #2c6d96. */  --green: #2c6d96;
+/* Original L40: For selector ':root[data-theme="coastal"]', --green-deep controls this CSS property; value '#205474' uses explicit color #205474. */  --green-deep: #205474;
+/* Original L41: For selector ':root[data-theme="coastal"]', --green-soft controls this CSS property; value '#e3f0f7' uses explicit color #e3f0f7. */  --green-soft: #e3f0f7;
+/* Original L42: For selector ':root[data-theme="coastal"]', --green-line controls this CSS property; value '#c5dce9' uses explicit color #c5dce9. */  --green-line: #c5dce9;
+/* Original L43: For selector ':root[data-theme="coastal"]', --amber controls this CSS property; value '#a96b20' uses explicit color #a96b20. */  --amber: #a96b20;
+/* Original L44: For selector ':root[data-theme="coastal"]', --amber-soft controls this CSS property; value '#fff2d8' uses explicit color #fff2d8. */  --amber-soft: #fff2d8;
+/* Original L45: For selector ':root[data-theme="coastal"]', --focus-ring controls this CSS property; value 'rgba(44, 109, 150, 0.24)' uses translucent color rgba(44, 109, 150, 0.24) to soften the surface/shadow. */  --focus-ring: rgba(44, 109, 150, 0.24);
+/* Original L46: For selector ':root[data-theme="coastal"]', --shadow-soft controls this CSS property; value '0 10px 28px rgba(27, 63, 82, 0.07)' sets --shadow-soft to 0 10px 28px rgba(27, 63, 82, 0.07). */  --shadow-soft: 0 10px 28px rgba(27, 63, 82, 0.07);
+/* Original L47: Closes the current CSS rule or media-query block. */}
+/* Original L48: Blank line separates related rules for readability. */
+/* Original L49: Selects ':root[data-theme="harvest"]'; declarations inside change the layout/appearance of those matching Timekeeper elements. */:root[data-theme="harvest"] {
+/* Original L50: For selector ':root[data-theme="harvest"]', --ink controls this CSS property; value '#30271f' uses explicit color #30271f. */  --ink: #30271f;
+/* Original L51: For selector ':root[data-theme="harvest"]', --ink-soft controls this CSS property; value '#58483a' uses explicit color #58483a. */  --ink-soft: #58483a;
+/* Original L52: For selector ':root[data-theme="harvest"]', --muted controls this CSS property; value '#887866' uses explicit color #887866. */  --muted: #887866;
+/* Original L53: For selector ':root[data-theme="harvest"]', --canvas controls this CSS property; value '#f7f3eb' uses explicit color #f7f3eb. */  --canvas: #f7f3eb;
+/* Original L54: For selector ':root[data-theme="harvest"]', --surface controls this CSS property; value '#fffdf8' uses explicit color #fffdf8. */  --surface: #fffdf8;
+/* Original L55: For selector ':root[data-theme="harvest"]', --surface-muted controls this CSS property; value '#fbf7ef' uses explicit color #fbf7ef. */  --surface-muted: #fbf7ef;
+/* Original L56: For selector ':root[data-theme="harvest"]', --surface-hover controls this CSS property; value '#f8f0e4' uses explicit color #f8f0e4. */  --surface-hover: #f8f0e4;
+/* Original L57: For selector ':root[data-theme="harvest"]', --control-surface controls this CSS property; value '#fffdf8' uses explicit color #fffdf8. */  --control-surface: #fffdf8;
+/* Original L58: For selector ':root[data-theme="harvest"]', --border controls this CSS property; value '#e8dfd0' uses explicit color #e8dfd0. */  --border: #e8dfd0;
+/* Original L59: For selector ':root[data-theme="harvest"]', --border-soft controls this CSS property; value '#f0e9dd' uses explicit color #f0e9dd. */  --border-soft: #f0e9dd;
+/* Original L60: For selector ':root[data-theme="harvest"]', --green controls this CSS property; value '#a66134' uses explicit color #a66134. */  --green: #a66134;
+/* Original L61: For selector ':root[data-theme="harvest"]', --green-deep controls this CSS property; value '#804624' uses explicit color #804624. */  --green-deep: #804624;
+/* Original L62: For selector ':root[data-theme="harvest"]', --green-soft controls this CSS property; value '#f6ebdf' uses explicit color #f6ebdf. */  --green-soft: #f6ebdf;
+/* Original L63: For selector ':root[data-theme="harvest"]', --green-line controls this CSS property; value '#e8cfb9' uses explicit color #e8cfb9. */  --green-line: #e8cfb9;
+/* Original L64: For selector ':root[data-theme="harvest"]', --amber controls this CSS property; value '#a96b20' uses explicit color #a96b20. */  --amber: #a96b20;
+/* Original L65: For selector ':root[data-theme="harvest"]', --amber-soft controls this CSS property; value '#fff2d8' uses explicit color #fff2d8. */  --amber-soft: #fff2d8;
+/* Original L66: For selector ':root[data-theme="harvest"]', --focus-ring controls this CSS property; value 'rgba(166, 97, 52, 0.24)' uses translucent color rgba(166, 97, 52, 0.24) to soften the surface/shadow. */  --focus-ring: rgba(166, 97, 52, 0.24);
+/* Original L67: For selector ':root[data-theme="harvest"]', --shadow-soft controls this CSS property; value '0 10px 28px rgba(75, 53, 31, 0.07)' sets --shadow-soft to 0 10px 28px rgba(75, 53, 31, 0.07). */  --shadow-soft: 0 10px 28px rgba(75, 53, 31, 0.07);
+/* Original L68: Closes the current CSS rule or media-query block. */}
+/* Original L69: Blank line separates related rules for readability. */
+/* Original L70: Selects ':root[data-theme="midnight"]'; declarations inside change the layout/appearance of those matching Timekeeper elements. */:root[data-theme="midnight"] {
+/* Original L71: For selector ':root[data-theme="midnight"]', color-scheme controls this CSS property; value 'dark' sets color-scheme to dark. */  color-scheme: dark;
+/* Original L72: For selector ':root[data-theme="midnight"]', --ink controls this CSS property; value '#e7efed' uses explicit color #e7efed. */  --ink: #e7efed;
+/* Original L73: For selector ':root[data-theme="midnight"]', --ink-soft controls this CSS property; value '#c4d2ce' uses explicit color #c4d2ce. */  --ink-soft: #c4d2ce;
+/* Original L74: For selector ':root[data-theme="midnight"]', --muted controls this CSS property; value '#9aaca8' uses explicit color #9aaca8. */  --muted: #9aaca8;
+/* Original L75: For selector ':root[data-theme="midnight"]', --canvas controls this CSS property; value '#11191d' uses explicit color #11191d. */  --canvas: #11191d;
+/* Original L76: For selector ':root[data-theme="midnight"]', --surface controls this CSS property; value '#1a252a' uses explicit color #1a252a. */  --surface: #1a252a;
+/* Original L77: For selector ':root[data-theme="midnight"]', --surface-muted controls this CSS property; value '#202e34' uses explicit color #202e34. */  --surface-muted: #202e34;
+/* Original L78: For selector ':root[data-theme="midnight"]', --surface-hover controls this CSS property; value '#26363c' uses explicit color #26363c. */  --surface-hover: #26363c;
+/* Original L79: For selector ':root[data-theme="midnight"]', --control-surface controls this CSS property; value '#142025' uses explicit color #142025. */  --control-surface: #142025;
+/* Original L80: For selector ':root[data-theme="midnight"]', --border controls this CSS property; value '#35474d' uses explicit color #35474d. */  --border: #35474d;
+/* Original L81: For selector ':root[data-theme="midnight"]', --border-soft controls this CSS property; value '#2b3b41' uses explicit color #2b3b41. */  --border-soft: #2b3b41;
+/* Original L82: For selector ':root[data-theme="midnight"]', --green controls this CSS property; value '#67c095' uses explicit color #67c095. */  --green: #67c095;
+/* Original L83: For selector ':root[data-theme="midnight"]', --green-deep controls this CSS property; value '#83d4aa' uses explicit color #83d4aa. */  --green-deep: #83d4aa;
+/* Original L84: For selector ':root[data-theme="midnight"]', --green-soft controls this CSS property; value '#233d33' uses explicit color #233d33. */  --green-soft: #233d33;
+/* Original L85: For selector ':root[data-theme="midnight"]', --green-line controls this CSS property; value '#365d4b' uses explicit color #365d4b. */  --green-line: #365d4b;
+/* Original L86: For selector ':root[data-theme="midnight"]', --amber controls this CSS property; value '#e3b25f' uses explicit color #e3b25f. */  --amber: #e3b25f;
+/* Original L87: For selector ':root[data-theme="midnight"]', --amber-soft controls this CSS property; value '#43371f' uses explicit color #43371f. */  --amber-soft: #43371f;
+/* Original L88: For selector ':root[data-theme="midnight"]', --red controls this CSS property; value '#e47d76' uses explicit color #e47d76. */  --red: #e47d76;
+/* Original L89: For selector ':root[data-theme="midnight"]', --red-soft controls this CSS property; value '#432b2a' uses explicit color #432b2a. */  --red-soft: #432b2a;
+/* Original L90: For selector ':root[data-theme="midnight"]', --focus-ring controls this CSS property; value 'rgba(103, 192, 149, 0.35)' uses translucent color rgba(103, 192, 149, 0.35) to soften the surface/shadow. */  --focus-ring: rgba(103, 192, 149, 0.35);
+/* Original L91: For selector ':root[data-theme="midnight"]', --shadow-soft controls this CSS property; value '0 12px 32px rgba(0, 0, 0, 0.23)' sets --shadow-soft to 0 12px 32px rgba(0, 0, 0, 0.23). */  --shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.23);
+/* Original L92: Closes the current CSS rule or media-query block. */}
+/* Original L93: Blank line separates related rules for readability. */
+/* Original L94: Selects ':root[data-theme="lavender"]'; declarations inside change the layout/appearance of those matching Timekeeper elements. */:root[data-theme="lavender"] {
+/* Original L95: For selector ':root[data-theme="lavender"]', --ink controls this CSS property; value '#29243a' uses explicit color #29243a. */  --ink: #29243a;
+/* Original L96: For selector ':root[data-theme="lavender"]', --ink-soft controls this CSS property; value '#4b4560' uses explicit color #4b4560. */  --ink-soft: #4b4560;
+/* Original L97: For selector ':root[data-theme="lavender"]', --muted controls this CSS property; value '#79738d' uses explicit color #79738d. */  --muted: #79738d;
+/* Original L98: For selector ':root[data-theme="lavender"]', --canvas controls this CSS property; value '#f4f1fa' uses explicit color #f4f1fa. */  --canvas: #f4f1fa;
+/* Original L99: For selector ':root[data-theme="lavender"]', --surface controls this CSS property; value '#ffffff' uses explicit color #ffffff. */  --surface: #ffffff;
+/* Original L100: For selector ':root[data-theme="lavender"]', --surface-muted controls this CSS property; value '#faf8fd' uses explicit color #faf8fd. */  --surface-muted: #faf8fd;
+/* Original L101: For selector ':root[data-theme="lavender"]', --surface-hover controls this CSS property; value '#f3eff9' uses explicit color #f3eff9. */  --surface-hover: #f3eff9;
+/* Original L102: For selector ':root[data-theme="lavender"]', --control-surface controls this CSS property; value '#ffffff' uses explicit color #ffffff. */  --control-surface: #ffffff;
+/* Original L103: For selector ':root[data-theme="lavender"]', --border controls this CSS property; value '#e3ddef' uses explicit color #e3ddef. */  --border: #e3ddef;
+/* Original L104: For selector ':root[data-theme="lavender"]', --border-soft controls this CSS property; value '#eee9f5' uses explicit color #eee9f5. */  --border-soft: #eee9f5;
+/* Original L105: For selector ':root[data-theme="lavender"]', --green controls this CSS property; value '#7356a8' uses explicit color #7356a8. */  --green: #7356a8;
+/* Original L106: For selector ':root[data-theme="lavender"]', --green-deep controls this CSS property; value '#5c438c' uses explicit color #5c438c. */  --green-deep: #5c438c;
+/* Original L107: For selector ':root[data-theme="lavender"]', --green-soft controls this CSS property; value '#f0ebf8' uses explicit color #f0ebf8. */  --green-soft: #f0ebf8;
+/* Original L108: For selector ':root[data-theme="lavender"]', --green-line controls this CSS property; value '#d9cceb' uses explicit color #d9cceb. */  --green-line: #d9cceb;
+/* Original L109: For selector ':root[data-theme="lavender"]', --amber controls this CSS property; value '#9a681c' uses explicit color #9a681c. */  --amber: #9a681c;
+/* Original L110: For selector ':root[data-theme="lavender"]', --amber-soft controls this CSS property; value '#fff2d7' uses explicit color #fff2d7. */  --amber-soft: #fff2d7;
+/* Original L111: For selector ':root[data-theme="lavender"]', --focus-ring controls this CSS property; value 'rgba(115, 86, 168, 0.25)' uses translucent color rgba(115, 86, 168, 0.25) to soften the surface/shadow. */  --focus-ring: rgba(115, 86, 168, 0.25);
+/* Original L112: For selector ':root[data-theme="lavender"]', --shadow-soft controls this CSS property; value '0 10px 28px rgba(55, 43, 82, 0.07)' sets --shadow-soft to 0 10px 28px rgba(55, 43, 82, 0.07). */  --shadow-soft: 0 10px 28px rgba(55, 43, 82, 0.07);
+/* Original L113: Closes the current CSS rule or media-query block. */}
+/* Original L114: Blank line separates related rules for readability. */
+/* Original L115: Selects ':root[data-theme="rose"]'; declarations inside change the layout/appearance of those matching Timekeeper elements. */:root[data-theme="rose"] {
+/* Original L116: For selector ':root[data-theme="rose"]', --ink controls this CSS property; value '#38252b' uses explicit color #38252b. */  --ink: #38252b;
+/* Original L117: For selector ':root[data-theme="rose"]', --ink-soft controls this CSS property; value '#5e4149' uses explicit color #5e4149. */  --ink-soft: #5e4149;
+/* Original L118: For selector ':root[data-theme="rose"]', --muted controls this CSS property; value '#8a7078' uses explicit color #8a7078. */  --muted: #8a7078;
+/* Original L119: For selector ':root[data-theme="rose"]', --canvas controls this CSS property; value '#faf1f2' uses explicit color #faf1f2. */  --canvas: #faf1f2;
+/* Original L120: For selector ':root[data-theme="rose"]', --surface controls this CSS property; value '#fffdfd' uses explicit color #fffdfd. */  --surface: #fffdfd;
+/* Original L121: For selector ':root[data-theme="rose"]', --surface-muted controls this CSS property; value '#fdf7f8' uses explicit color #fdf7f8. */  --surface-muted: #fdf7f8;
+/* Original L122: For selector ':root[data-theme="rose"]', --surface-hover controls this CSS property; value '#fbf0f2' uses explicit color #fbf0f2. */  --surface-hover: #fbf0f2;
+/* Original L123: For selector ':root[data-theme="rose"]', --control-surface controls this CSS property; value '#fffdfd' uses explicit color #fffdfd. */  --control-surface: #fffdfd;
+/* Original L124: For selector ':root[data-theme="rose"]', --border controls this CSS property; value '#ecdde0' uses explicit color #ecdde0. */  --border: #ecdde0;
+/* Original L125: For selector ':root[data-theme="rose"]', --border-soft controls this CSS property; value '#f3e9eb' uses explicit color #f3e9eb. */  --border-soft: #f3e9eb;
+/* Original L126: For selector ':root[data-theme="rose"]', --green controls this CSS property; value '#a34f68' uses explicit color #a34f68. */  --green: #a34f68;
+/* Original L127: For selector ':root[data-theme="rose"]', --green-deep controls this CSS property; value '#843d54' uses explicit color #843d54. */  --green-deep: #843d54;
+/* Original L128: For selector ':root[data-theme="rose"]', --green-soft controls this CSS property; value '#f8e9ed' uses explicit color #f8e9ed. */  --green-soft: #f8e9ed;
+/* Original L129: For selector ':root[data-theme="rose"]', --green-line controls this CSS property; value '#e9cbd4' uses explicit color #e9cbd4. */  --green-line: #e9cbd4;
+/* Original L130: For selector ':root[data-theme="rose"]', --amber controls this CSS property; value '#a26823' uses explicit color #a26823. */  --amber: #a26823;
+/* Original L131: For selector ':root[data-theme="rose"]', --amber-soft controls this CSS property; value '#fff2dc' uses explicit color #fff2dc. */  --amber-soft: #fff2dc;
+/* Original L132: For selector ':root[data-theme="rose"]', --red controls this CSS property; value '#ad3f52' uses explicit color #ad3f52. */  --red: #ad3f52;
+/* Original L133: For selector ':root[data-theme="rose"]', --red-soft controls this CSS property; value '#ffeaec' uses explicit color #ffeaec. */  --red-soft: #ffeaec;
+/* Original L134: For selector ':root[data-theme="rose"]', --focus-ring controls this CSS property; value 'rgba(163, 79, 104, 0.25)' uses translucent color rgba(163, 79, 104, 0.25) to soften the surface/shadow. */  --focus-ring: rgba(163, 79, 104, 0.25);
+/* Original L135: For selector ':root[data-theme="rose"]', --shadow-soft controls this CSS property; value '0 10px 28px rgba(84, 43, 55, 0.07)' sets --shadow-soft to 0 10px 28px rgba(84, 43, 55, 0.07). */  --shadow-soft: 0 10px 28px rgba(84, 43, 55, 0.07);
+/* Original L136: Closes the current CSS rule or media-query block. */}
+/* Original L137: Blank line separates related rules for readability. */
+/* Original L138: Selects ':root[data-theme="slate"]'; declarations inside change the layout/appearance of those matching Timekeeper elements. */:root[data-theme="slate"] {
+/* Original L139: For selector ':root[data-theme="slate"]', color-scheme controls this CSS property; value 'dark' sets color-scheme to dark. */  color-scheme: dark;
+/* Original L140: For selector ':root[data-theme="slate"]', --ink controls this CSS property; value '#e5edf2' uses explicit color #e5edf2. */  --ink: #e5edf2;
+/* Original L141: For selector ':root[data-theme="slate"]', --ink-soft controls this CSS property; value '#c5d2dc' uses explicit color #c5d2dc. */  --ink-soft: #c5d2dc;
+/* Original L142: For selector ':root[data-theme="slate"]', --muted controls this CSS property; value '#94a5b1' uses explicit color #94a5b1. */  --muted: #94a5b1;
+/* Original L143: For selector ':root[data-theme="slate"]', --canvas controls this CSS property; value '#141c23' uses explicit color #141c23. */  --canvas: #141c23;
+/* Original L144: For selector ':root[data-theme="slate"]', --surface controls this CSS property; value '#1d2831' uses explicit color #1d2831. */  --surface: #1d2831;
+/* Original L145: For selector ':root[data-theme="slate"]', --surface-muted controls this CSS property; value '#25323c' uses explicit color #25323c. */  --surface-muted: #25323c;
+/* Original L146: For selector ':root[data-theme="slate"]', --surface-hover controls this CSS property; value '#2c3b46' uses explicit color #2c3b46. */  --surface-hover: #2c3b46;
+/* Original L147: For selector ':root[data-theme="slate"]', --control-surface controls this CSS property; value '#18232b' uses explicit color #18232b. */  --control-surface: #18232b;
+/* Original L148: For selector ':root[data-theme="slate"]', --border controls this CSS property; value '#3b4b57' uses explicit color #3b4b57. */  --border: #3b4b57;
+/* Original L149: For selector ':root[data-theme="slate"]', --border-soft controls this CSS property; value '#2e3d47' uses explicit color #2e3d47. */  --border-soft: #2e3d47;
+/* Original L150: For selector ':root[data-theme="slate"]', --green controls this CSS property; value '#77b2d0' uses explicit color #77b2d0. */  --green: #77b2d0;
+/* Original L151: For selector ':root[data-theme="slate"]', --green-deep controls this CSS property; value '#97cce5' uses explicit color #97cce5. */  --green-deep: #97cce5;
+/* Original L152: For selector ':root[data-theme="slate"]', --green-soft controls this CSS property; value '#243b49' uses explicit color #243b49. */  --green-soft: #243b49;
+/* Original L153: For selector ':root[data-theme="slate"]', --green-line controls this CSS property; value '#3b5d70' uses explicit color #3b5d70. */  --green-line: #3b5d70;
+/* Original L154: For selector ':root[data-theme="slate"]', --amber controls this CSS property; value '#e0b567' uses explicit color #e0b567. */  --amber: #e0b567;
+/* Original L155: For selector ':root[data-theme="slate"]', --amber-soft controls this CSS property; value '#42371f' uses explicit color #42371f. */  --amber-soft: #42371f;
+/* Original L156: For selector ':root[data-theme="slate"]', --red controls this CSS property; value '#e1848a' uses explicit color #e1848a. */  --red: #e1848a;
+/* Original L157: For selector ':root[data-theme="slate"]', --red-soft controls this CSS property; value '#452c33' uses explicit color #452c33. */  --red-soft: #452c33;
+/* Original L158: For selector ':root[data-theme="slate"]', --focus-ring controls this CSS property; value 'rgba(119, 178, 208, 0.35)' uses translucent color rgba(119, 178, 208, 0.35) to soften the surface/shadow. */  --focus-ring: rgba(119, 178, 208, 0.35);
+/* Original L159: For selector ':root[data-theme="slate"]', --shadow-soft controls this CSS property; value '0 12px 32px rgba(0, 0, 0, 0.24)' sets --shadow-soft to 0 12px 32px rgba(0, 0, 0, 0.24). */  --shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.24);
+/* Original L160: Closes the current CSS rule or media-query block. */}
+/* Original L161: Blank line separates related rules for readability. */
+/* Original L162: Selects '@font-face'; declarations inside change the layout/appearance of those matching Timekeeper elements. */@font-face {
+/* Original L163: For selector '@font-face', font-family selects the typeface stack; value "'Sapoe'" sets selects the typeface stack to 'Sapoe'. */  font-family: 'Sapoe';
+/* Original L164: For selector '@font-face', src controls this CSS property; value "url('../fonts/Sapoe-Regular.otf') format('otf')" sets src to url('../fonts/Sapoe-Regular.otf') format('otf'). */  src: url('../fonts/Sapoe-Regular.otf') format('otf');
+/* Original L165: For selector '@font-face', font-weight sets text stroke emphasis; value 'normal' sets sets text stroke emphasis to normal. */  font-weight: normal;
+/* Original L166: For selector '@font-face', font-style selects normal/italic style; value 'normal' sets selects normal/italic style to normal. */  font-style: normal;
+/* Original L167: For selector '@font-face', font-display controls this CSS property; value 'swap' sets font-display to swap. */  font-display: swap;
+/* Original L168: Closes the current CSS rule or media-query block. */}
+/* Original L169: Blank line separates related rules for readability. */
+/* Original L170: Selects '*'; declarations on this line style matching Timekeeper elements. box-sizing makes declared dimensions include border/padding when border-box; value 'border-box' sets makes declared dimensions include border/padding when border-box to border-box. */* { box-sizing: border-box; }
+/* Original L171: Blank line separates related rules for readability. */
+/* Original L172: Selects 'html'; declarations on this line style matching Timekeeper elements. min-width sets the smallest allowed horizontal size; value '320px' sets the sets the smallest allowed horizontal size to 320px. background sets the full background paint; value 'var(--canvas)' uses theme custom property var(--canvas), so the shared design token controls this value. */html { min-width: 320px; background: var(--canvas); }
+/* Original L173: Blank line separates related rules for readability. */
+/* Original L174: Selects 'body'; declarations inside change the layout/appearance of those matching Timekeeper elements. */body {
+/* Original L175: For selector 'body', margin sets outside spacing around the box; value '0' sets sets outside spacing around the box to 0. */  margin: 0;
+/* Original L176: For selector 'body', min-height sets the smallest allowed control/region height; value '100vh' sets sets the smallest allowed control/region height to 100vh. */  min-height: 100vh;
+/* Original L177: For selector 'body', min-height sets the smallest allowed control/region height; value '100dvh' sets sets the smallest allowed control/region height to 100dvh. */  min-height: 100dvh;
+/* Original L178: For selector 'body', color sets foreground text/icon color; value 'var(--ink)' uses theme custom property var(--ink), so the shared design token controls this value. */  color: var(--ink);
+/* Original L179: For selector 'body', background sets the full background paint; value 'var(--canvas)' uses theme custom property var(--canvas), so the shared design token controls this value. */  background: var(--canvas);
+/* Original L180: For selector 'body', font-family selects the typeface stack; value 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' sets selects the typeface stack to Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif. */  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+/* Original L181: For selector 'body', font-size sets text size; value '14px' sets the sets text size to 14px. */  font-size: 14px;
+/* Original L182: For selector 'body', line-height sets line box height and text rhythm; value '1.5' sets sets line box height and text rhythm to 1.5. */  line-height: 1.5;
+/* Original L183: For selector 'body', -webkit-font-smoothing controls this CSS property; value 'antialiased' sets -webkit-font-smoothing to antialiased. */  -webkit-font-smoothing: antialiased;
+/* Original L184: Closes the current CSS rule or media-query block. */}
+/* Original L185: Blank line separates related rules for readability. */
+/* Original L186: Selects 'button, input, select, textarea'; declarations on this line style matching Timekeeper elements. font sets inherited font shorthand; value 'inherit' sets sets inherited font shorthand to inherit. */button, input, select, textarea { font: inherit; }
+/* Original L187: Selects 'button'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'inherit' sets sets foreground text/icon color to inherit. */button { color: inherit; }
+/* Original L188: Selects 'button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-visible'; declarations inside change the layout/appearance of those matching Timekeeper elements. */button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-visible {
+/* Original L189: For selector 'button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-visible', outline draws focus/diagnostic ring outside the border; value '3px solid var(--focus-ring)' sets draws focus/diagnostic ring outside the border to 3px solid var(--focus-ring). */  outline: 3px solid var(--focus-ring);
+/* Original L190: For selector 'button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-visible', outline-offset moves the outline away from the border; value '2px' sets the moves the outline away from the border to 2px. */  outline-offset: 2px;
+/* Original L191: Closes the current CSS rule or media-query block. */}
+/* Original L192: Blank line separates related rules for readability. */
+/* Original L193: Selects 'input, select, textarea'; declarations inside change the layout/appearance of those matching Timekeeper elements. */input, select, textarea {
+/* Original L194: For selector 'input, select, textarea', color sets foreground text/icon color; value 'var(--ink)' uses theme custom property var(--ink), so the shared design token controls this value. */  color: var(--ink);
+/* Original L195: For selector 'input, select, textarea', background sets the full background paint; value 'var(--control-surface)' uses theme custom property var(--control-surface), so the shared design token controls this value. */  background: var(--control-surface);
+/* Original L196: For selector 'input, select, textarea', border sets border width/style/color; value '1px solid var(--border)' sets sets border width/style/color to 1px solid var(--border). */  border: 1px solid var(--border);
+/* Original L197: For selector 'input, select, textarea', border-radius rounds box corners; value '10px' sets the rounds box corners to 10px. */  border-radius: 10px;
+/* Original L198: Closes the current CSS rule or media-query block. */}
+/* Original L199: Blank line separates related rules for readability. */
+/* Original L200: Selects ':where(input, select, textarea)'; declarations on this line style matching Timekeeper elements. scroll-margin-block controls this CSS property; value '16px' sets the scroll-margin-block to 16px. */:where(input, select, textarea) { scroll-margin-block: 16px; }
+/* Original L201: Selects 'dialog[open]'; declarations on this line style matching Timekeeper elements. max-height caps vertical size; value 'calc(100vh - 16px)' sets caps vertical size to calc(100vh - 16px). max-height caps vertical size; value 'calc(100dvh - 16px)' sets caps vertical size to calc(100dvh - 16px). overflow-y controls vertical overflow; value 'auto' sets controls vertical overflow to auto. overscroll-behavior controls this CSS property; value 'contain' sets overscroll-behavior to contain. */dialog[open] { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); overflow-y: auto; overscroll-behavior: contain; }
+/* Original L202: Blank line separates related rules for readability. */
+/* Original L203: Selects 'input::placeholder, textarea::placeholder'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--muted)' uses theme custom property var(--muted), so the shared design token controls this value. opacity makes the element and its contents translucent; value '.78' sets makes the element and its contents translucent to .78. */input::placeholder, textarea::placeholder { color: var(--muted); opacity: .78; }
+/* Original L204: Selects 'input:disabled, select:disabled, textarea:disabled'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--muted)' uses theme custom property var(--muted), so the shared design token controls this value. background sets the full background paint; value 'var(--surface-muted)' uses theme custom property var(--surface-muted), so the shared design token controls this value. cursor chooses pointer cursor presentation; value 'not-allowed' sets chooses pointer cursor presentation to not-allowed. */input:disabled, select:disabled, textarea:disabled { color: var(--muted); background: var(--surface-muted); cursor: not-allowed; }
+/* Original L205: Blank line separates related rules for readability. */
+/* Original L206: Selects 'label'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--ink-soft)' uses theme custom property var(--ink-soft), so the shared design token controls this value. font-size sets text size; value '12px' sets the sets text size to 12px. font-weight sets text stroke emphasis; value '650' semibold emphasis. */label { color: var(--ink-soft); font-size: 12px; font-weight: 650; }
+/* Original L207: Blank line separates related rules for readability. */
+/* Original L208: Selects 'button'; declarations inside change the layout/appearance of those matching Timekeeper elements. */button {
+/* Original L209: For selector 'button', border sets border width/style/color; value '0' sets sets border width/style/color to 0. */  border: 0;
+/* Original L210: For selector 'button', border-radius rounds box corners; value '10px' sets the rounds box corners to 10px. */  border-radius: 10px;
+/* Original L211: For selector 'button', cursor chooses pointer cursor presentation; value 'pointer' sets chooses pointer cursor presentation to pointer. */  cursor: pointer;
+/* Original L212: For selector 'button', transition controls this CSS property; value 'background-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease' sets transition to background-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease. */  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+/* Original L213: Closes the current CSS rule or media-query block. */}
+/* Original L214: Blank line separates related rules for readability. */
+/* Original L215: Selects 'button:disabled'; declarations on this line style matching Timekeeper elements. opacity makes the element and its contents translucent; value '0.58' sets makes the element and its contents translucent to 0.58. cursor chooses pointer cursor presentation; value 'not-allowed' sets chooses pointer cursor presentation to not-allowed. transform controls this CSS property; value 'none' sets transform to none. */button:disabled { opacity: 0.58; cursor: not-allowed; transform: none; }
+/* Original L216: Blank line separates related rules for readability. */
+/* Original L217: Selects 'h1, h2, h3, p'; declarations on this line style matching Timekeeper elements. margin-top adds outside space above the element; value '0' sets adds outside space above the element to 0. */h1, h2, h3, p { margin-top: 0; }
+/* Original L218: Selects 'h1, h2, h3'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--ink)' uses theme custom property var(--ink), so the shared design token controls this value. letter-spacing adjusts spacing between glyphs; value '-0.035em' sets the adjusts spacing between glyphs to -0.035em. */h1, h2, h3 { color: var(--ink); letter-spacing: -0.035em; }
+/* Original L219: Selects '.muted-copy'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--muted)' uses theme custom property var(--muted), so the shared design token controls this value. */.muted-copy { color: var(--muted); }
+/* Original L220: Blank line separates related rules for readability. */
+/* Original L221: Begins a responsive media query: the nested overrides apply when (prefers-reduced-motion: reduce) {. */@media (prefers-reduced-motion: reduce) {
+/* Original L222: Selects '*, *::before, *::after'; declarations on this line style matching Timekeeper elements. scroll-behavior controls this CSS property; value 'auto !important' sets scroll-behavior to auto !important. animation-duration controls this CSS property; value '0.01ms !important' sets animation-duration to 0.01ms !important. animation-iteration-count controls this CSS property; value '1 !important' sets animation-iteration-count to 1 !important. transition-duration controls this CSS property; value '0.01ms !important' sets transition-duration to 0.01ms !important. */  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+/* Original L223: Closes the current CSS rule or media-query block. */}
+/* Original L224: Blank line separates related rules for readability. */
+/* Original L225: Selects '.table-sort-button'; declarations inside change the layout/appearance of those matching Timekeeper elements. */.table-sort-button {
+/* Original L226: For selector '.table-sort-button', display chooses the layout model or visibility behavior; value 'inline-flex' keeps the control inline while laying out children with flex. */  display: inline-flex;
+/* Original L227: For selector '.table-sort-button', align-items aligns children across the cross axis; value 'center' sets aligns children across the cross axis to center. */  align-items: center;
+/* Original L228: For selector '.table-sort-button', gap sets spacing between flex/grid children; value '6px' sets the sets spacing between flex/grid children to 6px. */  gap: 6px;
+/* Original L229: For selector '.table-sort-button', min-height sets the smallest allowed control/region height; value '32px' sets the sets the smallest allowed control/region height to 32px. */  min-height: 32px;
+/* Original L230: For selector '.table-sort-button', padding sets inside spacing between border and content; value '2px 4px' sets the sets inside spacing between border and content to 2px 4px. */  padding: 2px 4px;
+/* Original L231: For selector '.table-sort-button', color sets foreground text/icon color; value 'inherit' sets sets foreground text/icon color to inherit. */  color: inherit;
+/* Original L232: For selector '.table-sort-button', background sets the full background paint; value 'transparent' sets sets the full background paint to transparent. */  background: transparent;
+/* Original L233: For selector '.table-sort-button', border-radius rounds box corners; value '6px' sets the rounds box corners to 6px. */  border-radius: 6px;
+/* Original L234: For selector '.table-sort-button', font sets inherited font shorthand; value 'inherit' sets sets inherited font shorthand to inherit. */  font: inherit;
+/* Original L235: For selector '.table-sort-button', letter-spacing adjusts spacing between glyphs; value 'inherit' sets adjusts spacing between glyphs to inherit. */  letter-spacing: inherit;
+/* Original L236: For selector '.table-sort-button', text-align aligns inline text; value 'left' aligns content to the left. */  text-align: left;
+/* Original L237: For selector '.table-sort-button', text-transform changes displayed letter casing; value 'inherit' sets changes displayed letter casing to inherit. */  text-transform: inherit;
+/* Original L238: For selector '.table-sort-button', white-space controls wrapping of whitespace/text; value 'nowrap' keeps text on one line. */  white-space: nowrap;
+/* Original L239: Closes the current CSS rule or media-query block. */}
+/* Original L240: Selects '.table-sort-button:hover'; declarations on this line style matching Timekeeper elements. color sets foreground text/icon color; value 'var(--green-deep)' uses theme custom property var(--green-deep), so the shared design token controls this value. background sets the full background paint; value 'var(--surface-hover)' uses theme custom property var(--surface-hover), so the shared design token controls this value. */.table-sort-button:hover { color: var(--green-deep); background: var(--surface-hover); }
+/* Original L241: Selects '.table-sort-indicator'; declarations on this line style matching Timekeeper elements. min-width sets the smallest allowed horizontal size; value '1em' sets the sets the smallest allowed horizontal size to 1em. color sets foreground text/icon color; value 'var(--green-deep)' uses theme custom property var(--green-deep), so the shared design token controls this value. font-size sets text size; value '1.15em' sets the sets text size to 1.15em. line-height sets line box height and text rhythm; value '1' sets sets line box height and text rhythm to 1. text-align aligns inline text; value 'center' centers inline content. */.table-sort-indicator { min-width: 1em; color: var(--green-deep); font-size: 1.15em; line-height: 1; text-align: center; }
+/* Original L242: Blank line separates related rules for readability. */
+/* Original L243: Selects '.confirm-dialog'; declarations inside change the layout/appearance of those matching Timekeeper elements. */.confirm-dialog {
+/* Original L244: For selector '.confirm-dialog', width sets horizontal size; value 'min(92vw, 420px)' sets sets horizontal size to min(92vw, 420px). */  width: min(92vw, 420px);
+/* Original L245: For selector '.confirm-dialog', max-height caps vertical size; value 'calc(100dvh - 32px)' sets caps vertical size to calc(100dvh - 32px). */  max-height: calc(100dvh - 32px);
+/* Original L246: For selector '.confirm-dialog', padding sets inside spacing between border and content; value '24px' sets the sets inside spacing between border and content to 24px. */  padding: 24px;
+/* Original L247: For selector '.confirm-dialog', border sets border width/style/color; value '1px solid var(--border)' sets sets border width/style/color to 1px solid var(--border). */  border: 1px solid var(--border);
+/* Original L248: For selector '.confirm-dialog', border-radius rounds box corners; value '20px' sets the rounds box corners to 20px. */  border-radius: 20px;
+/* Original L249: For selector '.confirm-dialog', color sets foreground text/icon color; value 'var(--ink)' uses theme custom property var(--ink), so the shared design token controls this value. */  color: var(--ink);
+/* Original L250: For selector '.confirm-dialog', background sets the full background paint; value 'var(--surface)' uses theme custom property var(--surface), so the shared design token controls this value. */  background: var(--surface);
+/* Original L251: For selector '.confirm-dialog', box-shadow draws depth/shadow around a component; value '0 24px 70px rgba(0, 0, 0, .24)' sets draws depth/shadow around a component to 0 24px 70px rgba(0, 0, 0, .24). */  box-shadow: 0 24px 70px rgba(0, 0, 0, .24);
+/* Original L252: Closes the current CSS rule or media-query block. */}
+/* Original L253: Blank line separates related rules for readability. */
+/* Original L254: Selects '.confirm-dialog::backdrop'; declarations inside change the layout/appearance of those matching Timekeeper elements. */.confirm-dialog::backdrop {
+/* Original L255: For selector '.confirm-dialog::backdrop', background sets the full background paint; value 'rgba(15, 23, 42, .42)' uses translucent color rgba(15, 23, 42, .42) to soften the surface/shadow. */  background: rgba(15, 23, 42, .42);
+/* Original L256: For selector '.confirm-dialog::backdrop', backdrop-filter filters pixels behind a translucent overlay; value 'blur(3px)' sets filters pixels behind a translucent overlay to blur(3px). */  backdrop-filter: blur(3px);
+/* Original L257: Closes the current CSS rule or media-query block. */}
+/* Original L258: Blank line separates related rules for readability. */
+/* Original L259: Selects '.confirm-dialog p'; declarations inside change the layout/appearance of those matching Timekeeper elements. */.confirm-dialog p {
+/* Original L260: For selector '.confirm-dialog p', margin sets outside spacing around the box; value '0 0 24px' sets the sets outside spacing around the box to 0 0 24px. */  margin: 0 0 24px;
+/* Original L261: For selector '.confirm-dialog p', color sets foreground text/icon color; value 'var(--ink)' uses theme custom property var(--ink), so the shared design token controls this value. */  color: var(--ink);
+/* Original L262: For selector '.confirm-dialog p', line-height sets line box height and text rhythm; value '1.6' sets sets line box height and text rhythm to 1.6. */  line-height: 1.6;
+/* Original L263: Closes the current CSS rule or media-query block. */}
+/* Original L264: Blank line separates related rules for readability. */
+/* Original L265: Selects '.confirm-dialog form'; declarations inside change the layout/appearance of those matching Timekeeper elements. */.confirm-dialog form {
+/* Original L266: For selector '.confirm-dialog form', display chooses the layout model or visibility behavior; value 'flex' uses Flexbox for one-dimensional child alignment. */  display: flex;
+/* Original L267: For selector '.confirm-dialog form', justify-content aligns children along the main axis; value 'flex-end' sets aligns children along the main axis to flex-end. */  justify-content: flex-end;
+/* Original L268: For selector '.confirm-dialog form', gap sets spacing between flex/grid children; value '10px' sets the sets spacing between flex/grid children to 10px. */  gap: 10px;
+/* Original L269: Closes the current CSS rule or media-query block. */}
+/* Original L270: Blank line separates related rules for readability. */
+/* Original L271: Selects '.confirm-dialog button'; declarations inside change the layout/appearance of those matching Timekeeper elements. */.confirm-dialog button {
+/* Original L272: For selector '.confirm-dialog button', min-height sets the smallest allowed control/region height; value '44px' sets the sets the smallest allowed control/region height to 44px. */  min-height: 44px;
+/* Original L273: For selector '.confirm-dialog button', padding sets inside spacing between border and content; value '0 16px' sets the sets inside spacing between border and content to 0 16px. */  padding: 0 16px;
+/* Original L274: For selector '.confirm-dialog button', border-radius rounds box corners; value '10px' sets the rounds box corners to 10px. */  border-radius: 10px;
+/* Original L275: For selector '.confirm-dialog button', font sets inherited font shorthand; value 'inherit' sets sets inherited font shorthand to inherit. */  font: inherit;
+/* Original L276: For selector '.confirm-dialog button', font-weight sets text stroke emphasis; value '650' semibold emphasis. */  font-weight: 650;
+/* Original L277: Closes the current CSS rule or media-query block. */}
+/* Original L278: Blank line separates related rules for readability. */
+/* Original L279: Selects '.confirm-dialog button[value="cancel"]'; declarations inside change the layout/appearance of those matching Timekeeper elements. */.confirm-dialog button[value="cancel"] {
+/* Original L280: For selector '.confirm-dialog button[value="cancel"]', color sets foreground text/icon color; value 'var(--ink)' uses theme custom property var(--ink), so the shared design token controls this value. */  color: var(--ink);
+/* Original L281: For selector '.confirm-dialog button[value="cancel"]', background sets the full background paint; value 'var(--surface-muted)' uses theme custom property var(--surface-muted), so the shared design token controls this value. */  background: var(--surface-muted);
+/* Original L282: For selector '.confirm-dialog button[value="cancel"]', border sets border width/style/color; value '1px solid var(--border)' sets sets border width/style/color to 1px solid var(--border). */  border: 1px solid var(--border);
+/* Original L283: Closes the current CSS rule or media-query block. */}
+/* Original L284: Blank line separates related rules for readability. */
+/* Original L285: Selects '.confirm-dialog button[value="confirm"]'; declarations inside change the layout/appearance of those matching Timekeeper elements. */.confirm-dialog button[value="confirm"] {
+/* Original L286: For selector '.confirm-dialog button[value="confirm"]', color sets foreground text/icon color; value 'white' sets sets foreground text/icon color to white. */  color: white;
+/* Original L287: For selector '.confirm-dialog button[value="confirm"]', background sets the full background paint; value 'var(--green)' uses theme custom property var(--green), so the shared design token controls this value. */  background: var(--green);
+/* Original L288: Closes the current CSS rule or media-query block. */}
+/* Original L289: Blank line separates related rules for readability. */
+/* Original L290: Selects '.confirm-dialog button:focus-visible'; declarations inside change the layout/appearance of those matching Timekeeper elements. */.confirm-dialog button:focus-visible {
+/* Original L291: For selector '.confirm-dialog button:focus-visible', outline draws focus/diagnostic ring outside the border; value '3px solid var(--focus-ring)' sets draws focus/diagnostic ring outside the border to 3px solid var(--focus-ring). */  outline: 3px solid var(--focus-ring);
+/* Original L292: For selector '.confirm-dialog button:focus-visible', outline-offset moves the outline away from the border; value '2px' sets the moves the outline away from the border to 2px. */  outline-offset: 2px;
+/* Original L293: Closes the current CSS rule or media-query block. */}

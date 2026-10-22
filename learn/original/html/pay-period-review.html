@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <link rel="stylesheet" href="../styles/pay-period-review.css">
+    <script type="module" src="../scripts/keyboard.mjs" defer></script>
+    <script type="module" src="../scripts/pay-period-review.js" defer></script>
+    <title>Pay-period review · Mosher Lawns Timekeeper</title>
+  </head>
+  <body>
+    <main class="review-page">
+      <header class="review-heading">
+        <p class="review-kicker">BEFORE YOU CLOSE OUT</p>
+        <h1>Pay-period review</h1>
+        <p>Completed work, pay settings, current balances, and unbilled shifts in one place.</p>
+        <span class="read-only-badge">Read-only review</span>
+      </header>
+
+      <form id="review-filters" class="review-panel review-filters">
+        <div class="filter-field"><label for="review-start">From</label><input id="review-start" type="date" required></div>
+        <div class="filter-field"><label for="review-end">Through</label><input id="review-end" type="date" required></div>
+        <div class="filter-field"><label for="review-employee">Employee</label><select id="review-employee"><option value="">All employees</option></select></div>
+        <button type="submit" id="review-apply" disabled>Review period</button>
+        <div class="period-shortcuts" aria-label="Date shortcuts">
+          <button type="button" id="review-this-week" disabled>This week</button>
+          <button type="button" id="review-last-week" disabled>Previous week</button>
+          <button type="button" id="review-refresh">Refresh data</button>
+        </div>
+      </form>
+      <p id="review-status" role="status" aria-live="polite">Loading review data…</p>
+      <p id="review-error" class="review-error" role="alert" hidden></p>
+
+      <div id="review-results" hidden>
+        <section id="review-metrics" class="review-metrics" aria-label="Period totals"></section>
+        <p class="review-explainer">Actual hours subtract recorded breaks. Pay hours use each shift’s paid-hours override, or actual hours if none is set; they do not mean payment has been made. Unpaid hours are pay hours on shifts not marked paid.</p>
+        <p id="review-warnings" class="review-warning" hidden></p>
+
+        <section class="review-panel" aria-labelledby="review-people-title">
+          <h2 id="review-people-title">Employee summary &amp; current balances</h2>
+          <p class="review-explainer">Hours are for the selected period. Balances include all current active ledger entries, regardless of date; they are not added to unpaid shift hours or a calculation of pay due. Positive balances are owed to the employee; negative balances are advances ahead of earnings.</p>
+          <div class="review-table-wrap" tabindex="0" role="region" aria-label="Employee summary, scroll horizontally for more columns">
+            <table><caption class="sr-only">Period hours and all-date active ledger balances by employee</caption><thead><tr><th scope="col">Employee</th><th scope="col">Shifts</th><th scope="col">Actual h</th><th scope="col">Pay h</th><th scope="col">Unpaid h</th><th scope="col">Current ledger balance</th></tr></thead><tbody id="review-people"></tbody></table>
+          </div>
+          <p class="review-explainer">Settled ledger histories archive automatically at $0.00. Archived shift links remain visible below, but archived entries do not contribute to the current balance. No active entries does not by itself prove a shift was paid.</p>
+        </section>
+
+        <section class="review-panel" aria-labelledby="review-shifts-title">
+          <h2 id="review-shifts-title">Completed shifts</h2>
+          <p class="review-explainer">Both dates are inclusive, using the local clock-in date. An overnight shift is counted in full on its start date. Invoice-ready means completed, not linked to any invoice, and a customer billing rate is set. Billing estimates use actual hours, not pay hours, and are not saved invoices.</p>
+          <div class="review-table-wrap" tabindex="0" role="region" aria-label="Completed shifts, scroll horizontally for more columns">
+            <table><caption class="sr-only">Completed shift payment, ledger, and invoice review</caption><thead><tr><th scope="col">Started</th><th scope="col">Employee / customer</th><th scope="col">Actual h</th><th scope="col">Pay h</th><th scope="col">Payment status</th><th scope="col">Ledger link</th><th scope="col">Invoice status</th><th scope="col">Ready estimate</th></tr></thead><tbody id="review-shifts"></tbody></table>
+          </div>
+        </section>
+      </div>
+      <p class="review-footnote">This page never marks shifts paid, adds ledger entries, archives balances, creates invoices, or closes a period. Work-hour logging stays unchanged.</p>
+    </main>
+  </body>
+</html>
