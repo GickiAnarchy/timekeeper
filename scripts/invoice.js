@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const addItemBtn = document.getElementById('add-item-btn');
   const editItemBtn = document.getElementById('edit-item-btn');
   const removeItemBtn = document.getElementById('remove-item-btn');
+  const addPaymentBtn = document.getElementById('payment-item-btn');
   const addInvBtn = document.getElementById('add-inv-btn');
   const deleteInvBtn = document.getElementById('delete-inv-btn');
   const invoiceBody = document.getElementById('invoice-table-body');
@@ -136,6 +137,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectedItemIndex = null;
     populateInvoiceDetails(invoice);
     renderOpenInvoices();
+  });
+  
+  addPaymentBtn.addEventListener('click', async () => {
+    
   });
 
   renderInvoiceList();
@@ -484,7 +489,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           const status = shiftInvoiceLineStatus(item, sourceShift);
           if (status !== 'current') {
             const warning = document.createElement('small');
-            warning.className = `invoice-line-warning is-${status}`;
+            warning
+            .className = `invoice-line-warning is-${status}`;
             warning.textContent = status === 'changed'
               ? `Source shift changed after billing. Saved snapshot remains ${Number(item.billedHours ?? item.actualHours ?? 0).toFixed(2)} h × $${Number(item.billingRate ?? 0).toFixed(2)}/h.`
               : status === 'missing'
