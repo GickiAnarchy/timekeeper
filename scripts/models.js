@@ -6,7 +6,8 @@ import {
   roundUp15Minutes,
   shiftIsAttachedElsewhere,
   makeShiftLedgerEntryData,
-  ledgerBalanceCents
+  ledgerBalanceCents,
+  repriceInvoiceShiftItems
 } from './domain.mjs';
 
 /*
@@ -914,11 +915,7 @@ export class AppDataStore {
       updates.billingRate = cleanRate;
     }
     
-    await updateDoc(doc(db, "customers", id), updates);
-    customer.name = cleanName;
-    customer.location = cleanLocation;
-    customer.note = cleanNote;
-    if (billingRate !== undefined) customer.billingRate = cleanRate;
+    await this.updateCustomerAndLinkedInvoices(customer, id, updates, billingRate !== undefined);
     return true;
   }
   
@@ -929,15 +926,38 @@ export class AppDataStore {
     if (rate !== null && (!Number.isFinite(rate) || rate < 0)) {
       throw new Error("Hourly billing rate must be a non-negative number.");
     }
-    const previousRate = customer.billingRate;
-    customer.billingRate = rate;
-    try {
-      await updateDoc(doc(db, "customers", id), { billingRate: rate });
-    } catch (error) {
-      customer.billingRate = previousRate;
-      throw error;
-    }
+    await this.updateCustomerAndLinkedInvoices(customer, id, { billingRate: rate }, true);
     return customer;
+  }
+
+  async updateCustomerAndLinkedInvoices(customer, id, updates, rateWasProvided) {
+    const rateChanged = rateWasProvided && customer.billingRate !== updates.billingRate;
+    const repricedInvoices = [];
+    if (rateChanged && updates.billingRate !== null) {
+      for (const invoice of this.invoices) {
+        if (String(invoice.customer?.id) !== String(id)) continue;
+        const items = repriceInvoiceShiftItems(invoice, updates.billingRate, this.shifts);
+        if (items.some((item, index) => item !== invoice.items?.[index])) {
+          repricedInvoices.push({ invoice, items });
+        }
+      }
+    }
+
+    if (repricedInvoices.length + 1 > 500) {
+      throw new Error('This rate change affects more invoices than can be saved atomically. No changes were made; please reduce the number of linked invoices and try again.');
+    }
+
+    const batch = writeBatch(db);
+    batch.update(doc(db, "customers", id), updates);
+    repricedInvoices.forEach(({ invoice, items }) => {
+      batch.update(doc(db, "invoices", invoice.id), { items });
+    });
+    await commitBatch(batch, 'Saving the customer rate and repricing linked invoice lines failed.');
+
+    Object.assign(customer, updates);
+    repricedInvoices.forEach(({ invoice, items }) => {
+      invoice.items = items;
+    });
   }
   
   async deleteCustomer(id) {

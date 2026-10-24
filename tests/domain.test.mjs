@@ -13,7 +13,9 @@ import {
   sortTableRows,
   sumLedgerHours,
   shiftInvoiceLineStatus,
-  shiftIsAttachedElsewhere
+  shiftIsAttachedElsewhere,
+  repriceInvoiceShiftItems,
+  groupInvoiceItemsByEmployee
 } from '../scripts/domain.mjs';
 
 const date = value => new Date(value);
@@ -164,4 +166,76 @@ test('a shift cannot be attached to two invoices and linked lines preserve audit
   assert.equal(shiftInvoiceLineStatus(line, shift), 'current');
   const editedShift = { ...shift, clockOutTime: date('2026-10-09T12:15:00Z') };
   assert.equal(shiftInvoiceLineStatus(line, editedShift), 'changed');
+});
+
+test('invoice display groups linked labor by employee while retaining each shift and exact totals', () => {
+  const items = [
+    { name: 'Labor · Oct 9 · Alice (1.25 h × $40.00/h)', value: 50, shiftId: 's1', billedHours: 1.25, shiftSnapshot: { employeeId: 'e1' } },
+    { name: 'Travel', value: 12.5 },
+    { name: 'Labor · Oct 10 · Alice (2.00 h × $40.00/h)', value: 80, shiftId: 's2', billedHours: 2, shiftSnapshot: { employeeId: 'e1' } },
+    { name: 'Labor · Oct 10 · Ben (0.50 h × $45.00/h)', value: 22.5, shiftId: 's3', billedHours: 0.5, shiftSnapshot: { employeeId: 'e2' } }
+  ];
+  const rows = groupInvoiceItemsByEmployee(items, [{ id: 's1', employee: { id: 'e9', name: 'Reassigned' } }], new Map([
+    ['e1', { id: 'e1', name: 'Alice' }], ['e2', { id: 'e2', name: 'Ben' }], ['e9', { id: 'e9', name: 'Reassigned' }]
+  ]));
+
+  assert.deepEqual(rows.map(row => row.kind), ['labor', 'item', 'labor']);
+  assert.equal(rows[0].employeeName, 'Alice');
+  assert.equal(rows[0].items.length, 2);
+  assert.equal(rows[0].totalHours, 3.25);
+  assert.equal(rows[0].value, 130);
+  assert.equal(rows[0].items[1].item.shiftId, 's2');
+  assert.equal(rows[1].item.name, 'Travel');
+  assert.equal(rows[2].employeeName, 'Ben');
+  assert.equal(rows[2].value, 22.5);
+});
+
+test('customer rate changes reprice linked shift items on paid invoices without changing saved hours or timestamps', () => {
+  const line = makeShiftInvoiceLine({
+    id: 'shift-rate-1',
+    employee: { id: 'employee-1' },
+    customer: { id: 'customer-1' },
+    clockInTime: date('2026-10-09T09:00:00Z'),
+    clockOutTime: date('2026-10-09T12:00:00Z'),
+    breaks: [{ start: date('2026-10-09T10:00:00Z'), end: date('2026-10-09T10:15:00Z') }]
+  }, 60);
+  line.name = 'Labor · Oct 9 · Alice (2.75 h × $60.00/h)';
+  const manual = { name: 'Materials', value: 15 };
+  const invoice = { isPaid: true, items: [line, manual] };
+  const originalSnapshot = structuredClone(line.shiftSnapshot);
+
+  const repriced = repriceInvoiceShiftItems(invoice, 80);
+
+  assert.equal(repriced[0].value, 220);
+  assert.equal(repriced[0].billingRate, 80);
+  assert.match(repriced[0].name, /2\.75 h × \$80\.00\/h/);
+  assert.equal(repriced[0].billedHours, 2.75);
+  assert.deepEqual(repriced[0].shiftSnapshot, originalSnapshot);
+  assert.equal(repriced[1], manual);
+  assert.equal(invoice.items[0].value, 165);
+  assert.equal(invoice.isPaid, true);
+});
+
+test('legacy linked labor without saved hours can use its source shift to get repriced', () => {
+  const shift = {
+    id: 'legacy-shift',
+    employee: { id: 'employee-1' },
+    customer: { id: 'customer-1' },
+    clockInTime: date('2026-10-09T09:00:00Z'),
+    clockOutTime: date('2026-10-09T12:00:00Z'),
+    breaks: [{ start: date('2026-10-09T10:00:00Z'), end: date('2026-10-09T10:15:00Z') }]
+  };
+  const [repriced] = repriceInvoiceShiftItems({ items: [{ name: 'Labor · Alice', shiftId: 'legacy-shift', value: 165 }] }, 80, [shift]);
+
+  assert.equal(repriced.value, 220);
+  assert.equal(repriced.billedHours, 2.75);
+  assert.equal(repriced.billingRate, 80);
+  assert.equal(repriced.shiftSnapshot.employeeId, 'employee-1');
+});
+
+test('repricing refuses to commit an unverifiable legacy shift with no saved or source hours', () => {
+  assert.throws(
+    () => repriceInvoiceShiftItems({ items: [{ shiftId: 'deleted-shift', value: 165 }] }, 80),
+    /Cannot reprice linked shift deleted-shift/
+  );
 });

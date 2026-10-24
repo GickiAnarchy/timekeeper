@@ -29,6 +29,13 @@ body > main { width: min(100%, 1000px); margin: 0 auto; }
 #inv-table tbody tr[data-item-index] { cursor: pointer; }
 #inv-table tbody tr:hover { background: var(--surface-hover); }
 #invoice-table-body tr.selected-item { background: var(--green-soft); outline: 2px solid var(--green-line); outline-offset: -2px; }
+.invoice-labor-title { display: block; color: var(--ink); }
+.invoice-shift-details { margin-top: 5px; }
+.invoice-shift-details > summary { width: fit-content; color: var(--green-deep); cursor: pointer; font-size: 10px; font-weight: 650; }
+.invoice-shift-detail-list { display: grid; gap: 7px; margin: 8px 0 0; padding: 0; list-style: none; }
+.invoice-shift-detail-list li { padding: 8px; background: var(--surface-muted); border: 1px solid var(--border-soft); border-radius: 8px; }
+.invoice-shift-detail-line { display: flex; justify-content: space-between; gap: 12px; color: var(--ink-soft); font-size: 10px; line-height: 1.45; }
+.invoice-shift-detail-line strong { flex: 0 0 auto; color: var(--ink); white-space: nowrap; }
 .invoice-line-warning { display: inline-block; margin-top: 3px; color: var(--red); font-size: 10px; font-weight: 650; line-height: 1.4; }
 .invoice-line-warning.is-unverified { color: var(--amber); }
 #inv-table tfoot td { color: var(--ink-soft); font-weight: 700; }

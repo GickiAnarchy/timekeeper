@@ -7,7 +7,8 @@ import {
   invoiceShiftIds as getInvoiceShiftIds,
   makeShiftInvoiceLine,
   shiftInvoiceLineStatus,
-  shiftIsAttachedElsewhere
+  shiftIsAttachedElsewhere,
+  groupInvoiceItemsByEmployee
 } from './domain.mjs';
 import { initializeTableSorting, sortTableRows } from './table-sort.mjs';
 
@@ -151,13 +152,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function sortInvoiceRows() {
-    const rows = [...invoiceBody.querySelectorAll('tr[data-item-index]')];
+    const rows = [...invoiceBody.querySelectorAll('tr[data-invoice-row]')];
     const sortedRows = invoiceSort
       ? sortTableRows(rows, {
           ...invoiceSort,
           getValue: (row, key) => key === 'item' ? row.dataset.sortItem : row.dataset.sortValue
         })
-      : rows.sort((a, b) => Number(a.dataset.itemIndex) - Number(b.dataset.itemIndex));
+      : rows.sort((a, b) => Number(a.dataset.orderIndex) - Number(b.dataset.orderIndex));
     sortedRows.forEach(row => invoiceBody.appendChild(row));
   }
 
@@ -473,35 +474,59 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!invoice.items || invoice.items.length === 0) {
       invoiceBody.innerHTML = '<tr><td colspan="3">No items in this invoice</td></tr>';
     } else {
-      invoice.items.forEach((item, index) => {
+      const displayRows = groupInvoiceItemsByEmployee(invoice.items, store.shifts, store.employees);
+      displayRows.forEach((entry, displayIndex) => {
         const row = document.createElement('tr');
-        row.dataset.itemIndex = index;
-        row.dataset.sortItem = item.name || '';
-        row.dataset.sortValue = String(Number(item.value || 0));
-        row.title = item.shiftId
-          ? 'This labor line is generated from a linked work shift; edit it in the Work shifts and labor section.'
-          : 'Click to select this item for editing or removal';
+        row.dataset.invoiceRow = 'true';
+        row.dataset.orderIndex = String(displayIndex);
+        row.dataset.sortItem = entry.kind === 'labor' ? `Labor · ${entry.employeeName}` : entry.label;
+        row.dataset.sortValue = String(Number(entry.value || 0));
         const nameCell = document.createElement('td');
         nameCell.colSpan = 2;
-        nameCell.textContent = item.name || '';
-        if (item.shiftId) {
-          const sourceShift = store.shifts.find(shift => String(shift.id) === String(item.shiftId));
-          const status = shiftInvoiceLineStatus(item, sourceShift);
-          if (status !== 'current') {
-            const warning = document.createElement('small');
-            warning
-            .className = `invoice-line-warning is-${status}`;
-            warning.textContent = status === 'changed'
-              ? `Source shift changed after billing. Saved snapshot remains ${Number(item.billedHours ?? item.actualHours ?? 0).toFixed(2)} h × $${Number(item.billingRate ?? 0).toFixed(2)}/h.`
-              : status === 'missing'
-                ? `Source shift ${item.shiftId} is missing. Saved billed hours and rate are retained.`
-                : 'This older labor line has no shift snapshot, so source changes cannot be verified.';
-            nameCell.appendChild(document.createElement('br'));
-            nameCell.appendChild(warning);
-          }
+        if (entry.kind === 'labor') {
+          row.classList.add('invoice-labor-group');
+          nameCell.appendChild(makeElement('strong', 'invoice-labor-title', `Labor · ${entry.employeeName}`));
+          const details = document.createElement('details');
+          details.className = 'invoice-shift-details';
+          const summary = document.createElement('summary');
+          summary.textContent = `View ${entry.items.length} linked ${entry.items.length === 1 ? 'shift' : 'shifts'} · ${entry.totalHours.toFixed(2)} actual h`;
+          details.appendChild(summary);
+          const shiftList = document.createElement('ul');
+          shiftList.className = 'invoice-shift-detail-list';
+          entry.items.forEach(({ item, shift }) => {
+            const detail = document.createElement('li');
+            const line = document.createElement('div');
+            line.className = 'invoice-shift-detail-line';
+            const hours = Number(item.billedHours ?? item.actualHours ?? item.shiftSnapshot?.billedHours ?? 0);
+            const rate = Number(item.billingRate ?? 0);
+            const fallbackName = `Shift ${item.shiftId} · ${hours.toFixed(2)} h × $${rate.toFixed(2)}/h`;
+            line.append(
+              makeElement('span', '', item.name || fallbackName),
+              makeElement('strong', '', formatCurrency(item.value || 0))
+            );
+            detail.appendChild(line);
+            const status = shiftInvoiceLineStatus(item, shift);
+            if (status !== 'current') {
+              const warning = document.createElement('small');
+              warning.className = `invoice-line-warning is-${status}`;
+              warning.textContent = status === 'changed'
+                ? `Source shift changed after billing. Saved snapshot remains ${Number(item.billedHours ?? item.actualHours ?? 0).toFixed(2)} h × $${Number(item.billingRate ?? 0).toFixed(2)}/h.`
+                : status === 'missing'
+                  ? `Source shift ${item.shiftId} is missing. Saved billed hours and rate are retained.`
+                  : 'This older labor line has no shift snapshot, so source changes cannot be verified.';
+              detail.appendChild(warning);
+            }
+            shiftList.appendChild(detail);
+          });
+          details.appendChild(shiftList);
+          nameCell.appendChild(details);
+        } else {
+          row.dataset.itemIndex = String(entry.indices[0]);
+          row.title = 'Click to select this item for editing or removal';
+          nameCell.textContent = entry.item.name || '';
         }
         const valueCell = document.createElement('td');
-        valueCell.textContent = formatCurrency(item.value || 0);
+        valueCell.textContent = formatCurrency(entry.value || 0);
         row.append(nameCell, valueCell);
         invoiceBody.appendChild(row);
       });

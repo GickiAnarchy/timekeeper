@@ -228,3 +228,92 @@ export function shiftInvoiceLineStatus(line, currentShift) {
     Number(recorded.billedHours) === current.billedHours && sameBreaks;
   return same ? 'current' : 'changed';
 }
+
+export function repriceInvoiceShiftItems(invoice, billingRate, shifts = []) {
+  const rate = Number(billingRate);
+  if (!Number.isFinite(rate) || rate < 0) throw new TypeError('A valid non-negative customer billing rate is required.');
+  const shiftsById = new Map((Array.isArray(shifts) ? shifts : []).map(shift => [String(shift?.id), shift]));
+
+  return (Array.isArray(invoice?.items) ? invoice.items : []).map(item => {
+    if (!item?.shiftId) return item;
+    const sourceShift = shiftsById.get(String(item.shiftId));
+    const savedHours = item.billedHours ?? item.actualHours ?? item.shiftSnapshot?.billedHours;
+    const start = asValidDate(sourceShift?.clockInTime);
+    const end = asValidDate(sourceShift?.clockOutTime);
+    const sourceHasValidTimes = start && end && end > start;
+    const liveHours = sourceHasValidTimes
+      ? typeof sourceShift.getHoursWorked === 'function'
+        ? sourceShift.getHoursWorked()
+        : actualShiftHours(start, end, sourceShift.breaks)
+      : null;
+    const sourceHours = savedHours ?? liveHours;
+    const hours = sourceHours === null || sourceHours === undefined ? Number.NaN : Number(sourceHours);
+    if (!Number.isFinite(hours) || hours < 0) {
+      throw new TypeError(`Cannot reprice linked shift ${item.shiftId} because its billed hours are missing and the source shift is unavailable.`);
+    }
+
+    const rateLabel = `(${hours.toFixed(2)} h × $${rate.toFixed(2)}/h)`;
+    const originalName = String(item.name || '').trim();
+    const name = /\([^()]*\d+(?:\.\d+)?\s*h\s*×\s*\$[\d,.]+\s*\/h\)\s*$/i.test(originalName)
+      ? originalName.replace(/\([^()]*\d+(?:\.\d+)?\s*h\s*×\s*\$[\d,.]+\s*\/h\)\s*$/i, rateLabel)
+      : `${originalName || 'Labor'} ${rateLabel}`;
+    const updated = {
+      ...item,
+      name,
+      value: Number((hours * rate).toFixed(2)),
+      billedHours: hours,
+      billingRate: rate
+    };
+    if (updated.actualHours === undefined) updated.actualHours = hours;
+    if (!updated.shiftSnapshot && sourceShift) updated.shiftSnapshot = shiftSnapshot(sourceShift);
+    return updated;
+  });
+}
+
+export function groupInvoiceItemsByEmployee(items = [], shifts = [], employees = new Map()) {
+  const shiftById = new Map((Array.isArray(shifts) ? shifts : []).map(shift => [String(shift?.id), shift]));
+  const employeeById = employees instanceof Map
+    ? employees
+    : new Map((Array.isArray(employees) ? employees : []).map(employee => [String(employee?.id), employee]));
+  const rows = [];
+  const laborGroups = new Map();
+
+  (Array.isArray(items) ? items : []).forEach((item, index) => {
+    if (!item?.shiftId) {
+      rows.push({ kind: 'item', item, indices: [index], label: String(item?.name || ''), value: Number(item?.value || 0) });
+      return;
+    }
+
+    const shift = shiftById.get(String(item.shiftId));
+    const employeeId = item.shiftSnapshot?.employeeId ?? shift?.employee?.id ?? null;
+    const key = employeeId == null || employeeId === '' ? `shift:${String(item.shiftId)}:${index}` : `employee:${String(employeeId)}`;
+    let group = laborGroups.get(key);
+    if (!group) {
+      const employee = employeeId == null ? null : employeeById.get(String(employeeId));
+      group = {
+        kind: 'labor',
+        employeeId: employeeId == null ? null : String(employeeId),
+        employeeName: employee?.name || shift?.employee?.name || (employeeId == null ? `Shift ${item.shiftId}` : `Employee ${employeeId}`),
+        items: [],
+        indices: [],
+        totalHours: 0,
+        valueCents: 0
+      };
+      laborGroups.set(key, group);
+      rows.push(group);
+    } else if (group.employeeName === `Employee ${employeeId}` && shift?.employee?.name) {
+      group.employeeName = shift.employee.name;
+    }
+
+    const hours = Number(item.billedHours ?? item.actualHours ?? item.shiftSnapshot?.billedHours ?? 0);
+    const amount = Number(item.value || 0);
+    group.items.push({ item, index, shift });
+    group.indices.push(index);
+    if (Number.isFinite(hours) && hours >= 0) group.totalHours = Number((group.totalHours + hours).toFixed(2));
+    if (Number.isFinite(amount)) group.valueCents += Math.round(amount * 100);
+  });
+
+  return rows.map(row => row.kind === 'labor'
+    ? { ...row, value: row.valueCents / 100 }
+    : row);
+}

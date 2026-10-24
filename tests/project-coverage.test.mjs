@@ -57,6 +57,20 @@ test('every native data table has accessible sortable controls for each sortable
   }
 });
 
+test('invoice labor rows group by employee but retain expandable shift details and reprice paid invoices', () => {
+  const invoiceMarkup = readProjectFile('html', 'invoice.html');
+  const invoiceScript = readProjectFile('scripts', 'invoice.js');
+  const model = readProjectFile('scripts', 'models.js');
+  assert.match(invoiceScript, /groupInvoiceItemsByEmployee\(invoice\.items, store\.shifts, store\.employees\)/);
+  assert.match(invoiceScript, /className = 'invoice-shift-details'/);
+  assert.match(invoiceScript, /querySelectorAll\('tr\[data-invoice-row\]'\)/);
+  assert.match(invoiceMarkup, /one labor total per employee; expand the row to see every linked shift/i);
+  const rateUpdate = model.slice(model.indexOf('async updateCustomerAndLinkedInvoices'), model.indexOf('async deleteCustomer', model.indexOf('async updateCustomerAndLinkedInvoices')));
+  assert.match(rateUpdate, /repriceInvoiceShiftItems\(invoice, updates\.billingRate, this\.shifts\)/);
+  assert.match(rateUpdate, /batch\.update\(doc\(db, "invoices", invoice\.id\), \{ items \}\)/);
+  assert.doesNotMatch(rateUpdate, /invoice\.isPaid/);
+});
+
 test('employee ledger footer includes a separate total-hours summary after the balance', () => {
   const markup = readProjectFile('html', 'payledger.html');
   const script = readProjectFile('scripts', 'ledger.js');

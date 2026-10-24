@@ -51,7 +51,7 @@
             </th>
           </tr>
           <tr>
-            <th scope="col" colspan="2" data-sort-key="item" data-sort-type="text"><button class="table-sort-button" type="button"><span class="table-sort-label">Item</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+            <th scope="col" colspan="2" data-sort-key="item" data-sort-type="text"><button class="table-sort-button" type="button"><span class="table-sort-label">Item / labor total</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
             <th scope="col" data-sort-key="value" data-sort-type="number"><button class="table-sort-button" type="button"><span class="table-sort-label">Value</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
           </tr>
         </thead>
@@ -73,7 +73,7 @@
       </div>
       <details class="shift-link-panel">
         <summary id="shift-link-heading"><span class="shift-link-title">Work shifts and labor</span></summary>
-        <p class="shift-link-description">Attach completed shifts for this customer. Each labor line snapshots the customer rate and saved break-adjusted hours. Clock In/Out and break buttons round recorded times to the nearest 15 minutes; manually edited shift times are used as saved. Hours are stored to 2 decimals and the line total is rounded to cents. Later shift or customer-rate edits do not change the billed snapshot; changed source shifts are flagged below.</p>
+        <p class="shift-link-description">Attach completed shifts for this customer. Invoices show one labor total per employee; expand the row to see every linked shift. Changing this customer’s hourly rate recalculates all linked labor lines, including paid invoices, while preserving each shift’s saved hours and time snapshot. Clearing the rate leaves existing invoice amounts at their last saved rate.</p>
         <div id="shift-link-list" class="shift-link-list" aria-live="polite"></div>
         <p id="shift-link-error" class="form-error" role="alert" aria-live="polite"></p>
         <button id="save-shift-links-btn" type="button" disabled>Update linked shifts</button>
