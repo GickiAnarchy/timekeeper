@@ -308,7 +308,7 @@ export class Invoice {
   }
   
   addItem(name, value) {
-    this.items.push({ name: name, value: Number(value) });
+    this.items.push({ name: name, type="general", value: Number(value) });
   }
   
   deleteItem(name, value) {

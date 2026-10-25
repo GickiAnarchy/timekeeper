@@ -1,47 +1,48 @@
 <!DOCTYPE html>
 
 <html>
-  <head>
-    <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <link rel="stylesheet" href="../styles/invoices.css"/>
-    <script type="module" src="../scripts/keyboard.mjs" defer></script>
-    <script type="module" src="../scripts/invoice.js" defer></script>
-    <title>Mosher Lawms</title>
-  </head>
-  
-  <body>
-    <header class="invoice-header">
-     
-     <div class="inv-dropdowns">
-       <div class="select-div">
-          <label for="cust-select">Customer:</label>
-          <select class="sel" id="cust-select">
-            <option value=""></option>
-          </select>
-        </div>
-        <div class="select-div">
-          <label for="inv-select">Invoice:</label>
-          <select class="sel" id="inv-select">
-            <option value=""></option>
-          </select>
-        </div> 
-       <div class="invoice-actions">
-         <button id="add-inv-btn">Create Invoice</button>
-         <button id="delete-inv-btn" type="button">Delete Invoice</button>
-       </div>
+
+<head>
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+  <link rel="stylesheet" href="../styles/invoices.css" />
+  <script type="module" src="../scripts/keyboard.mjs" defer></script>
+  <script type="module" src="../scripts/invoice.js" defer></script>
+  <title>Mosher Lawms</title>
+</head>
+
+<body>
+  <header class="invoice-header">
+    
+    <div class="inv-dropdowns">
+      <div class="select-div">
+        <label for="cust-select">Customer:</label>
+        <select class="sel" id="cust-select">
+          <option value=""></option>
+        </select>
       </div>
-      <div class="item-btns">
-        <button id="add-item-btn">Add Item</button>
-        <button id="edit-item-btn" type="button" disabled>Edit Item</button>
-        <button id="remove-item-btn" type="button">Remove Item</button>
-        <button id="payment-item-btn" type="button">Add Payment</button>
+      <div class="select-div">
+        <label for="inv-select">Invoice:</label>
+        <select class="sel" id="inv-select">
+          <option value=""></option>
+        </select>
       </div>
-      <section class="open-div" id="open-div" aria-label="All open invoices"></section>
-      
-    </header>
-    <main>
-      <div class="table-box">
+      <div class="invoice-actions">
+        <button id="add-inv-btn">Create Invoice</button>
+        <button id="delete-inv-btn" type="button">Delete Invoice</button>
+      </div>
+    </div>
+    <div class="item-btns">
+      <button id="add-item-btn">Add Item</button>
+      <button id="edit-item-btn" type="button" disabled>Edit Item</button>
+      <button id="remove-item-btn" type="button">Remove Item</button>
+      <button id="payment-item-btn" type="button">Add Payment</button>
+    </div>
+    <section class="open-div" id="open-div" aria-label="All open invoices"></section>
+    
+  </header>
+  <main>
+    <div class="table-box">
       <table id="inv-table">
         <thead>
           <tr>
@@ -70,31 +71,38 @@
           </tr>
         </tfoot>
       </table>
-      </div>
-      <details class="shift-link-panel">
-        <summary id="shift-link-heading"><span class="shift-link-title">Work shifts and labor</span></summary>
-        <p class="shift-link-description">Attach completed shifts for this customer. Invoices show one labor total per employee; expand the row to see every linked shift. Changing this customer’s hourly rate recalculates all linked labor lines, including paid invoices, while preserving each shift’s saved hours and time snapshot. Clearing the rate leaves existing invoice amounts at their last saved rate.</p>
-        <div id="shift-link-list" class="shift-link-list" aria-live="polite"></div>
-        <p id="shift-link-error" class="form-error" role="alert" aria-live="polite"></p>
-        <button id="save-shift-links-btn" type="button" disabled>Update linked shifts</button>
-      </details>
-    </main>
-    
-    <dialog class="modal" id="item-modal">
-      <form id="add-item-form">
-        <h2 id="item-modal-title">Add invoice item</h2>
-        <label for="name-input">Item name</label>
-        <input id="name-input" placeholder="Item name" type="text" required>
-        <label for="value-input">Item value</label>
-        <input id="value-input" placeholder="Item value" type="text" inputmode="decimal" pattern="^-?[0-9]*\.?[0-9]+" required>
+    </div>
+    <details class="shift-link-panel">
+      <summary id="shift-link-heading"><span class="shift-link-title">Work shifts and labor</span></summary>
+      <p class="shift-link-description">Attach completed shifts for this customer. Invoices show one labor total per employee; expand the row to see every linked shift. Changing this customer’s hourly rate recalculates all linked labor lines, including paid invoices, while preserving each shift’s saved hours and time snapshot. Clearing the rate leaves existing invoice amounts at their last saved rate.</p>
+      <div id="shift-link-list" class="shift-link-list" aria-live="polite"></div>
+      <p id="shift-link-error" class="form-error" role="alert" aria-live="polite"></p>
+      <button id="save-shift-links-btn" type="button" disabled>Update linked shifts</button>
+    </details>
+  </main>
+  
+  <dialog class="modal" id="item-modal">
+    <form id="add-item-form">
+      <h2 id="item-modal-title">Add invoice item</h2>
+      <label for="name-input">Item name</label>
+      <input id="name-input" placeholder="Item name" type="text" required>
+      <label for="value-input">Item value</label>
+      <input id="value-input" placeholder="Item value" type="text" inputmode="decimal" pattern="^-?[0-9]*\.?[0-9]+" required>
+      <div class="select-div">
+        <label for="type-select">Type:</label>
+        <select class="sel" id="type-select">
+          <option value="general">General</option>
+          <option value="material">Materials</option>
+          <option value="labor">Labor</option>
+        </select>
         <p id="item-form-error" class="form-error" aria-live="polite" hidden></p>
         <div class="modal-btns">
           <button type="submit" id="submit-btn">Add</button>
           <button type="reset" id="cancel-btn">Cancel</button>
         </div>
-      </form>
-    </dialog>
-    
-  </body>
+    </form>
+  </dialog>
   
+</body>
+
 </html>

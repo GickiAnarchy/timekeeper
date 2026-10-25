@@ -538,6 +538,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modal = document.getElementById('item-modal');
     const nameInput = document.getElementById('name-input');
     const valueInput = document.getElementById('value-input');
+    const typeSelect = document.getElementById('type-select');
     const itemForm = document.getElementById('add-item-form');
     const modalTitle = document.getElementById('item-modal-title');
     const formError = document.getElementById('item-form-error');
@@ -576,6 +577,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const name = nameInput.value.trim();
       const value = Number(valueInput.value);
+      const type = typeSelect.value;
       if (!name || !Number.isFinite(value)) {
         formError.textContent = 'Enter an item name and a valid amount.';
         formError.hidden = false;
@@ -588,7 +590,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           originalItem.name = name;
           originalItem.value = value;
         } else if (typeof invoice.addItem === 'function') {
-          invoice.addItem(name, value);
+          invoice.addItem(name, type, value);
           addedItem = invoice.items[invoice.items.length - 1];
         } else {
           if (!invoice.items) invoice.items = [];
