@@ -5,6 +5,7 @@ import {
   WorkShift
 } from './models.js';
 import { resetShiftDialogViewport, syncShiftDialogViewport } from './shift-dialog-viewport.mjs';
+import { promptForCompletedPlannedJobs } from './planned-job-confirmation.mjs';
 
 function formatForDateTimeLocal(date) {
   if (!date || !(date instanceof Date) || Number.isNaN(date.getTime())) return '';
@@ -240,6 +241,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     okBtn.disabled = true;
     okBtn.textContent = 'Saving…';
     try {
+      let completedNow = false;
       if (isNewShift) {
         activeShift.employee = employee;
         activeShift.customer = customer;
@@ -251,7 +253,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         activeShift.paidHours = paidHoursValue;
         await store.saveShift(activeShift);
         store.shifts.push(activeShift);
+        completedNow = activeShift.isComplete;
       } else {
+        const wasComplete = activeShift.isComplete;
         await store.updateShift(
           activeShift.id,
           employee,
@@ -263,12 +267,22 @@ document.addEventListener('DOMContentLoaded', async () => {
           breaks,
           paidHoursValue
         );
+        completedNow = !wasComplete && activeShift.isComplete;
       }
       // Keep the new employee’s shift visible even when the source was filtered.
       if (duplicateSource) empFilter.value = employee.id;
+      const savedShift = activeShift;
       modal.close();
       activeShift = null;
       renderList();
+      if (completedNow) {
+        try {
+          await promptForCompletedPlannedJobs(savedShift, store, window);
+        } catch (error) {
+          console.error('Unable to check planned jobs after shift completion:', error);
+          window.alert('The shift was saved, but planned jobs could not be checked. You can review them in Planned Jobs.');
+        }
+      }
     } catch (error) {
       console.error('Unable to save shift:', error);
       formError.textContent = error.message || 'Unable to save this shift. Please try again.';

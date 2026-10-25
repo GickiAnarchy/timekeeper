@@ -317,3 +317,94 @@ export function groupInvoiceItemsByEmployee(items = [], shifts = [], employees =
     ? { ...row, value: row.valueCents / 100 }
     : row);
 }
+
+const INVOICE_ITEM_TYPES = ['general', 'material', 'labor', 'payment'];
+const INVOICE_ITEM_TYPE_LABELS = {
+  general: 'General',
+  material: 'Materials',
+  labor: 'Labor',
+  payment: 'Payments'
+};
+
+export function normalizeInvoiceItemType(type) {
+  const normalized = String(type || 'general').trim().toLowerCase();
+  return INVOICE_ITEM_TYPES.includes(normalized) ? normalized : 'general';
+}
+
+export function createInvoiceItem(name, type = 'general', value = undefined) {
+  const legacyAmount = typeof type === 'number' || (
+    typeof type === 'string' && type.trim() !== '' &&
+    !INVOICE_ITEM_TYPES.includes(type.trim().toLowerCase()) && Number.isFinite(Number(type))
+  );
+  if (legacyAmount && value === undefined) {
+    value = type;
+    type = 'general';
+  }
+  const normalizedType = normalizeInvoiceItemType(type);
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) throw new TypeError('A valid invoice item amount is required.');
+  if (normalizedType === 'payment' && amount <= 0) {
+    throw new TypeError('Payment amounts must be greater than zero.');
+  }
+  return { name: String(name ?? ''), type: normalizedType, value: amount };
+}
+
+export function invoiceItemSignedValue(item) {
+  const amount = Number(item?.value ?? 0);
+  if (!Number.isFinite(amount)) return 0;
+  const type = item?.shiftId ? 'labor' : normalizeInvoiceItemType(item?.type);
+  return type === 'payment' ? -amount : amount;
+}
+
+export function invoiceTotal(items = []) {
+  const total = (Array.isArray(items) ? items : [])
+    .reduce((sum, item) => sum + invoiceItemSignedValue(item), 0);
+  return Number(total.toFixed(2));
+}
+
+export function groupInvoiceItemsByType(items = [], shifts = [], employees = new Map()) {
+  const buckets = new Map();
+  (Array.isArray(items) ? items : []).forEach((item, index) => {
+    const type = item?.shiftId ? 'labor' : normalizeInvoiceItemType(item?.type);
+    if (!buckets.has(type)) buckets.set(type, []);
+    buckets.get(type).push({ item, index });
+  });
+
+  return INVOICE_ITEM_TYPES.filter(type => buckets.has(type)).map(type => {
+    const indexedItems = buckets.get(type);
+    const localItems = indexedItems.map(({ item }) => item);
+    const rows = groupInvoiceItemsByEmployee(localItems, shifts, employees).map(row => ({
+      ...row,
+      indices: row.indices.map(index => indexedItems[index].index),
+      ...(row.kind === 'labor' ? {
+        items: row.items.map(({ item, index, shift }) => ({
+          item,
+          index: indexedItems[index].index,
+          shift
+        }))
+      } : {})
+    }));
+    return {
+      type,
+      label: INVOICE_ITEM_TYPE_LABELS[type],
+      rows,
+      value: Number(indexedItems.reduce((sum, { item }) => sum + invoiceItemSignedValue(item), 0).toFixed(2))
+    };
+  });
+}
+
+export function plannedJobsForCompletedShift(shift, plannedJobs = []) {
+  if (!shift?.isComplete || shift.plannedJobsPrompted || !shift?.customer?.id) return [];
+  const shiftDate = asValidDate(shift.clockInTime);
+  if (!shiftDate) return [];
+  const calendarDay = date => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const shiftDay = calendarDay(shiftDate);
+  return (Array.isArray(plannedJobs) ? plannedJobs : [])
+    .filter(job => {
+      if (!job || job.isComplete || String(job.customer?.id ?? '') !== String(shift.customer.id)) return false;
+      const dueDate = asValidDate(job.scheduledDate);
+      return Boolean(dueDate && shiftDay <= calendarDay(dueDate));
+    })
+    .sort((a, b) => (asValidDate(a.scheduledDate)?.getTime() ?? 0) - (asValidDate(b.scheduledDate)?.getTime() ?? 0) ||
+      String(a.description || '').localeCompare(String(b.description || '')));
+}

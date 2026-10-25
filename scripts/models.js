@@ -9,6 +9,8 @@ import {
   ledgerBalanceCents,
   repriceInvoiceShiftItems
 } from './domain.mjs';
+import { Invoice } from './invoice-model.mjs';
+export { Invoice };
 
 /*
   Firebase Setup
@@ -188,6 +190,7 @@ export class WorkShift {
     this.paidHours = paidHours === null || paidHours === undefined || paidHours === '' ?
       null :
       Number(paidHours);
+    this.plannedJobsPrompted = false;
   }
   
   startBreak() {
@@ -286,39 +289,6 @@ export class Payment {
     this.amount = Number(amount);
     this.date = date ? new Date(date) : new Date();
     this.note = note;
-  }
-}
-
-function todayDateString() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-export class Invoice {
-  constructor(cust, items = [], id = null, isPaid = false, date = todayDateString(), shiftIds = []) {
-    this.id = id || crypto.randomUUID();
-    this.customer = cust;
-    this.items = items;
-    this.isPaid = Boolean(isPaid);
-    this.date = date || null;
-    this.shiftIds = Array.isArray(shiftIds) ? [...new Set(shiftIds.map(String))] : [];
-  }
-  
-  addItem(name, value) {
-    this.items.push({ name: name, type="general", value: Number(value) });
-  }
-  
-  deleteItem(name, value) {
-    const dItem = this.items.find(i => i.name === name && i.value === value);
-    this.items = this.items.filter(i => i !== dItem);
-  }
-  
-  totalBill() {
-    const total = this.items.reduce((sum, item) => sum + Number(item.value || 0), 0);
-    return Number(total.toFixed(2));
   }
 }
 
@@ -984,6 +954,7 @@ export class AppDataStore {
         
         shift.clockInTime = data.clockInTime ? new Date(data.clockInTime) : null;
         shift.clockOutTime = data.clockOutTime ? new Date(data.clockOutTime) : null;
+        shift.plannedJobsPrompted = data.plannedJobsPrompted === true;
         
         this.shifts.push(shift);
       });
@@ -1007,7 +978,8 @@ export class AppDataStore {
       note: shift.note || null,
       isPaid: shift.isPaid || false,
       breaks: formattedBreaks,
-      paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null
+      paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null,
+      plannedJobsPrompted: Boolean(shift.plannedJobsPrompted)
     });
   }
   
@@ -1030,7 +1002,8 @@ export class AppDataStore {
         note: shift.note || null,
         isPaid: Boolean(shift.isPaid),
         breaks: formattedBreaks,
-        paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null
+        paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null,
+        plannedJobsPrompted: Boolean(shift.plannedJobsPrompted)
       });
     });
     await commitBatch(batch, 'Clocking in the selected employees failed.');
@@ -1088,7 +1061,8 @@ export class AppDataStore {
       note: note ? String(note).trim() : null,
       isPaid: Boolean(isPaid),
       breaks: normalizedBreaks.map(b => ({ start: b.start.toISOString(), end: b.end.toISOString() })),
-      paidHours: nextPaidHours
+      paidHours: nextPaidHours,
+      plannedJobsPrompted: Boolean(shift.plannedJobsPrompted)
     });
     
     shift.employee = employee;
@@ -1100,6 +1074,20 @@ export class AppDataStore {
     shift.breaks = normalizedBreaks;
     shift.paidHours = nextPaidHours;
     return shift;
+  }
+
+  async markShiftPlannedJobsPrompted(shiftId) {
+    const shift = this.shifts.find(candidate => String(candidate.id) === String(shiftId));
+    if (!shift) throw new Error('Work shift could not be found.');
+    if (shift.plannedJobsPrompted) return shift;
+    shift.plannedJobsPrompted = true;
+    try {
+      await updateDoc(doc(db, "shifts", shift.id), { plannedJobsPrompted: true });
+      return shift;
+    } catch (error) {
+      shift.plannedJobsPrompted = false;
+      throw error;
+    }
   }
   
   async howManyActive() {
@@ -1211,6 +1199,7 @@ export class AppDataStore {
         start: b.start ? new Date(b.start).toISOString() : null,
         end: b.end ? new Date(b.end).toISOString() : null
       })),
+      plannedJobsPrompted: Boolean(s.plannedJobsPrompted),
       paidHours: Number.isFinite(s.paidHours) ? s.paidHours : null
     }));
   }
@@ -1230,6 +1219,7 @@ export class AppDataStore {
         note: shiftData.note || null,
         isPaid: shiftData.isPaid,
         breaks: shiftData.breaks || [],
+        plannedJobsPrompted: Boolean(shiftData.plannedJobsPrompted),
         paidHours: shiftData.paidHours ?? null
       });
     }
@@ -1267,6 +1257,7 @@ export class AppDataStore {
             start: item.start?.toISOString?.() || item.start || null,
             end: item.end?.toISOString?.() || item.end || null
           })),
+          plannedJobsPrompted: Boolean(shift.plannedJobsPrompted),
           paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null
         })),
         invoices: this.invoices.map(invoice => ({
@@ -1343,6 +1334,7 @@ export class AppDataStore {
     for (const shift of backup.data.shifts) {
       if (!validDateOrNull(shift.clockInTime) || !validDateOrNull(shift.clockOutTime) ||
         !Array.isArray(shift.breaks || []) || !finiteOrNull(shift.paidHours) || typeof shift.isPaid !== 'boolean' ||
+        (shift.plannedJobsPrompted !== undefined && typeof shift.plannedJobsPrompted !== 'boolean') ||
         (shift.paidHours !== null && shift.paidHours !== undefined && typeof shift.paidHours !== 'number') ||
         (shift.breaks || []).some(item => !item || typeof item !== 'object' ||
           !validDateOrNull(item.start) || !validDateOrNull(item.end))) {

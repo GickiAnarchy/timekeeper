@@ -36,7 +36,6 @@
       <button id="add-item-btn">Add Item</button>
       <button id="edit-item-btn" type="button" disabled>Edit Item</button>
       <button id="remove-item-btn" type="button">Remove Item</button>
-      <button id="payment-item-btn" type="button">Add Payment</button>
     </div>
     <section class="open-div" id="open-div" aria-label="All open invoices"></section>
     
@@ -91,9 +90,10 @@
       <div class="select-div">
         <label for="type-select">Type:</label>
         <select class="sel" id="type-select">
-          <option value="general">General</option>
+          <option value="general" selected>General</option>
           <option value="material">Materials</option>
           <option value="labor">Labor</option>
+          <option value="payment">Payment</option>
         </select>
         <p id="item-form-error" class="form-error" aria-live="polite" hidden></p>
         <div class="modal-btns">

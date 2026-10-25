@@ -8,7 +8,8 @@ import {
   makeShiftInvoiceLine,
   shiftInvoiceLineStatus,
   shiftIsAttachedElsewhere,
-  groupInvoiceItemsByEmployee
+  groupInvoiceItemsByType,
+  invoiceItemSignedValue
 } from './domain.mjs';
 import { initializeTableSorting, sortTableRows } from './table-sort.mjs';
 
@@ -21,7 +22,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const addItemBtn = document.getElementById('add-item-btn');
   const editItemBtn = document.getElementById('edit-item-btn');
   const removeItemBtn = document.getElementById('remove-item-btn');
-  const addPaymentBtn = document.getElementById('payment-item-btn');
   const addInvBtn = document.getElementById('add-inv-btn');
   const deleteInvBtn = document.getElementById('delete-inv-btn');
   const invoiceBody = document.getElementById('invoice-table-body');
@@ -140,10 +140,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderOpenInvoices();
   });
   
-  addPaymentBtn.addEventListener('click', async () => {
-    
-  });
-
   renderInvoiceList();
 
   function getSelectedInvoice() {
@@ -474,60 +470,85 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!invoice.items || invoice.items.length === 0) {
       invoiceBody.innerHTML = '<tr><td colspan="3">No items in this invoice</td></tr>';
     } else {
-      const displayRows = groupInvoiceItemsByEmployee(invoice.items, store.shifts, store.employees);
-      displayRows.forEach((entry, displayIndex) => {
+      const displayGroups = groupInvoiceItemsByType(invoice.items, store.shifts, store.employees);
+      displayGroups.forEach((group, displayIndex) => {
         const row = document.createElement('tr');
         row.dataset.invoiceRow = 'true';
         row.dataset.orderIndex = String(displayIndex);
-        row.dataset.sortItem = entry.kind === 'labor' ? `Labor · ${entry.employeeName}` : entry.label;
-        row.dataset.sortValue = String(Number(entry.value || 0));
-        const nameCell = document.createElement('td');
-        nameCell.colSpan = 2;
-        if (entry.kind === 'labor') {
-          row.classList.add('invoice-labor-group');
-          nameCell.appendChild(makeElement('strong', 'invoice-labor-title', `Labor · ${entry.employeeName}`));
-          const details = document.createElement('details');
-          details.className = 'invoice-shift-details';
-          const summary = document.createElement('summary');
-          summary.textContent = `View ${entry.items.length} linked ${entry.items.length === 1 ? 'shift' : 'shifts'} · ${entry.totalHours.toFixed(2)} actual h`;
-          details.appendChild(summary);
-          const shiftList = document.createElement('ul');
-          shiftList.className = 'invoice-shift-detail-list';
-          entry.items.forEach(({ item, shift }) => {
-            const detail = document.createElement('li');
-            const line = document.createElement('div');
-            line.className = 'invoice-shift-detail-line';
-            const hours = Number(item.billedHours ?? item.actualHours ?? item.shiftSnapshot?.billedHours ?? 0);
-            const rate = Number(item.billingRate ?? 0);
-            const fallbackName = `Shift ${item.shiftId} · ${hours.toFixed(2)} h × $${rate.toFixed(2)}/h`;
-            line.append(
-              makeElement('span', '', item.name || fallbackName),
-              makeElement('strong', '', formatCurrency(item.value || 0))
-            );
-            detail.appendChild(line);
-            const status = shiftInvoiceLineStatus(item, shift);
-            if (status !== 'current') {
-              const warning = document.createElement('small');
-              warning.className = `invoice-line-warning is-${status}`;
-              warning.textContent = status === 'changed'
-                ? `Source shift changed after billing. Saved snapshot remains ${Number(item.billedHours ?? item.actualHours ?? 0).toFixed(2)} h × $${Number(item.billingRate ?? 0).toFixed(2)}/h.`
-                : status === 'missing'
-                  ? `Source shift ${item.shiftId} is missing. Saved billed hours and rate are retained.`
-                  : 'This older labor line has no shift snapshot, so source changes cannot be verified.';
-              detail.appendChild(warning);
-            }
-            shiftList.appendChild(detail);
-          });
-          details.appendChild(shiftList);
-          nameCell.appendChild(details);
-        } else {
-          row.dataset.itemIndex = String(entry.indices[0]);
-          row.title = 'Click to select this item for editing or removal';
-          nameCell.textContent = entry.item.name || '';
-        }
-        const valueCell = document.createElement('td');
-        valueCell.textContent = formatCurrency(entry.value || 0);
-        row.append(nameCell, valueCell);
+        row.dataset.sortItem = group.label;
+        row.dataset.sortValue = String(Number(group.value || 0));
+        const cell = document.createElement('td');
+        cell.colSpan = 3;
+        const details = document.createElement('details');
+        details.className = 'invoice-type-details';
+        const summary = document.createElement('summary');
+        summary.append(
+          makeElement('strong', 'invoice-type-title', group.label),
+          makeElement('strong', 'invoice-type-total', formatCurrency(group.value))
+        );
+        details.appendChild(summary);
+        const itemTable = document.createElement('table');
+        itemTable.className = 'invoice-type-items-table';
+        const itemBody = document.createElement('tbody');
+
+        group.rows.forEach(entry => {
+          const itemRow = document.createElement('tr');
+          const nameCell = document.createElement('td');
+          nameCell.colSpan = 2;
+          if (entry.kind === 'labor') {
+            itemRow.classList.add('invoice-labor-group');
+            nameCell.appendChild(makeElement('strong', 'invoice-labor-title', `Labor · ${entry.employeeName}`));
+            const shiftDetails = document.createElement('details');
+            shiftDetails.className = 'invoice-shift-details';
+            const shiftSummary = document.createElement('summary');
+            shiftSummary.textContent = `View ${entry.items.length} linked ${entry.items.length === 1 ? 'shift' : 'shifts'} · ${entry.totalHours.toFixed(2)} actual h`;
+            shiftDetails.appendChild(shiftSummary);
+            const shiftList = document.createElement('ul');
+            shiftList.className = 'invoice-shift-detail-list';
+            entry.items.forEach(({ item, shift }) => {
+              const detail = document.createElement('li');
+              const line = document.createElement('div');
+              line.className = 'invoice-shift-detail-line';
+              const hours = Number(item.billedHours ?? item.actualHours ?? item.shiftSnapshot?.billedHours ?? 0);
+              const rate = Number(item.billingRate ?? 0);
+              const fallbackName = `Shift ${item.shiftId} · ${hours.toFixed(2)} h × $${rate.toFixed(2)}/h`;
+              line.append(
+                makeElement('span', '', item.name || fallbackName),
+                makeElement('strong', '', formatCurrency(item.value || 0))
+              );
+              detail.appendChild(line);
+              const status = shiftInvoiceLineStatus(item, shift);
+              if (status !== 'current') {
+                const warning = document.createElement('small');
+                warning.className = `invoice-line-warning is-${status}`;
+                warning.textContent = status === 'changed'
+                  ? `Source shift changed after billing. Saved snapshot remains ${Number(item.billedHours ?? item.actualHours ?? 0).toFixed(2)} h × $${Number(item.billingRate ?? 0).toFixed(2)}/h.`
+                  : status === 'missing'
+                    ? `Source shift ${item.shiftId} is missing. Saved billed hours and rate are retained.`
+                    : 'This older labor line has no shift snapshot, so source changes cannot be verified.';
+                detail.appendChild(warning);
+              }
+              shiftList.appendChild(detail);
+            });
+            shiftDetails.appendChild(shiftList);
+            nameCell.appendChild(shiftDetails);
+          } else {
+            itemRow.dataset.itemIndex = String(entry.indices[0]);
+            itemRow.title = 'Click to select this item for editing or removal';
+            nameCell.textContent = entry.item.name || '';
+          }
+          const valueCell = document.createElement('td');
+          valueCell.textContent = formatCurrency(entry.kind === 'labor'
+            ? entry.value
+            : invoiceItemSignedValue(entry.item));
+          itemRow.append(nameCell, valueCell);
+          itemBody.appendChild(itemRow);
+        });
+
+        itemTable.appendChild(itemBody);
+        details.appendChild(itemTable);
+        cell.appendChild(details);
+        row.appendChild(cell);
         invoiceBody.appendChild(row);
       });
       sortInvoiceRows();
@@ -544,16 +565,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const formError = document.getElementById('item-form-error');
     const submitButton = document.getElementById('submit-btn');
 
-    if (!modal || !nameInput || !valueInput || !itemForm || !modalTitle || !formError || !submitButton) return;
+    if (!modal || !nameInput || !valueInput || !typeSelect || !itemForm || !modalTitle || !formError || !submitButton) return;
 
     const isEditing = Number.isInteger(itemIndex);
     const originalItem = isEditing ? invoice.items[itemIndex] : null;
     if (isEditing && (!originalItem || originalItem.shiftId)) return;
-    const originalItemSnapshot = originalItem ? { name: originalItem.name, value: originalItem.value } : null;
+    const originalItemSnapshot = originalItem ? { name: originalItem.name, type: originalItem.type, value: originalItem.value } : null;
     modalTitle.textContent = isEditing ? 'Edit invoice item' : 'Add invoice item';
     submitButton.textContent = isEditing ? 'Save changes' : 'Add';
     nameInput.value = originalItem?.name || '';
     valueInput.value = originalItem ? Number(originalItem.value || 0) : '';
+    typeSelect.value = originalItem?.type || 'general';
     formError.hidden = true;
     formError.textContent = '';
     modal.showModal();
@@ -583,18 +605,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         formError.hidden = false;
         return;
       }
+      if (type === 'payment' && value <= 0) {
+        formError.textContent = 'Enter a payment amount greater than zero.';
+        formError.hidden = false;
+        return;
+      }
 
       let addedItem = null;
       try {
         if (isEditing) {
           originalItem.name = name;
+          originalItem.type = type;
           originalItem.value = value;
         } else if (typeof invoice.addItem === 'function') {
           invoice.addItem(name, type, value);
           addedItem = invoice.items[invoice.items.length - 1];
         } else {
           if (!invoice.items) invoice.items = [];
-          addedItem = { name, value };
+          addedItem = { name, type, value };
           invoice.items.push(addedItem);
         }
 
@@ -606,6 +634,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       } catch (error) {
         if (isEditing) {
           originalItem.name = originalItemSnapshot.name;
+          originalItem.type = originalItemSnapshot.type;
           originalItem.value = originalItemSnapshot.value;
         } else if (addedItem) {
           invoice.items = invoice.items.filter(item => item !== addedItem);

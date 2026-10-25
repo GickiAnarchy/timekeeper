@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
+import { promptForCompletedPlannedJobs } from '../scripts/planned-job-confirmation.mjs';
 
 class FakeElement {
   constructor(tag = 'div', ownerDocument = null) {
@@ -101,15 +102,24 @@ function makeFixture() {
     employees: new Map([[sourceEmployee.id, sourceEmployee], [targetEmployee.id, targetEmployee]]),
     customers: new Map([[customer.id, customer]]),
     shifts: [source],
+    plannedJobs: [],
     async init() {},
     async saveShift(shift) { writes.save.push(shift); },
-    async updateShift(...args) { writes.update.push(args); }
+    async updateShift(...args) { writes.update.push(args); },
+    async markShiftPlannedJobsPrompted(shiftId) {
+      const shift = this.shifts.find(candidate => candidate.id === shiftId);
+      shift.plannedJobsPrompted = true;
+    },
+    async setPlannedComplete(jobId, isComplete) {
+      const job = this.plannedJobs.find(candidate => candidate.id === jobId);
+      job.isComplete = isComplete;
+    }
   };
   const populate = select => {
     for (const employee of store.employees.values()) { const option = document.createElement('option'); option.value = employee.id; select.appendChild(option); }
   };
   const populateCustomers = select => { const option = document.createElement('option'); option.value = customer.id; select.appendChild(option); };
-  const window = { document, innerHeight: 800, visualViewport: null, addEventListener() {}, alert: message => { window.alerts.push(message); }, confirm: () => true, alerts: [] };
+  const window = { document, innerHeight: 800, visualViewport: null, addEventListener() {}, alert: message => { window.alerts.push(message); }, confirm: message => { window.confirmations.push(message); return true; }, alerts: [], confirmations: [] };
   return { document, window, store, source, targetEmployee, writes };
 }
 
@@ -129,6 +139,7 @@ async function boot(fixture) {
       select.appendChild(option);
     },
     WorkShift: class {},
+    promptForCompletedPlannedJobs,
     resetShiftDialogViewport() {},
     syncShiftDialogViewport() {},
     setTimeout
@@ -182,4 +193,41 @@ test('failed duplicate save leaves source untouched and never updates it', async
   assert.equal(fixture.writes.update.length, 0);
   assert.deepEqual({ employee: fixture.source.employee, customer: fixture.source.customer, note: fixture.source.note, isPaid: fixture.source.isPaid, paidHours: fixture.source.paidHours, clockInTime: fixture.source.clockInTime, clockOutTime: fixture.source.clockOutTime }, original);
   assert.match(fixture.document.getElementById('shift-form-error').textContent, /offline/);
+});
+
+test('a newly completed shift prompts for matching due jobs once and marks confirmed jobs complete', async () => {
+  const fixture = makeFixture();
+  fixture.populate = select => { for (const employee of fixture.store.employees.values()) { const option = fixture.document.createElement('option'); option.value = employee.id; select.appendChild(option); } };
+  fixture.store.plannedJobs.push({
+    id: 'job-1', description: 'Trim the hedge', customer: { id: 'customer', name: 'Customer' },
+    scheduledDate: new Date('2026-10-10T12:00:00'), isComplete: false
+  }, {
+    id: 'job-2', description: 'Clean the driveway', customer: { id: 'customer', name: 'Customer' },
+    scheduledDate: new Date('2026-10-11T12:00:00'), isComplete: false
+  });
+  const answers = [true, false];
+  fixture.window.confirm = message => {
+    fixture.window.confirmations.push(message);
+    return answers.shift();
+  };
+  await boot(fixture);
+  const list = fixture.document.getElementById('shiftList');
+  await click(list.querySelector('.duplicate-btn'));
+  fixture.document.getElementById('shift-emp').value = 'target';
+  await click(fixture.document.getElementById('ok-btn'));
+
+  assert.equal(fixture.window.confirmations.length, 2);
+  assert.match(fixture.window.confirmations[0], /Trim the hedge/);
+  assert.match(fixture.window.confirmations[0], /1 of 2/);
+  assert.match(fixture.window.confirmations[1], /2 of 2/);
+  assert.match(fixture.window.confirmations[1], /Clean the driveway/);
+  assert.equal(fixture.store.plannedJobs[0].isComplete, true);
+  assert.equal(fixture.store.plannedJobs[1].isComplete, false, 'a declined candidate must not be completed automatically');
+  const duplicate = fixture.store.shifts.find(shift => shift.id === 'duplicate-shift');
+  assert.equal(duplicate.plannedJobsPrompted, true);
+
+  const duplicateCard = [...list.children].find(card => card.querySelector('.view-btn')?.dataset.id === 'duplicate-shift');
+  await click(duplicateCard.querySelector('.view-btn'));
+  await click(fixture.document.getElementById('ok-btn'));
+  assert.equal(fixture.window.confirmations.length, 2, 'editing an already-completed shift must not prompt again');
 });

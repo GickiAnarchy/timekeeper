@@ -29,6 +29,13 @@ body > main { width: min(100%, 1000px); margin: 0 auto; }
 #inv-table tbody tr[data-item-index] { cursor: pointer; }
 #inv-table tbody tr:hover { background: var(--surface-hover); }
 #invoice-table-body tr.selected-item { background: var(--green-soft); outline: 2px solid var(--green-line); outline-offset: -2px; }
+.invoice-type-details > summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; cursor: pointer; list-style-position: inside; }
+.invoice-type-title { color: var(--ink); }
+.invoice-type-total { color: var(--ink-soft); white-space: nowrap; }
+.invoice-type-items-table { width: 100%; margin-top: 7px; border: 0; border-collapse: collapse; }
+.invoice-type-items-table td { padding: 9px 8px !important; background: transparent; }
+.invoice-type-items-table tr:last-child td { border-bottom: 0 !important; }
+.invoice-type-items-table tr[data-item-index] { cursor: pointer; }
 .invoice-labor-title { display: block; color: var(--ink); }
 .invoice-shift-details { margin-top: 5px; }
 .invoice-shift-details > summary { width: fit-content; color: var(--green-deep); cursor: pointer; font-size: 10px; font-weight: 650; }

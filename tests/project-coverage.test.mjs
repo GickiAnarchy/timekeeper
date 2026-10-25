@@ -61,9 +61,11 @@ test('invoice labor rows group by employee but retain expandable shift details a
   const invoiceMarkup = readProjectFile('html', 'invoice.html');
   const invoiceScript = readProjectFile('scripts', 'invoice.js');
   const model = readProjectFile('scripts', 'models.js');
-  assert.match(invoiceScript, /groupInvoiceItemsByEmployee\(invoice\.items, store\.shifts, store\.employees\)/);
+  assert.match(invoiceScript, /groupInvoiceItemsByType\(invoice\.items, store\.shifts, store\.employees\)/);
+  assert.match(invoiceScript, /className = 'invoice-type-details'/);
   assert.match(invoiceScript, /className = 'invoice-shift-details'/);
   assert.match(invoiceScript, /querySelectorAll\('tr\[data-invoice-row\]'\)/);
+  assert.match(readProjectFile('scripts', 'domain.mjs'), /groupInvoiceItemsByEmployee\(localItems, shifts, employees\)/);
   assert.match(invoiceMarkup, /one labor total per employee; expand the row to see every linked shift/i);
   const rateUpdate = model.slice(model.indexOf('async updateCustomerAndLinkedInvoices'), model.indexOf('async deleteCustomer', model.indexOf('async updateCustomerAndLinkedInvoices')));
   assert.match(rateUpdate, /repriceInvoiceShiftItems\(invoice, updates\.billingRate, this\.shifts\)/);
