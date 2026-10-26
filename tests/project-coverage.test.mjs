@@ -176,3 +176,79 @@ test('inline add forms and shift-management sections use collapsed native disclo
   assert.match(invoice, /<details class="shift-link-panel">\s*<summary[^>]*>[\s\S]*?Work shifts and labor[\s\S]*?<\/summary>[\s\S]*?id="shift-link-list"/);
   assert.match(sharedStyles, /summary:focus-visible/);
 });
+
+test('ledger add controls stay collapsed above a compact, readable table', () => {
+  const ledger = readProjectFile('html', 'payledger.html');
+  const styles = readProjectFile('styles', 'ledger.css');
+  const actionsStart = ledger.indexOf('<section class="ledger-add-actions"');
+  const tableStart = ledger.indexOf('<div class="table-div">');
+  assert.ok(actionsStart >= 0 && actionsStart < tableStart, 'add controls should precede the table');
+
+  const actionSection = ledger.slice(actionsStart, tableStart);
+  assert.match(actionSection, /<details class="form-container shift-ledger-container">/);
+  assert.match(actionSection, /<details class="form-container ledger-add-container">/);
+  assert.doesNotMatch(actionSection, /<details\b[^>]*\bopen(?:\s|>)/i);
+  assert.match(styles, /th, td \{ padding: 6px 10px;[^}]*font-size: 12px/);
+  assert.match(styles, /@media \(max-width: 480px\)[\s\S]*?#ledger-table th, #ledger-table td \{[^}]*font-size: 13px/);
+  assert.match(styles, /\.ledger-row-actions \{[^}]*flex-wrap: nowrap/);
+  assert.match(styles, /\.edit-ledger-btn, \.delete-btn \{ min-height: 32px/);
+});
+
+test('Home is a task-oriented launchpad for shifts, jobs due soon, and ledger work', () => {
+  const home = readProjectFile('html', 'home.html');
+  const script = readProjectFile('scripts', 'home.js');
+  const ledger = readProjectFile('scripts', 'ledger.js');
+  assert.match(home, /href="clock\.html" target="main-content"/);
+  assert.match(home, /href="planned\.html" target="main-content"/);
+  assert.match(home, /id="ledger-work-list"/);
+  assert.match(home, /href="payledger\.html" target="main-content"/);
+  assert.match(script, /await store\.loadLedger\(\)/);
+  assert.match(script, /plannedJobUrgency\(job\)\.daysAway/);
+  assert.match(script, /daysAway <= 7/);
+  assert.match(script, /ledgerBalanceCents\(entries\)/);
+  assert.match(script, /payledger\.html\?employee=/);
+  assert.match(ledger, /requestedEmployeeId/);
+});
+
+test('Shift History keeps filters and its Add action together near the top', () => {
+  const markup = readProjectFile('html', 'viewshifts.html');
+  const styles = readProjectFile('styles', 'shifts.css');
+  const toolbarStart = markup.indexOf('<div class="shift-toolbar">');
+  const toolbarEnd = markup.indexOf('</div>\n      <hr>', toolbarStart);
+  assert.ok(toolbarStart >= 0 && toolbarEnd > toolbarStart);
+  const toolbar = markup.slice(toolbarStart, toolbarEnd);
+  assert.match(toolbar, /id="emp-filter"/);
+  assert.match(toolbar, /id="cust-filter"/);
+  assert.match(toolbar, /id="paid-filter"/);
+  assert.match(toolbar, /id="add-button"/);
+  assert.match(styles, /\.shift-toolbar \{ display: grid/);
+  assert.match(styles, /@media \(max-width: 680px\)[\s\S]*?\.button-div button \{ width: 100%; min-height: 44px/);
+});
+
+test('dense mobile records use expandable cards instead of horizontal scrolling', () => {
+  const ledgerMarkup = readProjectFile('html', 'payledger.html');
+  const ledgerScript = readProjectFile('scripts', 'ledger.js');
+  const ledgerStyles = readProjectFile('styles', 'ledger.css');
+  const reviewMarkup = readProjectFile('html', 'pay-period-review.html');
+  const reviewScript = readProjectFile('scripts', 'pay-period-review.js');
+  const reviewStyles = readProjectFile('styles', 'pay-period-review.css');
+  const invoiceScript = readProjectFile('scripts', 'invoice.js');
+  const invoiceStyles = readProjectFile('styles', 'invoices.css');
+
+  assert.match(ledgerMarkup, /id="ledger-mobile-list"/);
+  assert.match(ledgerScript, /className = 'ledger-mobile-card'/);
+  assert.match(ledgerScript, /mobileList\.addEventListener\('click', handleLedgerAction\)/);
+  assert.match(ledgerStyles, /@media \(max-width: 700px\)[\s\S]*?\.table-div \{ display: none/);
+  assert.match(ledgerStyles, /\.ledger-mobile-card > summary[^}]*min-height: 54px/);
+
+  assert.match(reviewMarkup, /id="review-people-mobile"/);
+  assert.match(reviewMarkup, /id="review-shifts-mobile"/);
+  assert.match(reviewScript, /function reviewCard\(/);
+  assert.match(reviewStyles, /@media \(max-width: 760px\)[\s\S]*?\.review-table-wrap \{ display: none/);
+  assert.match(reviewStyles, /\.review-mobile-card > summary[^}]*min-height: 52px/);
+
+  assert.match(invoiceScript, /className = 'invoice-type-details'/);
+  assert.match(invoiceStyles, /\.table-box \{ overflow: visible/);
+  assert.match(invoiceStyles, /#inv-table, #inv-table thead, #inv-table tbody, #inv-table tfoot \{ display: block; width: 100%; min-width: 0/);
+  assert.match(invoiceStyles, /\.invoice-type-details > summary \{ min-height: 52px/);
+});

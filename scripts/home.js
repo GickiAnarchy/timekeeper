@@ -1,10 +1,12 @@
 import { store } from './models.js';
 import { selectDailyQuote } from './daily-quotes.mjs';
 import { plannedJobUrgency, updatePlannedAlert, watchPlannedDayChange } from './planned-urgency.mjs';
+import { ledgerBalanceCents } from './domain.mjs';
 
 const hourFormat = new Intl.NumberFormat(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const timeFormat = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
 const jobDateFormat = new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+const currencyFormat = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' });
 
 function makeElement(tag, className, text) {
   const element = document.createElement(tag);
@@ -70,6 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const activeCountNote = document.getElementById('active-count-note');
   const activeList = document.getElementById('active-shift-list');
   const upcomingList = document.getElementById('upcoming-job-list');
+  const ledgerList = document.getElementById('ledger-work-list');
   function renderDailyQuote() {
     const dailyQuote = selectDailyQuote(new Date());
     document.getElementById('daily-quote-text').textContent = dailyQuote.text;
@@ -128,6 +131,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     updatePlannedAlert(document.getElementById('planned-overdue-alert'), store.plannedJobs);
     const jobs = store.plannedJobs
       .filter(job => !job.isComplete)
+      .filter(job => {
+        const daysAway = plannedJobUrgency(job).daysAway;
+        return daysAway !== null && daysAway <= 7;
+      })
       .sort((a, b) => {
         const dateA = validDate(a.scheduledDate)?.getTime() ?? null;
         const dateB = validDate(b.scheduledDate)?.getTime() ?? null;
@@ -138,8 +145,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       .slice(0, 3);
 
     if (jobs.length === 0) {
-      const empty = makeElement('li', 'dashboard-empty', 'No planned jobs yet.');
-      empty.appendChild(makeLink('Add the first job', 'planned.html'));
+      const empty = makeElement('li', 'dashboard-empty', 'No overdue jobs or jobs due in the next 7 days.');
+      empty.appendChild(makeLink('View the full schedule', 'planned.html'));
       upcomingList.appendChild(empty);
       return;
     }
@@ -159,13 +166,55 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  function renderLedgerWork() {
+    ledgerList.replaceChildren();
+    if (store.loadFailures?.length) {
+      ledgerList.appendChild(makeElement('li', 'dashboard-empty', 'Ledger balances could not be loaded completely. Refresh to try again.'));
+      return;
+    }
+
+    const balances = [...store.employees.values()]
+      .map(employee => {
+        const entries = store.ledger.entries.filter(entry => String(entry.employeeId) === String(employee.id));
+        return { employee, entries, balanceCents: ledgerBalanceCents(entries) };
+      })
+      .filter(item => item.balanceCents !== 0)
+      .sort((a, b) => Math.abs(b.balanceCents) - Math.abs(a.balanceCents) || String(a.employee.name || '').localeCompare(String(b.employee.name || '')))
+      .slice(0, 3);
+
+    if (balances.length === 0) {
+      const empty = makeElement('li', 'dashboard-empty', 'No current employee balances need attention.');
+      empty.appendChild(makeLink('Open the ledger', 'payledger.html'));
+      ledgerList.appendChild(empty);
+      return;
+    }
+
+    for (const { employee, entries, balanceCents } of balances) {
+      const item = makeElement('li', 'ledger-work-item');
+      const link = makeElement('a', 'ledger-work-link');
+      link.href = `payledger.html?employee=${encodeURIComponent(employee.id)}`;
+      link.target = 'main-content';
+      const employeeName = employee.name || 'Unknown employee';
+      link.setAttribute('aria-label', `Open ledger for ${employeeName}, current balance ${currencyFormat.format(balanceCents / 100)}`);
+      link.append(
+        makeElement('strong', '', employeeName),
+        makeElement('span', 'ledger-balance', currencyFormat.format(balanceCents / 100)),
+        makeElement('span', 'ledger-entry-count', `${entries.length} active ${entries.length === 1 ? 'entry' : 'entries'}`)
+      );
+      item.appendChild(link);
+      ledgerList.appendChild(item);
+    }
+  }
+
   try {
     await store.loadEmployees();
     await store.loadCustomers();
     await store.loadShifts();
+    await store.loadLedger();
     await store.loadPlanned();
     renderOverview();
     renderPlannedJobs();
+    renderLedgerWork();
     window.setInterval(renderOverview, 60_000);
     watchPlannedDayChange(renderPlannedJobs);
   } catch (error) {
@@ -174,5 +223,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     weekHours.textContent = '—';
     activeList.replaceChildren(makeElement('li', 'dashboard-empty', 'Could not load shift data. Try refreshing the page.'));
     upcomingList.replaceChildren(makeElement('li', 'dashboard-empty', 'Could not load planned jobs. Try refreshing the page.'));
+    ledgerList.replaceChildren(makeElement('li', 'dashboard-empty', 'Could not load ledger balances. Try refreshing the page.'));
   }
 });

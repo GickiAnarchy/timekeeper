@@ -42,6 +42,7 @@
           <div class="review-table-wrap" tabindex="0" role="region" aria-label="Employee summary, scroll horizontally for more columns">
             <table><caption class="sr-only">Period hours and all-date active ledger balances by employee</caption><thead><tr><th scope="col">Employee</th><th scope="col">Shifts</th><th scope="col">Actual h</th><th scope="col">Pay h</th><th scope="col">Unpaid h</th><th scope="col">Current ledger balance</th></tr></thead><tbody id="review-people"></tbody></table>
           </div>
+          <div id="review-people-mobile" class="review-mobile-list" aria-live="polite"></div>
           <p class="review-explainer">Settled ledger histories archive automatically at $0.00. Archived shift links remain visible below, but archived entries do not contribute to the current balance. No active entries does not by itself prove a shift was paid.</p>
         </section>
 
@@ -51,6 +52,7 @@
           <div class="review-table-wrap" tabindex="0" role="region" aria-label="Completed shifts, scroll horizontally for more columns">
             <table><caption class="sr-only">Completed shift payment, ledger, and invoice review</caption><thead><tr><th scope="col">Started</th><th scope="col">Employee / customer</th><th scope="col">Actual h</th><th scope="col">Pay h</th><th scope="col">Payment status</th><th scope="col">Ledger link</th><th scope="col">Invoice status</th><th scope="col">Ready estimate</th></tr></thead><tbody id="review-shifts"></tbody></table>
           </div>
+          <div id="review-shifts-mobile" class="review-mobile-list" aria-live="polite"></div>
         </section>
       </div>
       <p class="review-footnote">This page never marks shifts paid, adds ledger entries, archives balances, creates invoices, or closes a period. Work-hour logging stays unchanged.</p>

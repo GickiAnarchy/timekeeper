@@ -19,6 +19,7 @@
         <div class="home-actions">
           <a class="home-action" href="clock.html" target="main-content">Clock in / out <span aria-hidden="true">→</span></a>
           <a class="home-action home-action-secondary" href="planned.html" target="main-content">Plan a job</a>
+          <a class="home-action home-action-secondary" href="payledger.html" target="main-content">Open ledger</a>
         </div>
       </section>
 
@@ -61,12 +62,23 @@
 
         <article class="dashboard-panel">
           <div class="panel-heading">
-            <div><p class="panel-eyebrow">ON THE SCHEDULE</p><h2>Planned jobs</h2></div>
+            <div><p class="panel-eyebrow">DUE SOON</p><h2>Jobs due soon</h2></div>
             <a class="panel-link" href="planned.html" target="main-content">Full schedule <span aria-hidden="true">→</span></a>
           </div>
           <ul id="upcoming-job-list" class="dashboard-list" aria-live="polite">
             <li class="dashboard-empty">Loading planned jobs…</li>
           </ul>
+        </article>
+
+        <article class="dashboard-panel ledger-panel">
+          <div class="panel-heading">
+            <div><p class="panel-eyebrow">PAYROLL</p><h2>Ledger work</h2></div>
+            <a class="panel-link" href="payledger.html" target="main-content">Open ledger <span aria-hidden="true">→</span></a>
+          </div>
+          <ul id="ledger-work-list" class="dashboard-list ledger-work-list" aria-live="polite">
+            <li class="dashboard-empty">Loading ledger balances…</li>
+          </ul>
+          <p class="ledger-panel-note">Positive balances are owed to employees; negative balances are advances.</p>
         </article>
       </section>
 

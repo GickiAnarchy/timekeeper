@@ -3,13 +3,15 @@
 body { padding: clamp(14px, 3vw, 26px); }
 .shifts-section { width: min(100%, 1060px); margin: 0 auto; padding: clamp(15px, 2.5vw, 22px); background: var(--surface); border: 1px solid var(--border); border-radius: 17px; box-shadow: var(--shadow-soft); }
 .shifts-section > h1 { margin: 0 0 16px; font-size: 18px; letter-spacing: -.04em; }
+.shift-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 14px; }
 .filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .filter-sel { display: grid; gap: 6px; }
 .filter-sel select { width: 100%; min-height: 39px; padding: 8px 10px; font-size: 11px; }
-.paid-div { display: flex; align-items: center; gap: 8px; margin: 12px 0; color: var(--ink-soft); font-size: 11px; }
+.paid-div { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--ink-soft); font-size: 12px; }
 .paid-div input, .paid-toggle input { accent-color: var(--green); }
-.button-div { display: flex; justify-content: flex-end; }
-.button-div button, #ok-btn, .secondary-button { min-height: 37px; padding: 0 13px; color: white; background: var(--green); font-size: 11px; font-weight: 700; }
+.shift-toolbar-actions { display: grid; justify-items: end; gap: 8px; }
+.button-div { display: flex; justify-content: flex-end; width: 100%; }
+.button-div button, #ok-btn, .secondary-button { min-height: 42px; padding: 0 14px; color: white; background: var(--green); font-size: 12px; font-weight: 700; }
 .button-div button:hover, #ok-btn:hover { background: var(--green-deep); }
 .shifts-section hr { height: 1px; margin: 17px 0; background: var(--border); border: 0; }
 .shift-list-details > summary { padding: 3px 0; color: var(--ink-soft); cursor: pointer; font-size: 12px; font-weight: 700; }
@@ -59,7 +61,11 @@ body { padding: clamp(14px, 3vw, 26px); }
 button:disabled { opacity: .6; cursor: wait; }
 
 @media (max-width: 680px) {
+  .shift-toolbar { grid-template-columns: 1fr; }
   .filters, #shiftBase { grid-template-columns: 1fr; }
+  .shift-toolbar-actions { justify-items: stretch; }
+  .paid-div { min-height: 38px; }
+  .button-div button { width: 100%; min-height: 44px; }
   #shiftBase label { grid-row: auto; }
   .shift-card { grid-template-columns: minmax(0, 1fr); gap: 7px; }
   .list-item-buttons { justify-content: flex-start; }

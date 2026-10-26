@@ -36,9 +36,24 @@
 .review-table-wrap td.review-empty { white-space: normal; color: var(--muted); padding: 26px 12px; }
 .review-ready { color: var(--green-deep); font-weight: 700; }
 .review-needs-attention { color: var(--amber); }
+.review-mobile-list { display: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 [hidden] { display: none !important; }
 @media (max-width: 1000px) { .review-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  .review-table-wrap { display: none; }
+  .review-mobile-list { display: grid; gap: 9px; }
+  .review-mobile-card { overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+  .review-mobile-card > summary { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; min-height: 52px; padding: 11px 13px; color: var(--ink); cursor: pointer; font-size: 13px; list-style-position: inside; }
+  .review-mobile-card > summary strong { overflow-wrap: anywhere; font-size: 14px; }
+  .review-mobile-card > summary span { color: var(--muted); font-size: 12px; }
+  .review-mobile-fields { display: grid; gap: 0; margin: 0; padding: 0 13px 10px; border-top: 1px solid var(--border-soft); }
+  .review-mobile-fields > div { display: grid; grid-template-columns: minmax(95px, .7fr) minmax(0, 1.3fr); gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border-soft); }
+  .review-mobile-fields > div:last-child { border-bottom: 0; }
+  .review-mobile-fields dt { color: var(--muted); font-size: 12px; font-weight: 650; }
+  .review-mobile-fields dd { margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+  .review-mobile-empty { margin: 0; padding: 14px; color: var(--muted); background: var(--surface); border: 1px dashed var(--border); border-radius: 10px; font-size: 13px; }
+}
 @media (max-width: 560px) {
   .review-page { padding: 18px 12px; }
   .review-panel { padding: 16px; }

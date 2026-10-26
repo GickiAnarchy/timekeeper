@@ -19,6 +19,13 @@ function makeCell(text) {
   return cell;
 }
 
+function makeElement(tag, className = '', text = undefined) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = text;
+  return element;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
 
@@ -36,6 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const ledgerEntryStatus = document.getElementById('ledger-entry-status');
   const ledgerOwner = document.getElementById('ledger-owner');
   const tableBody = document.getElementById('ledger-body');
+  const mobileList = document.getElementById('ledger-mobile-list');
   const totalRow = document.getElementById('ledger-total');
   const hoursTotal = document.getElementById('ledger-hours-total');
   const ledgerTable = document.getElementById('ledger-table');
@@ -70,6 +78,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   const hasUnassignedEntries = store.ledger.entries.some(entry => !entry.employeeId);
   if (hasUnassignedEntries) ledgerFilter.add(new Option('Unassigned legacy entries', 'unassigned'));
+  const requestedEmployeeId = new URLSearchParams(window.location.search).get('employee');
+  if ([...ledgerFilter.options].some(option => option.value === requestedEmployeeId)) {
+    ledgerFilter.value = requestedEmployeeId;
+    if (store.employees.has(requestedEmployeeId)) employeeSelect.value = requestedEmployeeId;
+  }
 
   dateInput.value = localDateInputValue();
 
@@ -154,6 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderLedger() {
     renderShiftOptions();
     tableBody.replaceChildren();
+    mobileList.replaceChildren();
     const filterValue = ledgerFilter.value;
     if (!filterValue) {
       const row = document.createElement('tr');
@@ -164,6 +178,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       ledgerOwner.textContent = 'Choose an employee to view their ledger.';
       totalRow.innerHTML = '<strong>Total: $0.00</strong>';
       hoursTotal.innerHTML = '<strong>0.00</strong>';
+      mobileList.appendChild(makeElement('p', 'ledger-mobile-empty', 'Choose an employee to view their ledger.'));
       return;
     }
 
@@ -179,6 +194,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       message.colSpan = 7;
       row.appendChild(message);
       tableBody.appendChild(row);
+      mobileList.appendChild(makeElement('p', 'ledger-mobile-empty', 'No entries for this employee yet.'));
     } else {
       entries.forEach(entry => {
         const row = document.createElement('tr');
@@ -187,9 +203,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const typeLabel = entry.sourceShiftId && type === 'normal'
           ? 'Shift pay'
           : type ? type.charAt(0).toUpperCase() + type.slice(1) : '';
-        const amountCell = makeCell(type === 'advance'
+        const amountText = type === 'advance'
           ? `-$${Math.abs(amount).toFixed(2)}`
-          : `$${amount.toFixed(2)}`);
+          : `$${amount.toFixed(2)}`;
+        const amountCell = makeCell(amountText);
         if (type === 'advance') amountCell.classList.add('advance-amount');
         row.append(
           makeCell(entry.index),
@@ -218,6 +235,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         actionCell.appendChild(rowActions);
         row.appendChild(actionCell);
         tableBody.appendChild(row);
+
+        const card = document.createElement('details');
+        card.className = 'ledger-mobile-card';
+        const summary = document.createElement('summary');
+        summary.append(
+          makeElement('span', 'ledger-card-entry-label', `Entry ${entry.index}`),
+          makeElement('span', 'ledger-card-date', entry.date || 'Undated'),
+          makeElement('strong', 'ledger-card-amount', amountText)
+        );
+        const fields = makeElement('dl', 'ledger-mobile-fields');
+        const addField = (label, value) => {
+          const field = document.createElement('div');
+          field.append(makeElement('dt', '', label), makeElement('dd', '', value || '—'));
+          fields.appendChild(field);
+        };
+        addField('Type', typeLabel);
+        addField('Hours', Number(entry.hours || 0).toFixed(2));
+        addField('Amount', amountText);
+        addField('Notes', entry.notes || '—');
+        const mobileActions = makeElement('div', 'ledger-mobile-actions');
+        const mobileEdit = makeElement('button', 'edit-ledger-btn', 'Edit');
+        mobileEdit.type = 'button';
+        mobileEdit.dataset.id = entry.id;
+        mobileEdit.setAttribute('aria-label', `Edit ledger entry ${entry.index}`);
+        const mobileDelete = makeElement('button', 'delete-btn', 'Delete');
+        mobileDelete.type = 'button';
+        mobileDelete.dataset.id = entry.id;
+        mobileDelete.setAttribute('aria-label', `Delete ledger entry ${entry.index}`);
+        mobileActions.append(mobileEdit, mobileDelete);
+        card.append(summary, fields, mobileActions);
+        mobileList.appendChild(card);
       });
     }
 
@@ -330,8 +378,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       trigger.focus();
       return;
     }
-    const replacementTrigger = [...tableBody.querySelectorAll('.edit-ledger-btn[data-id]')]
-      .find(button => button.dataset.id === entryId);
+    const editTriggers = [
+      ...mobileList.querySelectorAll('.edit-ledger-btn[data-id]'),
+      ...tableBody.querySelectorAll('.edit-ledger-btn[data-id]')
+    ].filter(button => button.dataset.id === entryId);
+    const replacementTrigger = editTriggers.find(button => button.getClientRects?.().length > 0) || editTriggers[0];
     (replacementTrigger || ledgerFilter).focus();
   });
 
@@ -466,7 +517,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  tableBody.addEventListener('click', async event => {
+  async function handleLedgerAction(event) {
     const editButton = event.target.closest('.edit-ledger-btn[data-id]');
     if (editButton) {
       const entry = store.ledger.getEntry(editButton.dataset.id);
@@ -493,5 +544,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       button.disabled = false;
       window.alert('This ledger entry could not be deleted. Please try again.');
     }
-  });
+  }
+
+  tableBody.addEventListener('click', handleLedgerAction);
+  mobileList.addEventListener('click', handleLedgerAction);
 });

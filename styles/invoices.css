@@ -74,4 +74,33 @@ body > main { width: min(100%, 1000px); margin: 0 auto; }
   .inv-dropdowns { grid-template-columns: 1fr; }
   .invoice-actions { grid-column: auto; }
   .open-div { grid-column: auto; }
+  .invoice-actions, .item-btns { width: 100%; }
+  .invoice-actions button, .item-btns button { min-height: 42px; padding-inline: 13px; font-size: 12px; }
+  .open-invoice-button { min-height: 44px; font-size: 12px; line-height: 1.4; }
+  .table-box { overflow: visible; }
+  #inv-table, #inv-table thead, #inv-table tbody, #inv-table tfoot { display: block; width: 100%; min-width: 0; }
+  #inv-table { table-layout: fixed; }
+  #inv-table thead tr { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  #inv-table thead tr:first-child { display: block; }
+  #inv-table thead tr:first-child th { display: block; padding: 10px 12px; }
+  #inv-table thead tr:nth-child(2) th { min-width: 0; padding: 5px 7px; }
+  #date-head { display: flex !important; flex-wrap: wrap; align-items: center; gap: 7px; }
+  #date-head label { margin: 0; font-size: 11px; }
+  #invoice-date { max-width: 100%; min-height: 40px; font-size: 13px; }
+  #inv-table .table-sort-button { min-height: 42px; padding: 4px; font-size: 11px; white-space: normal; }
+  #inv-table tbody tr[data-invoice-row] { display: block; margin: 8px 0; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+  #inv-table tbody tr[data-invoice-row] > td { display: block; width: 100%; padding: 0; border: 0; }
+  .invoice-type-details > summary { min-height: 52px; padding: 12px; font-size: 13px; }
+  .invoice-type-title { min-width: 0; overflow-wrap: anywhere; font-size: 13px; }
+  .invoice-type-total { font-size: 13px; }
+  .invoice-type-items-table { width: 100%; min-width: 0; table-layout: fixed; }
+  .invoice-type-items-table td { padding: 8px 10px !important; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+  .invoice-labor-title { font-size: 13px; overflow-wrap: anywhere; }
+  .invoice-shift-details > summary { min-height: 40px; padding: 8px 0; font-size: 12px; }
+  .invoice-shift-detail-line { flex-wrap: wrap; gap: 5px 10px; font-size: 12px; }
+  .invoice-shift-detail-line strong { font-size: 12px; }
+  .invoice-line-warning { font-size: 12px; }
+  #inv-table tfoot tr, #inv-table tfoot td { display: block; width: 100%; }
+  #inv-table tfoot td { padding: 11px 12px; font-size: 13px; }
+  #mark-paid-btn { min-height: 44px; font-size: 12px; }
 }

@@ -1,6 +1,6 @@
 @import url("./ui.css");
 
-body { display: flex; flex-direction: column; align-items: stretch; gap: 15px; padding: clamp(14px, 3vw, 26px); }
+body { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: clamp(14px, 3vw, 26px); }
 .ledger-section, .table-div, .form-container { width: min(100%, 1060px); margin: 0 auto; }
 .ledger-section { padding: 0 2px; }
 .ledger-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
@@ -8,11 +8,15 @@ body { display: flex; flex-direction: column; align-items: stretch; gap: 15px; p
 .ledger-owner { margin: 0; color: var(--muted); font-size: 11px; }
 .ledger-filter { display: grid; min-width: min(260px, 45%); gap: 5px; color: var(--ink-soft); font-size: 10px; font-weight: 650; }
 .ledger-filter select { width: 100%; min-height: 38px; padding: 7px 9px; font-size: 10px; }
+.ledger-add-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: min(100%, 1060px); margin: 0 auto; }
+.ledger-add-actions .form-container { width: 100%; margin: 0; padding: 10px 14px; }
+.ledger-add-actions .form-container > summary { min-height: 42px; padding-block: 10px; font-size: 13px; line-height: 1.4; }
 .table-div { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-soft); }
 table { width: 100%; min-width: 700px; border-collapse: collapse; text-align: left; }
 thead { color: var(--muted); background: var(--surface-muted); }
-th, td { padding: 11px 12px; border-bottom: 1px solid var(--border-soft); font-size: 10px; }
-th { font-size: 9px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
+th, td { padding: 6px 10px; border-bottom: 1px solid var(--border-soft); font-size: 12px; line-height: 1.35; }
+th { font-size: 10px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
+#ledger-table .table-sort-button { min-height: 30px; }
 tbody tr:hover { background: var(--surface-hover); }
 .advance-amount { color: var(--red); font-weight: 700; }
 tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight: 700; }
@@ -20,8 +24,10 @@ tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight
 .ledger-archive-notice:empty { display: none; }
 .ledger-archive-link a { color: var(--green-deep); font-weight: 700; text-decoration: none; }
 .ledger-archive-link a:hover { text-decoration: underline; }
-.ledger-row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
-.edit-ledger-btn, .delete-btn { min-height: 32px; padding: 0 10px; font-size: 10px; font-weight: 650; }
+.ledger-row-actions { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; white-space: nowrap; }
+.edit-ledger-btn, .delete-btn { min-height: 32px; padding: 0 10px; font-size: 11px; font-weight: 650; }
+#ledger-table th:last-child, #ledger-table td:last-child { min-width: 126px; }
+.ledger-mobile-list { display: none; }
 .edit-ledger-btn { color: var(--green-deep); background: var(--green-soft); }
 .edit-ledger-btn:hover { background: var(--surface-hover); }
 .delete-btn { color: var(--red); background: var(--red-soft); }
@@ -90,9 +96,29 @@ tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight
   .ledger-filter { min-width: 0; }
   #ledger-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+@media (max-width: 600px) {
+  .ledger-add-actions { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .table-div { display: none; }
+  .ledger-mobile-list { display: grid; gap: 9px; width: min(100%, 1060px); margin: 0 auto; }
+  .ledger-mobile-card { overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; box-shadow: var(--shadow-soft); }
+  .ledger-mobile-card > summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; min-height: 54px; padding: 11px 13px; color: var(--ink); cursor: pointer; font-size: 13px; font-weight: 700; list-style-position: inside; }
+  .ledger-card-date { color: var(--muted); font-size: 12px; font-weight: 550; }
+  .ledger-card-amount { grid-column: 2; grid-row: 1 / span 2; color: var(--ink); font-size: 15px; white-space: nowrap; }
+  .ledger-mobile-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px 14px; margin: 0; padding: 12px 14px; border-top: 1px solid var(--border-soft); }
+  .ledger-mobile-fields > div { min-width: 0; }
+  .ledger-mobile-fields dt { color: var(--muted); font-size: 11px; font-weight: 650; }
+  .ledger-mobile-fields dd { margin: 2px 0 0; color: var(--ink-soft); font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; white-space: pre-wrap; }
+  .ledger-mobile-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 14px 13px; }
+  .ledger-mobile-actions button { min-height: 42px; padding: 0 14px; font-size: 12px; font-weight: 650; }
+  .ledger-mobile-empty { padding: 16px; color: var(--muted); background: var(--surface); border: 1px dashed var(--border); border-radius: 12px; font-size: 13px; }
+}
 @media (max-width: 480px) {
   #ledger-form { grid-template-columns: 1fr; }
   #shift-ledger-form { grid-template-columns: 1fr; }
+  #ledger-table th, #ledger-table td { padding: 7px 10px; font-size: 13px; }
+  #ledger-table th { font-size: 10px; }
   .ledger-edit-modal { width: calc(100% - 16px); max-height: calc(100dvh - 16px); border-radius: 14px; }
   .ledger-edit-form { gap: 16px; padding: 20px 16px; }
   .ledger-edit-fields { grid-template-columns: 1fr; gap: 12px; }

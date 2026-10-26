@@ -21,6 +21,20 @@ function emptyRow(body, columns, text) {
   body.append(row);
 }
 
+function reviewCard(title, subtitle, fields) {
+  const card = element('details', undefined, 'review-mobile-card');
+  const summary = element('summary');
+  summary.append(element('strong', title), element('span', subtitle));
+  const details = element('dl', undefined, 'review-mobile-fields');
+  for (const [label, value, className = ''] of fields) {
+    const field = element('div');
+    field.append(element('dt', label), element('dd', value, className));
+    details.append(field);
+  }
+  card.append(summary, details);
+  return card;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const form = document.getElementById('review-filters');
   const start = document.getElementById('review-start');
@@ -64,18 +78,32 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       const people = document.getElementById('review-people');
+      const peopleMobile = document.getElementById('review-people-mobile');
       people.replaceChildren();
+      peopleMobile.replaceChildren();
       for (const person of review.employees) {
         const row = element('tr');
         const balance = element('td', money(person.balanceCents));
         balance.append(element('small', `${person.ledgerEntryCount} active entries · all dates`));
         row.append(element('td', person.name), element('td', person.shiftCount), element('td', hours(person.actualHours)), element('td', hours(person.paidHours)), element('td', hours(person.unpaidHours)), balance);
         people.append(row);
+        peopleMobile.append(reviewCard(person.name, `${money(person.balanceCents)} current ledger balance`, [
+          ['Shifts', String(person.shiftCount)],
+          ['Actual hours', `${hours(person.actualHours)} h`],
+          ['Pay hours', `${hours(person.paidHours)} h`],
+          ['Not marked paid', `${hours(person.unpaidHours)} h`],
+          ['Current ledger balance', `${money(person.balanceCents)} · ${person.ledgerEntryCount} active entries · all dates`]
+        ]));
       }
-      if (!review.employees.length) emptyRow(people, 6, 'No employees or ledger balances to review.');
+      if (!review.employees.length) {
+        emptyRow(people, 6, 'No employees or ledger balances to review.');
+        peopleMobile.append(element('p', 'No employees or ledger balances to review.', 'review-mobile-empty'));
+      }
 
       const shifts = document.getElementById('review-shifts');
+      const shiftsMobile = document.getElementById('review-shifts-mobile');
       shifts.replaceChildren();
+      shiftsMobile.replaceChildren();
       for (const shift of review.shifts) {
         const row = element('tr');
         const person = element('td', shift.employeeName);
@@ -89,8 +117,25 @@ document.addEventListener('DOMContentLoaded', async () => {
           element('td', shift.invoiceStatus === 'Ready' ? money(shift.invoiceCents) : '—')
         );
         shifts.append(row);
+        const paymentStatus = shift.isPaid ? 'Marked paid' : 'Not marked paid';
+        const invoiceClass = shift.invoiceStatus === 'Ready' ? 'review-ready' : shift.invoiceStatus.startsWith('Missing') ? 'review-needs-attention' : '';
+        shiftsMobile.append(reviewCard(`${shift.employeeName} · ${shift.customerName}`, `${dateFormat.format(shift.start)} · ${paymentStatus}`, [
+          ['Started', dateFormat.format(shift.start)],
+          ['Employee', shift.employeeName],
+          ['Customer', shift.customerName || 'Not set'],
+          ['Actual hours', `${hours(shift.actualHours)} h`],
+          ['Pay hours', `${hours(shift.paidHours)} h`],
+          ['Payment status', paymentStatus, shift.isPaid ? '' : 'review-needs-attention'],
+          ['Ledger link', shift.ledgerStatus],
+          ['Invoice status', shift.invoiceStatus, invoiceClass],
+          ['Ready estimate', shift.invoiceStatus === 'Ready' ? money(shift.invoiceCents) : '—']
+        ]));
       }
-      if (!review.shifts.length) emptyRow(shifts, 8, 'No completed shifts in this period for the selected employee filter. Current ledger balances are still shown above.');
+      if (!review.shifts.length) {
+        const message = 'No completed shifts in this period for the selected employee filter. Current ledger balances are still shown above.';
+        emptyRow(shifts, 8, message);
+        shiftsMobile.append(element('p', message, 'review-mobile-empty'));
+      }
 
       const warnings = [];
       if (review.activeShiftCount) warnings.push(`${review.activeShiftCount} active shift(s) started in this period are excluded from totals.`);
