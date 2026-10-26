@@ -5,6 +5,7 @@ import {
 } from './models.js';
 import { sortLedgerEntriesByDate, sumLedgerHours } from './domain.mjs';
 import { initializeTableSorting, sortTableRows } from './table-sort.mjs';
+import { ledgerItemLabel } from './ledger-display.mjs';
 
 function localDateInputValue(date = new Date()) {
   const year = date.getFullYear();
@@ -111,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       ...ledgerSort,
       getValue: (entry, key) => {
         switch (key) {
-          case 'index': return entry.index;
+          case 'item': return ledgerItemLabel(entry, store.shifts);
           case 'date': return entry.date;
           case 'type': return entry.type;
           case 'hours': return entry.hours;
@@ -203,13 +204,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const typeLabel = entry.sourceShiftId && type === 'normal'
           ? 'Shift pay'
           : type ? type.charAt(0).toUpperCase() + type.slice(1) : '';
+        const itemLabel = ledgerItemLabel(entry, store.shifts);
+        const itemActionLabel = `${itemLabel}${entry.date ? `, ${entry.date}` : ''}`;
         const amountText = type === 'advance'
           ? `-$${Math.abs(amount).toFixed(2)}`
           : `$${amount.toFixed(2)}`;
         const amountCell = makeCell(amountText);
         if (type === 'advance') amountCell.classList.add('advance-amount');
+        const itemCell = makeCell(itemLabel);
+        itemCell.classList.add('ledger-item-cell');
         row.append(
-          makeCell(entry.index),
+          itemCell,
           makeCell(entry.date || ''),
           makeCell(typeLabel),
           makeCell(Number(entry.hours || 0).toFixed(2)),
@@ -223,13 +228,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         editButton.type = 'button';
         editButton.className = 'edit-ledger-btn';
         editButton.dataset.id = entry.id;
-        editButton.setAttribute('aria-label', `Edit ledger entry ${entry.index}`);
+        editButton.setAttribute('aria-label', `Edit ${itemActionLabel}`);
         editButton.textContent = 'Edit';
         const deleteButton = document.createElement('button');
         deleteButton.type = 'button';
         deleteButton.className = 'delete-btn';
         deleteButton.dataset.id = entry.id;
-        deleteButton.setAttribute('aria-label', `Delete ledger entry ${entry.index}`);
+        deleteButton.setAttribute('aria-label', `Delete ${itemActionLabel}`);
         deleteButton.textContent = 'Delete';
         rowActions.append(editButton, deleteButton);
         actionCell.appendChild(rowActions);
@@ -240,7 +245,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         card.className = 'ledger-mobile-card';
         const summary = document.createElement('summary');
         summary.append(
-          makeElement('span', 'ledger-card-entry-label', `Entry ${entry.index}`),
+          makeElement('span', 'ledger-card-entry-label', itemLabel),
           makeElement('span', 'ledger-card-date', entry.date || 'Undated'),
           makeElement('strong', 'ledger-card-amount', amountText)
         );
@@ -258,11 +263,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const mobileEdit = makeElement('button', 'edit-ledger-btn', 'Edit');
         mobileEdit.type = 'button';
         mobileEdit.dataset.id = entry.id;
-        mobileEdit.setAttribute('aria-label', `Edit ledger entry ${entry.index}`);
+        mobileEdit.setAttribute('aria-label', `Edit ${itemActionLabel}`);
         const mobileDelete = makeElement('button', 'delete-btn', 'Delete');
         mobileDelete.type = 'button';
         mobileDelete.dataset.id = entry.id;
-        mobileDelete.setAttribute('aria-label', `Delete ledger entry ${entry.index}`);
+        mobileDelete.setAttribute('aria-label', `Delete ${itemActionLabel}`);
         mobileActions.append(mobileEdit, mobileDelete);
         card.append(summary, fields, mobileActions);
         mobileList.appendChild(card);
@@ -342,7 +347,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     editingEntryEmployeeId = entry.employeeId;
     editTrigger = trigger;
     editError.textContent = '';
-    editTitle.textContent = `Edit ledger entry ${entry.index}`;
+    editTitle.textContent = `Edit ${ledgerItemLabel(entry, store.shifts)}`;
     editDate.value = entry.date || '';
     editType.value = String(entry.type || 'normal').toLowerCase();
     editHours.value = String(Number(entry.hours || 0));

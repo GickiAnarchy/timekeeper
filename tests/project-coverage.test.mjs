@@ -170,8 +170,8 @@ test('inline add forms and shift-management sections use collapsed native disclo
 
   assert.match(people, /<details class="form-container add-form-disclosure">\s*<summary>Add Employee<\/summary>\s*<form class="add-form" id="add-emp-form">/);
   assert.match(people, /<details class="form-container add-form-disclosure">\s*<summary>Add Customer<\/summary>\s*<form class="add-form" id="add-cust-form">/);
-  assert.match(ledger, /<details class="form-container shift-ledger-container">\s*<summary[^>]*>Add a completed shift<\/summary>[\s\S]*?<form id="shift-ledger-form">/);
-  assert.match(ledger, /<details class="form-container ledger-add-container">\s*<summary>Add ledger entry<\/summary>\s*<form id="ledger-form">/);
+  assert.match(ledger, /<details class="form-container shift-ledger-container">\s*<summary[^>]*>Add completed shift<\/summary>[\s\S]*?<form id="shift-ledger-form">/);
+  assert.match(ledger, /<details class="form-container ledger-add-container">\s*<summary>Add manual entry<\/summary>\s*<form id="ledger-form">/);
   assert.doesNotMatch(ledger, /<details\b[^>]*\bopen(?:\s|>)/i);
   assert.match(invoice, /<details class="shift-link-panel">\s*<summary[^>]*>[\s\S]*?Work shifts and labor[\s\S]*?<\/summary>[\s\S]*?id="shift-link-list"/);
   assert.match(sharedStyles, /summary:focus-visible/);
@@ -187,7 +187,10 @@ test('ledger add controls stay collapsed above a compact, readable table', () =>
   const actionSection = ledger.slice(actionsStart, tableStart);
   assert.match(actionSection, /<details class="form-container shift-ledger-container">/);
   assert.match(actionSection, /<details class="form-container ledger-add-container">/);
+  assert.match(actionSection, /<h2>Add to this ledger<\/h2>/);
   assert.doesNotMatch(actionSection, /<details\b[^>]*\bopen(?:\s|>)/i);
+  assert.match(ledger, /data-sort-key="item" data-sort-type="text"[\s\S]*?<span class="table-sort-label">Item<\/span>/);
+  assert.match(styles, /\.ledger-add-actions \{[^}]*background: var\(--green-soft\)[^}]*border: 1px solid var\(--green-line\)/);
   assert.match(styles, /th, td \{ padding: 6px 10px;[^}]*font-size: 12px/);
   assert.match(styles, /@media \(max-width: 480px\)[\s\S]*?#ledger-table th, #ledger-table td \{[^}]*font-size: 13px/);
   assert.match(styles, /\.ledger-row-actions \{[^}]*flex-wrap: nowrap/);
@@ -237,6 +240,8 @@ test('dense mobile records use expandable cards instead of horizontal scrolling'
 
   assert.match(ledgerMarkup, /id="ledger-mobile-list"/);
   assert.match(ledgerScript, /className = 'ledger-mobile-card'/);
+  assert.match(ledgerScript, /ledgerItemLabel\(entry, store\.shifts\)/);
+  assert.doesNotMatch(ledgerScript, /Entry \$\{entry\.index\}/);
   assert.match(ledgerScript, /mobileList\.addEventListener\('click', handleLedgerAction\)/);
   assert.match(ledgerStyles, /@media \(max-width: 700px\)[\s\S]*?\.table-div \{ display: none/);
   assert.match(ledgerStyles, /\.ledger-mobile-card > summary[^}]*min-height: 54px/);

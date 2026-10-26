@@ -25,8 +25,12 @@
     </section>
 
     <section class="ledger-add-actions" aria-label="Add ledger items">
+      <div class="ledger-add-heading">
+        <h2>Add to this ledger</h2>
+        <p>Choose an action to add a record.</p>
+      </div>
       <details class="form-container shift-ledger-container">
-        <summary class="shift-ledger-summary" id="shift-ledger-title">Add a completed shift</summary>
+        <summary class="shift-ledger-summary" id="shift-ledger-title">Add completed shift</summary>
         <div class="shift-ledger-content">
           <p class="shift-ledger-description">Adds the shift’s paid hours at the employee’s current wage. This does not change the shift or mark it paid.</p>
           <form id="shift-ledger-form">
@@ -42,7 +46,7 @@
       </details>
 
       <details class="form-container ledger-add-container">
-        <summary>Add ledger entry</summary>
+        <summary>Add manual entry</summary>
         <form id="ledger-form">
           <label for="employee-select">Employee
             <select id="employee-select" required>
@@ -77,7 +81,7 @@
       <table id="ledger-table" aria-label="Employee ledger entries">
         <thead>
           <tr>
-            <th scope="col" data-sort-key="index" data-sort-type="number"><button class="table-sort-button" type="button"><span class="table-sort-label">Entry</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+            <th scope="col" data-sort-key="item" data-sort-type="text"><button class="table-sort-button" type="button"><span class="table-sort-label">Item</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
             <th scope="col" data-sort-key="date" data-sort-type="date" aria-sort="descending"><button class="table-sort-button" type="button"><span class="table-sort-label">Date</span><span class="table-sort-indicator" aria-hidden="true">↓</span></button></th>
             <th scope="col" data-sort-key="type" data-sort-type="text"><button class="table-sort-button" type="button"><span class="table-sort-label">Type</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
             <th scope="col" data-sort-key="hours" data-sort-type="number"><button class="table-sort-button" type="button"><span class="table-sort-label">Hours</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
@@ -108,7 +112,7 @@
         <div class="ledger-edit-heading">
           <p class="ledger-edit-eyebrow">LEDGER ENTRY</p>
           <h2 id="ledger-edit-title">Edit ledger entry</h2>
-          <p id="ledger-edit-help">Update the entry details. The employee assignment and entry number will stay unchanged.</p>
+          <p id="ledger-edit-help">Update the details for this ledger item. Its employee assignment will stay unchanged.</p>
         </div>
         <div class="ledger-edit-fields">
           <label for="edit-ledger-date">Date
