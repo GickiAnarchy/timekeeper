@@ -12,3 +12,8 @@ fonts/
 
 # idk
 *.bsdesign
+
+
+
+# VS code
+.vscode/
