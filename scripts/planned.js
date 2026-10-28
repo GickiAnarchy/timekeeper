@@ -3,8 +3,8 @@ import {
   PlannedJob,
   populateCustomerDropdowns
 } from './models.js';
-import { asValidDate, plannedDateStatus } from './domain.mjs';
-import { plannedJobUrgency, updatePlannedAlert, watchPlannedDayChange } from './planned-urgency.mjs';
+import { asValidDate, plannedDateStatus, plannedJobsForCompletedShift } from './domain.mjs';
+//import { plannedJobUrgency, updatePlannedAlert, watchPlannedDayChange } from './planned-urgency.mjs';
 
 const formatJobDate = new Intl.DateTimeFormat(undefined, {
   weekday: 'long',
@@ -29,6 +29,88 @@ function makeElement(tag, className, text) {
   if (text !== undefined) element.textContent = text;
   return element;
 }
+
+
+// PLANNED-JOB-CONFIRMATION
+
+export async function promptForCompletedPlannedJobs(shift, store, ui = globalThis.window) {
+  const candidates = plannedJobsForCompletedShift(shift, store?.plannedJobs);
+  if (!candidates.length) return [];
+
+  try {
+    await store.markShiftPlannedJobsPrompted(shift.id);
+  } catch (error) {
+    // Suppress repeat prompts in this session even if the marker write fails.
+    shift.plannedJobsPrompted = true;
+    console.error('Unable to save planned-job prompt status:', error);
+  }
+
+  const shiftDate = shift.clockInTime.toLocaleDateString();
+  for (const [index, job] of candidates.entries()) {
+    const dueDate = job.scheduledDate.toLocaleDateString();
+    const jobLabel = job.description || 'Scheduled job';
+    const prompt = candidates.length > 1
+      ? `Did the ${shiftDate} work shift complete planned job ${index + 1} of ${candidates.length}: “${jobLabel}” for ${job.customer?.name || 'this customer'}? (Due ${dueDate})`
+      : `Did the ${shiftDate} work shift complete planned job “${jobLabel}” for ${job.customer?.name || 'this customer'}? (Due ${dueDate})`;
+    if (!ui.confirm(prompt)) continue;
+    try {
+      await store.setPlannedComplete(job.id, true);
+    } catch (error) {
+      console.error('Unable to mark planned job complete:', error);
+      ui.alert(`“${jobLabel}” could not be marked complete. You can update it in Planned Jobs.`);
+    }
+  }
+  return candidates;
+}
+//:END PLANNED-JOB-CONFIRMATION
+
+// PLANNED-URGENCY
+
+// Compare local calendar days, not elapsed hours (which vary across DST).
+export function plannedJobUrgency(job, today = new Date()) {
+  if (job.isComplete) return { level: 'complete', label: 'Completed', daysAway: null };
+  const date = asValidDate(job.scheduledDate);
+  if (!date) return { level: 'tbd', label: 'Date TBD', daysAway: null };
+  const now = asValidDate(today) || new Date();
+  const dayNumber = value => Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()) / 86_400_000;
+  const daysAway = dayNumber(date) - dayNumber(now);
+  if (daysAway < 0) return { level: 'overdue', label: `Overdue by ${-daysAway} ${daysAway === -1 ? 'day' : 'days'}`, daysAway };
+  if (daysAway === 0) return { level: 'today', label: 'Due today', daysAway };
+  if (daysAway === 1) return { level: 'tomorrow', label: 'Due tomorrow', daysAway };
+  const level = daysAway <= 3 ? 'soon' : daysAway <= 7 ? 'week' : 'upcoming';
+  return { level, label: `Due in ${daysAway} days`, daysAway };
+}
+
+export function plannedOverdueMessage(jobs, today = new Date()) {
+  const count = jobs.filter(job => plannedJobUrgency(job, today).level === 'overdue').length;
+  return count ? `Action needed: ${count} planned ${count === 1 ? 'job is' : 'jobs are'} overdue. Review the schedule to complete or reschedule ${count === 1 ? 'it' : 'them'}.` : '';
+}
+
+export function updatePlannedAlert(element, jobs, today = new Date()) {
+  const message = plannedOverdueMessage(jobs, today);
+  // Avoid repeat screen-reader announcements on filter changes or timer ticks.
+  if (element.textContent !== message) element.textContent = message;
+  element.hidden = !message;
+}
+
+export function watchPlannedDayChange(refresh, doc = document, view = window) {
+  const dayKey = () => new Date().toDateString();
+  let previousDay = dayKey();
+  const check = () => {
+    const currentDay = dayKey();
+    if (currentDay === previousDay) return;
+    previousDay = currentDay;
+    refresh();
+  };
+  view.setInterval(check, 60_000);
+  view.addEventListener('focus', check);
+  doc.addEventListener('visibilitychange', () => {
+    if (!doc.hidden) check();
+  });
+}
+// END PLANNED-URGENCY
+
+
 
 document.addEventListener('DOMContentLoaded', async () => {
   const plannedList = document.getElementById('planned-list');

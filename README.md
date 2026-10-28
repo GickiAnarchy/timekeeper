@@ -12,6 +12,18 @@ The **Pay-period review** navigation item opens a read-only view with inclusive 
 
 The review deliberately loads data without `store.init()`, so opening or refreshing it cannot resume pending archives or archive zero-balance ledgers. It cannot pay, save, close, invoice, or modify shifts. Incomplete data loads hide all results rather than presenting partial balances. Local review tests use synthetic data and do not access production Firestore.
 
+## Changelog
+
+Restructuring and consolidating the project directory.
+
+Should be able to remove:
+
+-  ***/scripts/planned-job-confirmation.***
+-  ***/scripts/planned-urgency.mjs***
+
+
+
+
 ## Tests
 
 Run the local Node test suite (Node.js 18 or newer):

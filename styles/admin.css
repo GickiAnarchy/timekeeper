@@ -1,0 +1,41 @@
+@import url('./ui.css');
+
+.admin-page {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 28px;
+}
+
+.admin-heading {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.admin-kicker {
+  color: var(--green);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.admin-heading h1 {
+  margin: 8px 0;
+  font-size: clamp(1.7rem, 4vw, 2.3rem);
+}
+
+.admin-heading>p:not(.admin-kicker) {
+  color: var(--ink-soft);
+  line-height: 1.6;
+  max-width: 720px;
+}
+
+.admin-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: var(--green-soft);
+  color: var(--green-deep);
+  font-size: .8rem;
+  font-weight: 700;
+}
+
