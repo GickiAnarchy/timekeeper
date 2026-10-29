@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DAILY_QUOTES, DAILY_QUOTE_TIME_ZONE, dateKeyInTimeZone, selectDailyQuote } from '../scripts/daily-quotes.mjs';
+import { DAILY_QUOTES, DAILY_QUOTE_TIME_ZONE, dateKeyInTimeZone, normalizeDailyQuotes, selectDailyQuote } from '../scripts/daily-quotes.mjs';
 
 test('daily quote is stable throughout the same America/Chicago calendar day', () => {
   const beforeMidnight = new Date('2026-10-10T03:15:00.000Z');
@@ -34,6 +34,37 @@ test('date-seeded selection varies and avoids back-to-back repeats', () => {
   }
 
   assert.ok(seen.size > 4);
+});
+
+test('quote normalization assigns stable starter IDs, trims fields, and keeps list order', () => {
+  const quotes = normalizeDailyQuotes(DAILY_QUOTES);
+  assert.equal(quotes.length, DAILY_QUOTES.length);
+  assert.equal(quotes[0].id, 'starter-001');
+  assert.equal(quotes[1].id, 'starter-002');
+  assert.equal(quotes[0].text, DAILY_QUOTES[0].text);
+
+  const trimmed = normalizeDailyQuotes([{
+    id: ' custom-id ',
+    text: '  A thought. ',
+    author: '  Someone ',
+    work: '  Notes ',
+    source: ' https://example.com/notes '
+  }]);
+  assert.deepEqual(trimmed[0], {
+    id: 'custom-id',
+    text: 'A thought.',
+    author: 'Someone',
+    work: 'Notes',
+    source: 'https://example.com/notes'
+  });
+});
+
+test('quote normalization rejects empty lists, incomplete records, insecure sources, and duplicate IDs', () => {
+  const quote = { text: 'A thought.', author: 'Someone', work: 'Notes', source: 'https://example.com/notes' };
+  assert.throws(() => normalizeDailyQuotes([]), /At least one daily quote/);
+  assert.throws(() => normalizeDailyQuotes([{ ...quote, author: ' ' }]), /Author is required/);
+  assert.throws(() => normalizeDailyQuotes([{ ...quote, source: 'http://example.com/notes' }]), /must use HTTPS/);
+  assert.throws(() => normalizeDailyQuotes([{ ...quote, id: 'same' }, { ...quote, id: 'same' }]), /IDs must be unique/);
 });
 
 test('curated quotes have text, explicit author attribution, work, and a source URL', () => {

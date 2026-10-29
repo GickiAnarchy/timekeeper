@@ -1,5 +1,5 @@
-import { store } from './models.js';
-import { selectDailyQuote } from './daily-quotes.mjs';
+import { loadDailyQuotes, store } from './models.js';
+import { DAILY_QUOTES, selectDailyQuote } from './daily-quotes.mjs';
 import { plannedJobUrgency, updatePlannedAlert, watchPlannedDayChange } from './planned-urgency.mjs';
 import { ledgerBalanceCents } from './domain.mjs';
 
@@ -73,8 +73,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const activeList = document.getElementById('active-shift-list');
   const upcomingList = document.getElementById('upcoming-job-list');
   const ledgerList = document.getElementById('ledger-work-list');
+  let dailyQuotes = DAILY_QUOTES;
   function renderDailyQuote() {
-    const dailyQuote = selectDailyQuote(new Date());
+    const dailyQuote = selectDailyQuote(new Date(), dailyQuotes);
     document.getElementById('daily-quote-text').textContent = dailyQuote.text;
     document.getElementById('daily-quote-author').textContent = dailyQuote.author;
     const quoteSource = document.getElementById('daily-quote-source');
@@ -82,6 +83,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     quoteSource.href = dailyQuote.source;
   }
   renderDailyQuote();
+  loadDailyQuotes().then(quotes => {
+    dailyQuotes = quotes;
+    renderDailyQuote();
+  }).catch(error => {
+    console.warn('Unable to load shared daily quotes; showing the built-in list.', error);
+  });
   window.setInterval(renderDailyQuote, 60_000);
 
   function renderOverview() {

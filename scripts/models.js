@@ -10,6 +10,7 @@ import {
   repriceInvoiceShiftItems
 } from './domain.mjs';
 import { Invoice } from './invoice-model.mjs';
+import { DAILY_QUOTES, normalizeDailyQuotes } from './daily-quotes.mjs';
 export { Invoice };
 
 /*
@@ -22,6 +23,7 @@ import {
   getFirestore,
   collection,
   setDoc as firestoreSetDoc,
+  getDoc as firestoreGetDoc,
   getDocs as firestoreGetDocs,
   doc,
   updateDoc as firestoreUpdateDoc,
@@ -116,11 +118,26 @@ function firestoreRequest(message, operation) {
 }
 
 const setDoc = (...args) => firestoreRequest('Saving data to Firestore failed.', () => firestoreSetDoc(...args));
+const getDoc = (...args) => firestoreRequest('Loading data from Firestore failed.', () => firestoreGetDoc(...args));
 const getDocs = (...args) => firestoreRequest('Loading data from Firestore failed.', () => firestoreGetDocs(...args));
 const updateDoc = (...args) => firestoreRequest('Updating data in Firestore failed.', () => firestoreUpdateDoc(...args));
 const deleteDoc = (...args) => firestoreRequest('Deleting data from Firestore failed.', () => firestoreDeleteDoc(...args));
 const commitBatch = (batch, message = 'Saving this group of changes to Firestore failed.') =>
   firestoreRequest(message, () => batch.commit());
+
+const DAILY_QUOTES_DOCUMENT = ['appSettings', 'dailyQuotes'];
+
+export async function loadDailyQuotes() {
+  const snapshot = await getDoc(doc(db, ...DAILY_QUOTES_DOCUMENT));
+  if (!snapshot.exists()) return normalizeDailyQuotes(DAILY_QUOTES);
+  return normalizeDailyQuotes(snapshot.data()?.quotes);
+}
+
+export async function saveDailyQuotes(quotes) {
+  const normalized = normalizeDailyQuotes(quotes);
+  await setDoc(doc(db, ...DAILY_QUOTES_DOCUMENT), { quotes: normalized });
+  return normalized;
+}
 
 
 export { roundTo15Minutes, roundDown15Minutes, roundUp15Minutes };

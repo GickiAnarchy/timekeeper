@@ -1,37 +1,64 @@
 <!doctype html>
-
 <html lang="en">
   <head>
-    <meta charset="UT F-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
     <link rel="stylesheet" href="../styles/admin.css">
-    <title>Mosher Lawns · Timekeeper</title>
+    <script type="module" src="../scripts/keyboard.mjs" defer></script>
     <script type="module" src="../scripts/admin.js" defer></script>
+    <title>Admin Settings · Mosher Lawns Timekeeper</title>
   </head>
-  
-<body>
-  
-  <main class="admin-page">
-    <header class="admin-header">
-      <p class="admin-kicker">TOP SECRET AREA</p>
-      <h1>Admin Settings</h1>
-      <p>Add daily quotes. Edit or delete anythihg. Play kindly.</p>
-      <span class="admin-badge">Full control access</span>
-    </header>
-    
-    <section class="admin-section quote-section">
-      <h2 class="admin-heading">
-        <button class="admin-toggle" id="quote-toggle" type="button">
-          <span>Daily Quote Management</span><span class="admin-chevron" aria-hidden="true">|○○|</span>
-        </button>
-      </h2>
-      <div class="settings-card" id="quote-card">
-        <!-- TODO -->
-      </div>
-    </section>
-    
-  </main>
-  
-</body>
+  <body>
+    <main class="admin-page">
+      <header class="admin-header">
+        <p class="admin-kicker">WORKSPACE SETTINGS</p>
+        <h1>Admin Settings</h1>
+        <p>Manage the daily quotes shown on the home page.</p>
+        <span class="admin-badge">Shared workspace controls</span>
+      </header>
 
+      <section class="admin-section quote-section" aria-labelledby="quote-section-title">
+        <h2 class="admin-heading">
+          <button class="admin-toggle" id="quote-toggle" type="button" aria-expanded="true" aria-controls="quote-card">
+            <span id="quote-section-title">Daily Quote Management</span>
+            <span class="admin-chevron" aria-hidden="true">⌄</span>
+          </button>
+        </h2>
+        <div class="settings-card" id="quote-card">
+          <p class="quote-management-note">Quotes rotate on the home page using the America/Chicago calendar date. At least one quote must remain in the shared list.</p>
+          <p class="admin-status" id="quote-status" role="status" aria-live="polite">Loading daily quotes…</p>
+          <ul class="quote-list" id="quote-list" aria-label="Daily quotes"></ul>
+
+          <details class="quote-form-disclosure" id="quote-form-disclosure">
+            <summary id="quote-form-summary">Add a daily quote</summary>
+            <form id="daily-quote-form" novalidate>
+              <div class="quote-form-grid">
+                <div class="quote-field quote-field-wide">
+                  <label for="quote-text">Quote</label>
+                  <textarea id="quote-text" name="text" rows="4" maxlength="1200" required></textarea>
+                </div>
+                <div class="quote-field">
+                  <label for="quote-author">Author</label>
+                  <input id="quote-author" name="author" type="text" maxlength="160" required>
+                </div>
+                <div class="quote-field">
+                  <label for="quote-work">Work or source title</label>
+                  <input id="quote-work" name="work" type="text" maxlength="240" required>
+                </div>
+                <div class="quote-field quote-field-wide">
+                  <label for="quote-source">Source URL (HTTPS)</label>
+                  <input id="quote-source" name="source" type="url" inputmode="url" maxlength="1000" placeholder="https://…" required>
+                </div>
+              </div>
+              <p class="quote-form-error" id="quote-form-error" role="alert" aria-live="polite"></p>
+              <div class="quote-form-actions">
+                <button class="admin-button admin-button-primary" id="quote-save-button" type="submit">Add quote</button>
+                <button class="admin-button admin-button-secondary" id="quote-cancel-button" type="button" hidden>Cancel edit</button>
+              </div>
+            </form>
+          </details>
+        </div>
+      </section>
+    </main>
+  </body>
 </html>

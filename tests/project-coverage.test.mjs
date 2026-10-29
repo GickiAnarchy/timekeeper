@@ -213,6 +213,25 @@ test('Home is a task-oriented launchpad for shifts, jobs due soon, and ledger wo
   assert.match(ledger, /requestedEmployeeId/);
 });
 
+test('Admin Settings manages the shared daily quote list displayed on Home', () => {
+  const adminMarkup = readProjectFile('html', 'admin-settings.html');
+  const adminScript = readProjectFile('scripts', 'admin.js');
+  const homeScript = readProjectFile('scripts', 'home.js');
+  const model = readProjectFile('scripts', 'models.js');
+
+  assert.match(adminMarkup, /id="quote-text"/);
+  assert.match(adminMarkup, /id="quote-author"/);
+  assert.match(adminMarkup, /id="quote-work"/);
+  assert.match(adminMarkup, /id="quote-source"/);
+  assert.match(adminScript, /loadDailyQuotes\(\)/);
+  assert.match(adminScript, /saveDailyQuotes\(nextQuotes\)/);
+  assert.match(adminScript, /dataset\.action = 'edit'/);
+  assert.match(adminScript, /dataset\.action = 'delete'/);
+  assert.match(model, /doc\(db, \.\.\.DAILY_QUOTES_DOCUMENT\)/);
+  assert.match(homeScript, /loadDailyQuotes\(\)/);
+  assert.match(homeScript, /selectDailyQuote\(new Date\(\), dailyQuotes\)/);
+});
+
 test('Shift History keeps filters and its Add action together near the top', () => {
   const markup = readProjectFile('html', 'viewshifts.html');
   const styles = readProjectFile('styles', 'shifts.css');
