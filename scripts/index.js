@@ -1,3 +1,4 @@
+
 // Keep navigation in the shell's single asset: a missing separately deployed
 // module must not prevent every click handler from being registered.
 // Native buttons retain Enter/Space activation and the shared focus-visible ring.
