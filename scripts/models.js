@@ -44,6 +44,7 @@ const firebaseConfig = {
 // 3. Initialize Firebase & Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+export { app };
 
 function showFirestoreError(message, retryOperation) {
   if (!globalThis.document?.body) return;

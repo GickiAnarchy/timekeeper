@@ -11,11 +11,13 @@ import {
   updateDoc
 } from '@firebase/firestore';
 import {
+  assertFails,
   assertSucceeds,
   initializeTestEnvironment
 } from '@firebase/rules-unit-testing';
 
 const PROJECT_ID = 'demo-timekeeper';
+const DAILY_QUOTES_OWNER_UID = 'N9fh9kr98neSYBSNdyDHBZn9IGv1';
 const firestoreHost = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
 const [firestoreHostname, firestorePortText] = firestoreHost.split(':');
 let environment;
@@ -76,4 +78,36 @@ test('an unrelated authenticated user has the same unrestricted access', async (
   assert.equal((await assertSucceeds(getDoc(reference))).data().wage, 99);
   await assertSucceeds(updateDoc(reference, { wage: 100 }));
   await assertSucceeds(deleteDoc(reference));
+});
+
+test('daily quote settings are public-read and writable only by the approved owner UID', async () => {
+  const anonymous = environment.unauthenticatedContext().firestore();
+  const unrelatedUser = environment.authenticatedContext('not-an-owner').firestore();
+  const owner = environment.authenticatedContext(DAILY_QUOTES_OWNER_UID).firestore();
+  const anonymousQuoteRef = doc(anonymous, 'appSettings', 'dailyQuotes');
+  const unrelatedQuoteRef = doc(unrelatedUser, 'appSettings', 'dailyQuotes');
+  const ownerQuoteRef = doc(owner, 'appSettings', 'dailyQuotes');
+
+  await assertSucceeds(getDoc(anonymousQuoteRef));
+  await assertFails(setDoc(anonymousQuoteRef, { quotes: [] }));
+  await assertFails(setDoc(unrelatedQuoteRef, { quotes: [] }));
+  await assertSucceeds(setDoc(ownerQuoteRef, { quotes: ['owner-created'] }));
+  assert.deepEqual((await assertSucceeds(getDoc(anonymousQuoteRef))).data().quotes, ['owner-created']);
+  await assertFails(updateDoc(unrelatedQuoteRef, { quotes: ['unrelated-update'] }));
+  await assertFails(deleteDoc(unrelatedQuoteRef));
+  await assertSucceeds(updateDoc(ownerQuoteRef, { quotes: ['owner-updated'] }));
+  await assertSucceeds(deleteDoc(ownerQuoteRef));
+});
+
+test('other appSettings documents and subcollection documents remain publicly writable', async () => {
+  const anonymous = environment.unauthenticatedContext().firestore();
+  const siblingSetting = doc(anonymous, 'appSettings', 'otherSetting');
+  const nestedSetting = doc(anonymous, 'appSettings', 'dailyQuotes', 'metadata', 'entry');
+
+  await assertSucceeds(setDoc(siblingSetting, { value: 'public sibling' }));
+  await assertSucceeds(updateDoc(siblingSetting, { value: 'updated sibling' }));
+  await assertSucceeds(deleteDoc(siblingSetting));
+  await assertSucceeds(setDoc(nestedSetting, { value: 'public nested document' }));
+  await assertSucceeds(updateDoc(nestedSetting, { value: 'updated nested document' }));
+  await assertSucceeds(deleteDoc(nestedSetting));
 });

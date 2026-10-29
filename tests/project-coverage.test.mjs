@@ -156,10 +156,15 @@ test('the no-login clock screen retains multi-employee selection and clock actio
   assert.match(model, /async saveShift\(shift\)/);
 });
 
-test('Firestore rules intentionally grant public read/write access recursively', () => {
+test('Firestore rules keep public access except owner-only daily quote settings writes', () => {
   const rules = readProjectFile('firestore.rules');
-  assert.match(rules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if true;\s*\}/);
-  assert.doesNotMatch(rules, /request\.auth|isOwner|isGuest|hasRecentOwnerAuthentication/);
+  assert.match(rules, /match \/\{collection\}\/\{document=\*\*\}/);
+  assert.match(rules, /allow write: if collection != 'appSettings'/);
+  assert.match(rules, /match \/appSettings\/\{settingsDocument\}/);
+  assert.match(rules, /settingsDocument != 'dailyQuotes' \|\| isDailyQuotesOwner\(\)/);
+  assert.match(rules, /request\.auth != null && request\.auth\.uid == 'N9fh9kr98neSYBSNdyDHBZn9IGv1'/);
+  assert.match(rules, /match \/appSettings\/\{settingsDocument\}\/\{subcollection\}\/\{nestedDocument=\*\*\}/);
+  assert.doesNotMatch(rules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if true;/);
 });
 
 test('inline add forms and shift-management sections use collapsed native disclosures', () => {
@@ -230,6 +235,24 @@ test('Admin Settings manages the shared daily quote list displayed on Home', () 
   assert.match(model, /doc\(db, \.\.\.DAILY_QUOTES_DOCUMENT\)/);
   assert.match(homeScript, /loadDailyQuotes\(\)/);
   assert.match(homeScript, /selectDailyQuote\(new Date\(\), dailyQuotes\)/);
+});
+
+test('Admin Settings prompts for the approved Firebase owner and routes rejected access to Home', () => {
+  const adminMarkup = readProjectFile('html', 'admin-settings.html');
+  const adminScript = readProjectFile('scripts', 'admin.js');
+  const authScript = readProjectFile('scripts', 'admin-auth.mjs');
+
+  assert.match(adminMarkup, /<dialog[^>]*id="owner-auth-dialog"/);
+  assert.match(adminMarkup, /id="owner-auth-email"[^>]*type="email"/);
+  assert.match(adminMarkup, /id="owner-auth-password"[^>]*type="password"/);
+  assert.match(adminMarkup, /id="admin-content" hidden/);
+  assert.match(adminScript, /authDialog\.showModal\(\)/);
+  assert.match(adminScript, /authApi\.isDailyQuotesAdmin\(user\)/);
+  assert.match(adminScript, /authDialog\.addEventListener\('cancel'/);
+  assert.match(adminScript, /new URL\('home\.html'/);
+  assert.match(authScript, /signInWithEmailAndPassword\(auth, email, password\)/);
+  assert.match(authScript, /setPersistence\(auth, inMemoryPersistence\)/);
+  assert.match(authScript, /DAILY_QUOTES_OWNER_UID = 'N9fh9kr98neSYBSNdyDHBZn9IGv1'/);
 });
 
 test('Shift History keeps filters and its Add action together near the top', () => {

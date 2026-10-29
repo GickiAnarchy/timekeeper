@@ -9,7 +9,28 @@
     <title>Admin Settings · Mosher Lawns Timekeeper</title>
   </head>
   <body>
-    <main class="admin-page">
+    <dialog class="admin-auth-dialog" id="owner-auth-dialog" aria-labelledby="owner-auth-title" aria-describedby="owner-auth-help owner-auth-status">
+      <form class="admin-auth-form" id="owner-auth-form" novalidate>
+        <p class="admin-kicker">OWNER ACCESS</p>
+        <h1 id="owner-auth-title">Sign in to Admin Settings</h1>
+        <p id="owner-auth-help">Use the approved owner Firebase account to manage daily quotes.</p>
+        <label class="admin-auth-field" for="owner-auth-email">
+          <span>Email</span>
+          <input id="owner-auth-email" name="email" type="email" autocomplete="username" required>
+        </label>
+        <label class="admin-auth-field" for="owner-auth-password">
+          <span>Password</span>
+          <input id="owner-auth-password" name="password" type="password" autocomplete="current-password" required>
+        </label>
+        <p class="admin-auth-status" id="owner-auth-status" role="alert" aria-live="assertive"></p>
+        <div class="admin-auth-actions">
+          <button class="admin-button admin-button-primary" id="owner-auth-submit" type="submit">Sign in</button>
+          <button class="admin-button admin-button-secondary" id="owner-auth-cancel" type="button">Cancel and go Home</button>
+        </div>
+      </form>
+    </dialog>
+
+    <main class="admin-page" id="admin-content" hidden>
       <header class="admin-header">
         <p class="admin-kicker">TOP SECRET SETTINGS</p>
         <h1>Admin Settings</h1>

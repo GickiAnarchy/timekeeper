@@ -13,7 +13,7 @@ function createQuoteId() {
   return randomId ? `quote-${randomId}` : `quote-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+function initializeQuoteManager() {
   const quoteToggle = document.getElementById('quote-toggle');
   const quoteCard = document.getElementById('quote-card');
   const quoteList = document.getElementById('quote-list');
@@ -184,17 +184,118 @@ document.addEventListener('DOMContentLoaded', async () => {
     await persistQuotes(nextQuotes, 'Quote deleted.');
   });
 
-  try {
-    quotes = await loadDailyQuotes();
+  loadDailyQuotes().then(loadedQuotes => {
+    quotes = loadedQuotes;
     ready = true;
     renderQuotes();
     quoteStatus.textContent = `${quotes.length} ${quotes.length === 1 ? 'quote is' : 'quotes are'} in the shared daily rotation.`;
-  } catch (error) {
+  }).catch(error => {
     console.error('Unable to load daily quotes.', error);
     quoteList.replaceChildren();
     quoteStatus.textContent = 'Daily quotes could not be loaded. Refresh the page or check the connection before editing.';
     quoteFormError.textContent = 'The saved list was not loaded, so editing is disabled to avoid overwriting it.';
-  } finally {
-    setBusy(false);
+  }).finally(() => setBusy(false));
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const authDialog = document.getElementById('owner-auth-dialog');
+  const authForm = document.getElementById('owner-auth-form');
+  const authEmail = document.getElementById('owner-auth-email');
+  const authPassword = document.getElementById('owner-auth-password');
+  const authStatus = document.getElementById('owner-auth-status');
+  const authSubmit = document.getElementById('owner-auth-submit');
+  const authCancel = document.getElementById('owner-auth-cancel');
+  const adminContent = document.getElementById('admin-content');
+  let authApi;
+  let authorized = false;
+  let redirecting = false;
+  let signingIn = false;
+
+  function routeHome() {
+    window.location.replace(new URL('home.html', window.location.href).href);
+  }
+
+  async function leaveAdmin() {
+    if (redirecting) return;
+    redirecting = true;
+    authSubmit.disabled = true;
+    authCancel.disabled = true;
+    authStatus.textContent = 'Returning Home…';
+    try {
+      await authApi?.signOutDailyQuotesAdmin();
+    } catch (error) {
+      console.warn('Unable to clear the temporary owner session.', error);
+    }
+    routeHome();
+  }
+
+  authDialog.addEventListener('cancel', event => {
+    event.preventDefault();
+    void leaveAdmin();
+  });
+  authDialog.addEventListener('close', () => {
+    if (!authorized) void leaveAdmin();
+  });
+  authCancel.addEventListener('click', () => void leaveAdmin());
+
+  authForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (redirecting || signingIn) return;
+    const email = authEmail.value.trim();
+    const password = authPassword.value;
+    if (!email || !password) {
+      void leaveAdmin();
+      return;
+    }
+
+    signingIn = true;
+    authSubmit.disabled = true;
+    authCancel.disabled = true;
+    authStatus.textContent = 'Checking owner account…';
+    try {
+      const user = await authApi.signInDailyQuotesAdmin(email, password);
+      if (redirecting) {
+        await authApi.signOutDailyQuotesAdmin();
+        return;
+      }
+      if (!authApi.isDailyQuotesAdmin(user)) {
+        authStatus.textContent = 'This account is not approved. Returning Home…';
+        await authApi.signOutDailyQuotesAdmin();
+        if (!redirecting) {
+          redirecting = true;
+          routeHome();
+        }
+        return;
+      }
+
+      authorized = true;
+      authPassword.value = '';
+      authDialog.close();
+      adminContent.hidden = false;
+      initializeQuoteManager();
+    } catch (error) {
+      console.warn('Owner sign-in failed.', error);
+      authStatus.textContent = 'Sign-in was not accepted. Returning Home…';
+      try {
+        await authApi?.signOutDailyQuotesAdmin();
+      } catch (signOutError) {
+        console.warn('Unable to clear the failed sign-in state.', signOutError);
+      }
+      if (!redirecting) {
+        redirecting = true;
+        routeHome();
+      }
+    } finally {
+      signingIn = false;
+    }
+  });
+
+  try {
+    authApi = await import('./admin-auth.mjs');
+    await authApi.prepareDailyQuotesAdminSignIn();
+    if (!authDialog.open) authDialog.showModal();
+  } catch (error) {
+    console.error('Owner authentication is unavailable.', error);
+    await leaveAdmin();
   }
 });
