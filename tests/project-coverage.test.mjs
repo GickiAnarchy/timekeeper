@@ -27,10 +27,10 @@ test('the parent shell monitors keyboard focus and viewport changes in its activ
   assert.match(script, /visualViewport\?\.addEventListener\('resize'/);
 });
 
-test('the footer links to the GitHub profile and centers the Android download link', () => {
+test('the footer links to protected Admin Settings and centers the Android download link', () => {
   const markup = readProjectFile('index.html');
   const stylesheet = readProjectFile('styles', 'style.css');
-  assert.match(markup, /<a class="site-footer-link" href="https:\/\/github\.com\/GickiAnarchy"[^>]*>© 2026 GickiStudios<\/a>/);
+  assert.match(markup, /<a class="site-footer-link" href="html\/admin-settings\.html" target="main-content"[^>]*>© 2026 GickiStudios<\/a>/);
   assert.match(markup, /<a class="site-footer-app-link" href="https:\/\/github\.com\/GickiAnarchy\/timekeeper\/releases\/download\/[^"]+"[^>]*>Get the Android app here<\/a>/);
   assert.match(markup, /<div class="site-footer-meta">[\s\S]*?Timekeeping made simple[\s\S]*?version-badge/);
   assert.match(stylesheet, /\.site-footer-link\s*\{\s*color:\s*inherit;\s*text-decoration:\s*none;/);
@@ -140,10 +140,28 @@ test('the no-login clock screen retains multi-employee selection and clock actio
   assert.match(model, /async saveShift\(shift\)/);
 });
 
-test('Firestore rules intentionally grant public read/write access recursively', () => {
+test('Firestore rules keep public access except owner-only daily quote settings writes', () => {
   const rules = readProjectFile('firestore.rules');
-  assert.match(rules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if true;\s*\}/);
-  assert.doesNotMatch(rules, /request\.auth|isOwner|isGuest|hasRecentOwnerAuthentication/);
+  assert.match(rules, /match \/\{collection\}\/\{document=\*\*\}/);
+  assert.match(rules, /allow write: if collection != 'appSettings'/);
+  assert.match(rules, /match \/appSettings\/\{settingsDocument\}/);
+  assert.match(rules, /settingsDocument != 'dailyQuotes' \|\| isDailyQuotesOwner\(\)/);
+  assert.match(rules, /request\.auth != null && request\.auth\.uid == 'N9fh9kr98neSYBSNdyDHBZn9IGv1'/);
+  assert.match(rules, /match \/appSettings\/\{settingsDocument\}\/\{subcollection\}\/\{nestedDocument=\*\*\}/);
+  assert.doesNotMatch(rules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if true;/);
+});
+
+test('protected quote management and public Home use only the shared dailyQuotes settings document', () => {
+  const model = readProjectFile('scripts', 'models.js');
+  const home = readProjectFile('scripts', 'home.js');
+  const admin = readProjectFile('scripts', 'admin.js');
+  assert.match(model, /const DAILY_QUOTES_DOCUMENT = \['appSettings', 'dailyQuotes'\]/);
+  assert.match(model, /export async function loadDailyQuotes\(\)/);
+  assert.match(model, /export async function saveDailyQuotes\(quotes\)/);
+  assert.match(model, /export \{ app \}/);
+  assert.match(home, /loadDailyQuotes\(\)\.then/);
+  assert.match(home, /selectDailyQuote\(new Date\(\), dailyQuotes\)/);
+  assert.match(admin, /import \{ loadDailyQuotes, saveDailyQuotes \} from '\.\/models\.js'/);
 });
 
 test('inline add forms and shift-management sections use collapsed native disclosures', () => {

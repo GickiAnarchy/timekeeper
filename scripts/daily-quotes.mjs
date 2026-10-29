@@ -27,6 +27,40 @@ export const DAILY_QUOTES = Object.freeze([
   Object.freeze({ text: 'Drugs are fun. Especially when you are high.', author: 'Turpin Tine', work: 'Unemployed', source: MISC_SOURCE })
 ]);
 
+export function normalizeDailyQuotes(quotes) {
+  if (!Array.isArray(quotes) || quotes.length === 0) {
+    throw new Error('At least one daily quote must remain.');
+  }
+
+  const normalized = quotes.map((quote, index) => {
+    if (!quote || typeof quote !== 'object' || Array.isArray(quote)) {
+      throw new Error(`Quote ${index + 1} is not a valid record.`);
+    }
+    const requiredText = (value, field) => {
+      const text = String(value ?? '').trim();
+      if (!text) throw new Error(`${field} is required.`);
+      return text;
+    };
+    const id = String(quote.id ?? '').trim() || `starter-${String(index + 1).padStart(3, '0')}`;
+    const text = requiredText(quote.text, 'Quote text');
+    const author = requiredText(quote.author, 'Author');
+    const work = requiredText(quote.work, 'Work or source title');
+    const source = requiredText(quote.source, 'Source URL');
+    let sourceUrl;
+    try {
+      sourceUrl = new URL(source);
+    } catch {
+      throw new Error('Enter a valid HTTPS source URL.');
+    }
+    if (sourceUrl.protocol !== 'https:') throw new Error('Source URLs must use HTTPS.');
+    return { id, text, author, work, source };
+  });
+  if (new Set(normalized.map(quote => quote.id)).size !== normalized.length) {
+    throw new Error('Daily quote IDs must be unique.');
+  }
+  return normalized;
+}
+
 export function dateKeyInTimeZone(date, timeZone = DAILY_QUOTE_TIME_ZONE) {
   if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
     throw new TypeError('A valid Date is required to select the daily quote.');
