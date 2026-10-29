@@ -32,6 +32,7 @@ export function setupNavigationGroups(root) {
       else entry.toggle.removeAttribute('data-current');
     }
   };
+  
 }
 
 // A disclosure, not an ARIA menu: ordinary buttons keep native Tab/Enter/Space.
@@ -40,6 +41,7 @@ export function setupNavigationPicker(root) {
   const panel = root?.querySelector('.sidebar-nav');
   const label = root?.querySelector('.nav-picker-label');
   if (!toggle || !panel) return () => {};
+  
   const doc = root.ownerDocument;
 
   function close(restoreFocus = false) {
@@ -47,24 +49,30 @@ export function setupNavigationPicker(root) {
     toggle.setAttribute('aria-expanded', 'false');
     if (restoreFocus) toggle.focus();
   }
+  
   close();
+  
   toggle.addEventListener('click', () => {
     const open = panel.hidden;
     panel.hidden = !open;
     toggle.setAttribute('aria-expanded', String(open));
   });
+  
   root.addEventListener('keydown', event => {
     if (event.key === 'Escape' && !panel.hidden) {
       event.preventDefault();
       close(true);
     }
   });
+  
   doc?.addEventListener('pointerdown', event => {
     if (!root.contains(event.target)) close();
   });
+  
   // Pointer events inside the workspace iframe do not bubble to this document.
   // Entering that frame blurs the shell window; dismiss without stealing focus.
   doc?.defaultView?.addEventListener('blur', () => close());
+  
   root.addEventListener('focusout', event => {
     if (event.relatedTarget && !root.contains(event.relatedTarget)) close();
   });
