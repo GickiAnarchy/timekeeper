@@ -1,5 +1,6 @@
 import { loadDailyQuotes, saveDailyQuotes } from './models.js';
 import { normalizeDailyQuotes } from './daily-quotes.mjs';
+import { store } from './models.js';
 
 function makeElement(tag, className, text) {
   const element = document.createElement(tag);
@@ -198,6 +199,8 @@ function initializeQuoteManager() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  await store.init();
+  
   const authDialog = document.getElementById('owner-auth-dialog');
   const authForm = document.getElementById('owner-auth-form');
   const authEmail = document.getElementById('owner-auth-email');
