@@ -89,7 +89,6 @@
             <span class="admin-chevron" aria-hidden="true">⌄</span>
           </button>
         </h2>
-        
         <div class="settings-card" id="wage-card">
           <p class="wage-management-note">Modify the hourly rate for employees.</p>
           <p class="admin-status" id="wage-status" role="status" aria-live="polite">Loading employee wages…</p>
@@ -97,7 +96,26 @@
           
           <details class="wage-table-disclosure" id="wage-table-disclosure">
             <summary id="wage-table-summary">Modify Employee Wages</summary>
-            <table class="wage-table" id="wage-table"
+            <table class="wage-table" id="wage-table">
+              <thead>
+                <tr>
+                  <th colspan="2" id="name-head">
+                    <span class="table-head"><p>Name</p></span>
+                  </th>
+                  <th id ="wage-head">
+                    <span class="table-head"><p>Wage</p></span>
+                  </th>
+                  <th colspan="2" id="action-head">
+                    <span class="table-head"><p>Action</p></span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="wage-table-body">
+                <tr>
+                  <td>Loading...</td>
+                </tr>
+              </tbody>
+            </table>
           </details>
         
         </div>
