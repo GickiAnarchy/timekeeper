@@ -50,7 +50,11 @@
         <div class="settings-card" id="quote-card">
           <p class="quote-management-note">Quotes rotate on the home page daily. At least one quote must remain in the shared list.</p>
           <p class="admin-status" id="quote-status" role="status" aria-live="polite">Loading daily quotes…</p>
-          <ul class="admin-list quote-list" id="quote-list" aria-label="Daily quotes"></ul>
+          <details class="quote-list-details">
+            <summary class="quote-list-summary">Current Quotes</summary>
+            <ul class="admin-list quote-list" id="quote-list" aria-label="Daily quotes"></ul>
+          </details>
+          
           
           <details class="quote-form-disclosure" id="quote-form-disclosure">
             <summary id="quote-form-summary">Add a daily quote</summary>
