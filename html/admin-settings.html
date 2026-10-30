@@ -38,6 +38,7 @@
         <span class="admin-badge">Shared workspace controls</span>
       </header>
 
+    <!-- QUOTES -->
       <section class="admin-section quote-section" aria-labelledby="quote-section-title">
         <h2 class="admin-heading">
           <button class="admin-toggle" id="quote-toggle" type="button" aria-expanded="true" aria-controls="quote-card">
@@ -45,11 +46,12 @@
             <span class="admin-chevron" aria-hidden="true">⌄</span>
           </button>
         </h2>
+      
         <div class="settings-card" id="quote-card">
           <p class="quote-management-note">Quotes rotate on the home page daily. At least one quote must remain in the shared list.</p>
           <p class="admin-status" id="quote-status" role="status" aria-live="polite">Loading daily quotes…</p>
-          <ul class="quote-list" id="quote-list" aria-label="Daily quotes"></ul>
-
+          <ul class="admin-list quote-list" id="quote-list" aria-label="Daily quotes"></ul>
+          
           <details class="quote-form-disclosure" id="quote-form-disclosure">
             <summary id="quote-form-summary">Add a daily quote</summary>
             <form id="daily-quote-form" novalidate>
@@ -80,6 +82,47 @@
           </details>
         </div>
       </section>
+      
+    <!-- WAGES -->
+      <section class="admin-section wage-section">
+        <h2 class="admin-heading">
+          <button class="admin-toggle" id="wage-toggle" type="button" aria-expanded="true" aria-controls="quote-card">
+            <span id="wage-section-title">Employee Wage Management</span>
+            <span class="admin-chevron" aria-hidden="true">⌄</span>
+          </button>
+        </h2>
+        <div class="settings-card" id="wage-card">
+          <p class="wage-management-note">Modify the hourly rate for employees.</p>
+          <p class="admin-status" id="wage-status" role="status" aria-live="polite">Loading employee wages…</p>
+          <ul class="admin-list wage-list" id="wage-list" aria-label="Employee Wage List"></ul>
+          
+          <details class="wage-table-disclosure" id="wage-table-disclosure">
+            <summary id="wage-table-summary">Modify Employee Wages</summary>
+            <table class="wage-table" id="wage-table">
+              <thead>
+                <tr>
+                  <th colspan="2" id="name-head">
+                    <span class="table-head"><p>Name</p></span>
+                  </th>
+                  <th id ="wage-head">
+                    <span class="table-head"><p>Wage</p></span>
+                  </th>
+                  <th colspan="2" id="action-head">
+                    <span class="table-head"><p>Action</p></span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="wage-table-body">
+                <tr>
+                  <td>Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </details>
+        </div>
+      </section>
+
+ 
     </main>
   </body>
 </html>
