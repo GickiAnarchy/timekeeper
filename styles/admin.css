@@ -178,6 +178,11 @@
 .admin-auth-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 .admin-auth-actions .admin-button { min-height: 44px; }
 
+.wage-table {
+  width: 90%;
+  height: auto;
+}
+
 @media (max-width: 620px) {
   .admin-page { padding: 16px 13px 28px; }
   .quote-item { flex-direction: column; gap: 12px; }
