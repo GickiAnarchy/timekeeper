@@ -1,6 +1,7 @@
 const FIREBASE_AUTH_MODULE_URL = 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 const ADMIN_ONLY_SELECTOR = '[data-admin-only]';
 export const DAILY_QUOTES_OWNER_UID = 'N9fh9kr98neSYBSNdyDHBZn9IGv1';
+export const ADMIN_SESSION_MESSAGE_TYPE = 'timekeeper-admin-session-state';
 
 let firebaseAuthApi;
 let auth;
@@ -62,6 +63,23 @@ export function watchAdminOnlyControls(root, initialIsAdmin = false) {
       originalDisabledStates.clear();
     }
   };
+}
+
+export function watchAdminAccessBadgeMessages(root) {
+  const badge = root?.getElementById?.('admin-access-badge');
+  const frame = root?.querySelector?.('iframe[name="main-content"]');
+  const rootWindow = root?.defaultView;
+  if (!badge || !frame || !rootWindow?.addEventListener) return () => {};
+
+  const onMessage = event => {
+    if (event.origin !== rootWindow.location?.origin
+      || event.source !== frame.contentWindow
+      || event.data?.type !== ADMIN_SESSION_MESSAGE_TYPE
+      || typeof event.data.isAdmin !== 'boolean') return;
+    badge.hidden = !event.data.isAdmin;
+  };
+  rootWindow.addEventListener('message', onMessage);
+  return () => rootWindow.removeEventListener?.('message', onMessage);
 }
 
 export function initializeAdminSectionToggles(root = document) {
@@ -130,12 +148,19 @@ export async function prepareDailyQuotesAdminSignIn() {
 
 export function observeDailyQuotesAdminSession(onChange, onError) {
   if (!firebaseAuthApi || !auth) throw new Error('Prepare the admin session before observing it.');
-  return firebaseAuthApi.onAuthStateChanged(auth, onChange, onError);
+  return firebaseAuthApi.onAuthStateChanged(auth, user => {
+    announceAdminSessionToShell(user);
+    onChange?.(user);
+  }, error => {
+    announceAdminSessionToShell(null);
+    onError?.(error);
+  });
 }
 
 export async function signInDailyQuotesAdmin(email, password) {
   const api = await ensurePersistentAdminSession();
   const credential = await api.signInWithEmailAndPassword(auth, email, password);
+  announceAdminSessionToShell(credential.user);
   return credential.user;
 }
 
@@ -143,13 +168,21 @@ export function isDailyQuotesAdmin(user) {
   return user?.uid === DAILY_QUOTES_OWNER_UID;
 }
 
+export function announceAdminSessionToShell(user, frameWindow = globalThis.window) {
+  if (!frameWindow || frameWindow.parent === frameWindow || typeof frameWindow.parent?.postMessage !== 'function') {
+    return false;
+  }
+  frameWindow.parent.postMessage({
+    type: ADMIN_SESSION_MESSAGE_TYPE,
+    isAdmin: isDailyQuotesAdmin(user)
+  }, frameWindow.location.origin);
+  return true;
+}
+
 export async function signOutDailyQuotesAdmin() {
   const api = await configureDailyQuotesAdminAuth();
-  if (auth.currentUser) {
-    await api.signOut(auth);
-    const badge = document.getElementById('admin-access-badge');
-    badge.hidden = true;
-  }
+  await api.signOut(auth);
+  announceAdminSessionToShell(null);
 }
 
 function makeElement(tag, className, text) {
@@ -553,6 +586,7 @@ async function initializeAdminPage() {
 
   const authDialog = document.getElementById('owner-auth-dialog');
   if (!authDialog) {
+    if (badge) watchAdminAccessBadgeMessages(document);
     try {
       const currentUser = await prepareDailyQuotesAdminSignIn();
       const isAdmin = isDailyQuotesAdmin(currentUser);
@@ -754,7 +788,7 @@ if (typeof document !== 'undefined') {
   const start = () => {
     void initializeAdminPage().catch(error => {
       console.error('Unable to initialize the admin controller.', error);
-      
+      const badge = document.getElementById('admin-access-badge');
       if (badge) badge.hidden = true;
     });
   };
