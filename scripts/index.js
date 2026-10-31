@@ -178,7 +178,6 @@ export function initializeShell() {
   const mainIframe = document.querySelector('iframe[name="main-content"]');
   const title = document.getElementById('active-page-title');
   const dateLabel = document.getElementById('topbar-date');
-  initializeAdminSessionBadge();
   let baselineViewportHeight = 0;
 
   function isKeyboardInput(target) {
@@ -345,31 +344,6 @@ export function initializeShell() {
       weekday: 'short', month: 'short', day: 'numeric'
     }).format(new Date());
   }
-}
-
-function initializeAdminSessionBadge() {
-  const badge = document.getElementById('admin-access-badge');
-  if (!badge) return;
-  badge.hidden = true;
-
-  function updateBadge(authApi, user) {
-    badge.hidden = !authApi.isDailyQuotesAdmin(user);
-  }
-
-  void (async () => {
-    try {
-      const authApi = await import('./admin-auth.mjs?v=owner-session-1');
-      const currentUser = await authApi.prepareDailyQuotesAdminSignIn();
-      updateBadge(authApi, currentUser);
-      authApi.observeDailyQuotesAdminSession(user => updateBadge(authApi, user), error => {
-        console.warn('Unable to observe the owner session for the admin badge.', error);
-        badge.hidden = true;
-      });
-    } catch (error) {
-      console.warn('Admin privileges could not be checked for the shell badge.', error);
-      badge.hidden = true;
-    }
-  })();
 }
 
 if (typeof document !== 'undefined') {

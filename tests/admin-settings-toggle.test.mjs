@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { initializeAdminSectionToggles } from '../scripts/admin-section-toggles.mjs';
+import { initializeAdminSectionToggles } from '../scripts/admin.js';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const adminMarkup = readFileSync(join(projectRoot, 'html', 'admin-settings.html'), 'utf8');

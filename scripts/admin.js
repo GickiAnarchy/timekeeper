@@ -1,7 +1,152 @@
-import { loadDailyQuotes, saveDailyQuotes } from './models.js';
-import { normalizeDailyQuotes } from './daily-quotes.mjs';
-import { store } from './models.js';
-import { initializeAdminSectionToggles } from './admin-section-toggles.mjs';
+const FIREBASE_AUTH_MODULE_URL = 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+const ADMIN_ONLY_SELECTOR = '[data-admin-only]';
+export const DAILY_QUOTES_OWNER_UID = 'N9fh9kr98neSYBSNdyDHBZn9IGv1';
+
+let firebaseAuthApi;
+let auth;
+let authModulePromise;
+let persistencePromise;
+let store;
+let loadDailyQuotes;
+let saveDailyQuotes;
+let normalizeDailyQuotes;
+
+export function watchAdminOnlyControls(root, initialIsAdmin = false) {
+  if (!root?.querySelectorAll) throw new TypeError('An admin-control root is required.');
+
+  let isAdmin = Boolean(initialIsAdmin);
+  const originalDisabledStates = new Map();
+
+  function synchronize() {
+    const controls = new Set(root.querySelectorAll(ADMIN_ONLY_SELECTOR));
+
+    for (const [control, originalDisabled] of originalDisabledStates) {
+      if (controls.has(control)) continue;
+      control.disabled = originalDisabled;
+      originalDisabledStates.delete(control);
+    }
+
+    for (const control of controls) {
+      if (!('disabled' in control)) continue;
+      if (!originalDisabledStates.has(control)) {
+        originalDisabledStates.set(control, Boolean(control.disabled));
+      }
+      control.disabled = !isAdmin || originalDisabledStates.get(control);
+    }
+  }
+
+  const mutationObserverConstructor = root.defaultView?.MutationObserver || globalThis.MutationObserver;
+  const target = root.documentElement || root;
+  const observer = mutationObserverConstructor && target
+    ? new mutationObserverConstructor(synchronize)
+    : null;
+
+  synchronize();
+  observer?.observe(target, {
+    attributes: true,
+    attributeFilter: ['data-admin-only'],
+    childList: true,
+    subtree: true
+  });
+
+  return {
+    setAdmin(nextIsAdmin) {
+      isAdmin = Boolean(nextIsAdmin);
+      synchronize();
+    },
+    disconnect() {
+      observer?.disconnect();
+      for (const [control, originalDisabled] of originalDisabledStates) {
+        control.disabled = originalDisabled;
+      }
+      originalDisabledStates.clear();
+    }
+  };
+}
+
+export function initializeAdminSectionToggles(root = document) {
+  root.querySelectorAll('.admin-toggle[aria-controls]').forEach(toggle => {
+    const controlledId = toggle.getAttribute('aria-controls');
+    const controlledCard = controlledId && root.getElementById(controlledId);
+    if (!controlledCard) return;
+
+    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+    controlledCard.hidden = !expanded;
+
+    toggle.addEventListener('click', () => {
+      const wasExpanded = toggle.getAttribute('aria-expanded') === 'true';
+      toggle.setAttribute('aria-expanded', String(!wasExpanded));
+      controlledCard.hidden = wasExpanded;
+    });
+  });
+}
+
+async function configureDailyQuotesAdminAuth() {
+  if (!authModulePromise) {
+    authModulePromise = Promise.all([
+      import(FIREBASE_AUTH_MODULE_URL),
+      import('./models.js')
+    ]).then(([api, models]) => {
+      firebaseAuthApi = api;
+      auth = api.getAuth(models.app);
+      return api;
+    }).catch(error => {
+      authModulePromise = undefined;
+      throw error;
+    });
+  }
+  return authModulePromise;
+}
+
+async function ensurePersistentAdminSession() {
+  const api = await configureDailyQuotesAdminAuth();
+  if (!persistencePromise) {
+    persistencePromise = api.setPersistence(auth, api.browserLocalPersistence).catch(error => {
+      persistencePromise = undefined;
+      throw error;
+    });
+  }
+  await persistencePromise;
+  return api;
+}
+
+function waitForInitialAuthState(api) {
+  return new Promise((resolve, reject) => {
+    let unsubscribe = () => {};
+    unsubscribe = api.onAuthStateChanged(auth, user => {
+      unsubscribe();
+      resolve(user);
+    }, error => {
+      unsubscribe();
+      reject(error);
+    });
+  });
+}
+
+export async function prepareDailyQuotesAdminSignIn() {
+  const api = await ensurePersistentAdminSession();
+  return waitForInitialAuthState(api);
+}
+
+export function observeDailyQuotesAdminSession(onChange, onError) {
+  if (!firebaseAuthApi || !auth) throw new Error('Prepare the admin session before observing it.');
+  return firebaseAuthApi.onAuthStateChanged(auth, onChange, onError);
+}
+
+export async function signInDailyQuotesAdmin(email, password) {
+  const api = await ensurePersistentAdminSession();
+  const credential = await api.signInWithEmailAndPassword(auth, email, password);
+  return credential.user;
+}
+
+export function isDailyQuotesAdmin(user) {
+  return user?.uid === DAILY_QUOTES_OWNER_UID;
+}
+
+export async function signOutDailyQuotesAdmin() {
+  const api = await configureDailyQuotesAdminAuth();
+  if (auth.currentUser) await api.signOut(auth);
+}
 
 function makeElement(tag, className, text) {
   const element = document.createElement(tag);
@@ -397,10 +542,45 @@ function initializePeopleManager() {
   renderCustomers();
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  await store.init();
-  
+async function initializeAdminPage() {
+  const adminControls = watchAdminOnlyControls(document, false);
+  const badge = document.getElementById('admin-access-badge');
+  if (badge) badge.hidden = true;
+
   const authDialog = document.getElementById('owner-auth-dialog');
+  if (!authDialog) {
+    try {
+      const currentUser = await prepareDailyQuotesAdminSignIn();
+      const isAdmin = isDailyQuotesAdmin(currentUser);
+      adminControls.setAdmin(isAdmin);
+      if (badge) badge.hidden = !isAdmin;
+      observeDailyQuotesAdminSession(user => {
+        const activeAdmin = isDailyQuotesAdmin(user);
+        adminControls.setAdmin(activeAdmin);
+        if (badge) badge.hidden = !activeAdmin;
+      }, error => {
+        console.warn('Unable to observe the owner session for admin-only controls.', error);
+        adminControls.setAdmin(false);
+        if (badge) badge.hidden = true;
+      });
+    } catch (error) {
+      console.warn('Admin privileges could not be checked for this page.', error);
+      adminControls.setAdmin(false);
+      if (badge) badge.hidden = true;
+    }
+    return;
+  }
+
+  const [models, quoteRules] = await Promise.all([
+    import('./models.js'),
+    import('./daily-quotes.mjs')
+  ]);
+  store = models.store;
+  loadDailyQuotes = models.loadDailyQuotes;
+  saveDailyQuotes = models.saveDailyQuotes;
+  normalizeDailyQuotes = quoteRules.normalizeDailyQuotes;
+  await store.init();
+
   const authForm = document.getElementById('owner-auth-form');
   const authEmail = document.getElementById('owner-auth-email');
   const authPassword = document.getElementById('owner-auth-password');
@@ -408,7 +588,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const authSubmit = document.getElementById('owner-auth-submit');
   const authCancel = document.getElementById('owner-auth-cancel');
   const adminContent = document.getElementById('admin-content');
-  let authApi;
+  const authApi = {
+    prepareDailyQuotesAdminSignIn,
+    observeDailyQuotesAdminSession,
+    signInDailyQuotesAdmin,
+    signOutDailyQuotesAdmin,
+    isDailyQuotesAdmin
+  };
   let authorized = false;
   let contentInitialized = false;
   let redirecting = false;
@@ -484,12 +670,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
+      adminControls.setAdmin(true);
       showAdminContent();
     } catch (error) {
       console.warn('Owner sign-in failed.', error);
       authStatus.textContent = 'Sign-in was not accepted. Returning Home…';
       try {
-        await authApi?.signOutDailyQuotesAdmin();
+        await authApi.signOutDailyQuotesAdmin();
       } catch (signOutError) {
         console.warn('Unable to clear the failed sign-in state.', signOutError);
       }
@@ -503,15 +690,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   try {
-    authApi = await import('./admin-auth.mjs?v=owner-session-1');
     const currentUser = await authApi.prepareDailyQuotesAdminSignIn();
     if (currentUser && !authApi.isDailyQuotesAdmin(currentUser)) {
       await authApi.signOutDailyQuotesAdmin();
     }
-    if (authApi.isDailyQuotesAdmin(currentUser)) showAdminContent();
+    const currentIsAdmin = authApi.isDailyQuotesAdmin(currentUser);
+    adminControls.setAdmin(currentIsAdmin);
+    if (currentIsAdmin) showAdminContent();
     else showAuthDialog();
     authApi.observeDailyQuotesAdminSession(user => {
-      if (authApi.isDailyQuotesAdmin(user)) {
+      const activeAdmin = authApi.isDailyQuotesAdmin(user);
+      adminControls.setAdmin(activeAdmin);
+      if (activeAdmin) {
         showAdminContent();
       } else if (authorized) {
         authorized = false;
@@ -519,6 +709,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }, error => {
       console.warn('Unable to observe the owner session.', error);
+      adminControls.setAdmin(false);
       if (authorized) {
         authorized = false;
         showAuthDialog('Owner status could not be verified. Sign in again to continue.');
@@ -526,6 +717,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   } catch (error) {
     console.error('Owner authentication is unavailable.', error);
+    adminControls.setAdmin(false);
     await leaveAdmin();
   }
-});
+}
+
+if (typeof document !== 'undefined') {
+  const start = () => {
+    void initializeAdminPage().catch(error => {
+      console.error('Unable to initialize the admin controller.', error);
+      const badge = document.getElementById('admin-access-badge');
+      if (badge) badge.hidden = true;
+    });
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, { once: true });
+  } else {
+    start();
+  }
+}

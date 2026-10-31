@@ -117,16 +117,17 @@ test('settled employee ledgers are archived and browsable without losing backup 
 
 test('the workspace opens to Home with no login UI and shows an active-admin badge only for the approved owner', () => {
   const markup = readProjectFile('index.html');
-  const shellScript = readProjectFile('scripts', 'index.js');
+  const sharedAdminScript = readProjectFile('scripts', 'admin.js');
   const sharedStylesheet = readProjectFile('styles', 'style.css');
   const embeddedStylesheet = readProjectFile('styles', 'ui.css');
 
   assert.match(markup, /<iframe[^>]*src="html\/home\.html"/);
   assert.doesNotMatch(markup, /sign.?in|sign.?out|password|guest-access-badge|owner-access-badge/i);
   assert.match(markup, /id="admin-access-badge"[^>]*hidden>Admin privileges/);
-  assert.match(shellScript, /prepareDailyQuotesAdminSignIn\(\)/);
-  assert.match(shellScript, /observeDailyQuotesAdminSession/);
-  assert.match(shellScript, /isDailyQuotesAdmin\(user\)/);
+  assert.match(markup, /scripts\/admin\.js\?v=admin-single-file-1/);
+  assert.match(sharedAdminScript, /prepareDailyQuotesAdminSignIn\(\)/);
+  assert.match(sharedAdminScript, /observeDailyQuotesAdminSession/);
+  assert.match(sharedAdminScript, /isDailyQuotesAdmin\(user\)/);
   assert.match(sharedStylesheet, /\.admin-access-badge\s*\{[^}]*position:\s*fixed;[^}]*left:\s*0;[^}]*bottom:\s*0/);
   assert.doesNotMatch(sharedStylesheet + embeddedStylesheet, /data-owner-only|data-owner=/i);
 
@@ -134,7 +135,7 @@ test('the workspace opens to Home with no login UI and shows an active-admin bad
     const page = readProjectFile('html', file);
     assert.doesNotMatch(page, /data-owner-only|data-owner=/i, `${file} should not use legacy owner markers`);
     if (/data-admin-only/.test(page)) {
-      assert.match(page, /scripts\/admin-page-controls\.mjs/, `${file} should load the shared admin-control gate`);
+      assert.match(page, /scripts\/admin\.js\?v=admin-single-file-1/, `${file} should load the shared admin controller`);
     }
   }
 });
@@ -247,7 +248,7 @@ test('Admin Settings manages the shared daily quote list displayed on Home', () 
 test('Admin Settings prompts for the approved Firebase owner and routes rejected access to Home', () => {
   const adminMarkup = readProjectFile('html', 'admin-settings.html');
   const adminScript = readProjectFile('scripts', 'admin.js');
-  const authScript = readProjectFile('scripts', 'admin-auth.mjs');
+  const authScript = adminScript;
 
   assert.match(adminMarkup, /<dialog[^>]*id="owner-auth-dialog"/);
   assert.match(adminMarkup, /id="owner-auth-email"[^>]*type="email"/);
@@ -259,13 +260,16 @@ test('Admin Settings prompts for the approved Firebase owner and routes rejected
   assert.match(adminScript, /new URL\('home\.html'/);
   assert.match(adminScript, /const currentUser = await authApi\.prepareDailyQuotesAdminSignIn\(\)/);
   assert.match(adminScript, /showAdminContent\(\)/);
-  assert.match(authScript, /signInWithEmailAndPassword\(auth, email, password\)/);
-  assert.match(authScript, /setPersistence\(auth, browserLocalPersistence\)/);
+  assert.match(authScript, /api\.signInWithEmailAndPassword\(auth, email, password\)/);
+  assert.match(authScript, /api\.setPersistence\(auth, api\.browserLocalPersistence\)/);
   assert.match(authScript, /observeDailyQuotesAdminSession/);
   assert.doesNotMatch(authScript, /inMemoryPersistence/);
   const prepareSession = authScript.match(/export async function prepareDailyQuotesAdminSignIn\(\) \{([^}]*)\}/)?.[1] || '';
   assert.doesNotMatch(prepareSession, /signOut/);
   assert.match(authScript, /DAILY_QUOTES_OWNER_UID = 'N9fh9kr98neSYBSNdyDHBZn9IGv1'/);
+  assert.match(authScript, /watchAdminOnlyControls/);
+  assert.match(authScript, /initializeAdminSectionToggles/);
+  assert.doesNotMatch(authScript, /admin-auth\.mjs|admin-controls\.mjs|admin-page-controls\.mjs|admin-section-toggles\.mjs/);
 });
 
 test('ledger mutation controls are admin-only while read-only ledger tools stay available', () => {

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { watchAdminOnlyControls } from '../scripts/admin-controls.mjs';
+import { watchAdminOnlyControls } from '../scripts/admin.js';
 
 const observers = [];
 
