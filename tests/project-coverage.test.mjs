@@ -27,10 +27,16 @@ test('the parent shell monitors keyboard focus and viewport changes in its activ
   assert.match(script, /visualViewport\?\.addEventListener\('resize'/);
 });
 
-test('the footer links to Admin Settings and centers the Android download link', () => {
+test('Admin Settings is linked from Settings, not the footer, and the Android download link remains centered', () => {
   const markup = readProjectFile('index.html');
+  const settingsMarkup = readProjectFile('html', 'settings.html');
+  const peopleMarkup = readProjectFile('html', 'basic-data.html');
   const stylesheet = readProjectFile('styles', 'style.css');
-  assert.match(markup, /<a class="site-footer-link" href="html\/admin-settings\.html" target="main-content"[^>]*>© 2026 GickiStudios<\/a>/);
+  assert.match(settingsMarkup, /<a class="settings-admin-link" href="admin-settings\.html" target="main-content">Open Admin Settings<\/a>/);
+  assert.doesNotMatch(peopleMarkup, /href="admin-settings\.html"/);
+  assert.match(peopleMarkup, /open Admin Settings from the Settings page/i);
+  assert.doesNotMatch(markup, /href="html\/admin-settings\.html"/);
+  assert.match(markup, /<span class="site-footer-link">© 2026 GickiStudios<\/span>/);
   assert.match(markup, /<a class="site-footer-app-link" href="https:\/\/github\.com\/GickiAnarchy\/timekeeper\/releases\/download\/[^"]+"[^>]*><u>Get the app<\/u><\/a>/);
   assert.match(markup, /<div class="site-footer-meta">[\s\S]*?Timekeeping made simple[\s\S]*?version-badge/);
   assert.match(stylesheet, /\.site-footer-link\s*\{\s*color:\s*inherit;\s*text-decoration:\s*none;/);

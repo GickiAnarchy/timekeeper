@@ -25,6 +25,9 @@
 .settings-help { margin: 12px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .backup-button { min-height: 40px; padding: 0 14px; color: #fff; background: var(--green); font-size: 12px; font-weight: 750; }
 .backup-button:hover { background: var(--green-deep); }
+.settings-admin-link { display: inline-flex; align-items: center; min-height: 42px; padding: 0 14px; color: #fff; background: var(--green); border-radius: 9px; font-size: 12px; font-weight: 750; text-decoration: none; }
+.settings-admin-link:hover { background: var(--green-deep); }
+.settings-admin-link:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 .backup-file-field { margin-top: 17px; }
 .backup-file-field input { min-height: 42px; padding: 8px; }
 .backup-preview { margin-top: 12px; padding: 12px; color: var(--ink-soft); background: var(--surface-muted); border: 1px solid var(--border); border-radius: 10px; font-size: 12px; line-height: 1.55; white-space: pre-wrap; }

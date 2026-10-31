@@ -63,6 +63,16 @@ test('employee and customer profile editing lives in Admin Settings', () => {
   assert.match(adminController, /customerStatus\.textContent = 'Customer profile saved/);
   assert.match(adminMarkup, /Changing a billing rate updates linked labor lines on invoices, including paid invoices/i);
   assert.match(adminMarkup, /href="basic-data\.html" target="main-content">Open People Data/);
+  assert.match(peopleMarkup, /open Admin Settings from the Settings page/i);
+  assert.doesNotMatch(peopleMarkup, /href="admin-settings\.html"/);
+});
+
+test('Admin Settings shows a sign-out button wired to the existing persistent owner session', () => {
+  assert.match(adminMarkup, /<button class="admin-button admin-button-secondary" id="admin-sign-out" type="button">Sign out<\/button>/);
+  assert.match(adminMarkup, /id="admin-sign-out-status" role="status" aria-live="polite" hidden/);
+  assert.match(adminController, /adminSignOutButton\.addEventListener\('click'/);
+  assert.match(adminController, /await authApi\.signOutDailyQuotesAdmin\(\)/);
+  assert.match(adminController, /browserLocalPersistence/);
 });
 
 test('People Data retains add/delete flows but no longer exposes employee/customer editing', () => {

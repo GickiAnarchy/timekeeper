@@ -588,6 +588,8 @@ async function initializeAdminPage() {
   const authSubmit = document.getElementById('owner-auth-submit');
   const authCancel = document.getElementById('owner-auth-cancel');
   const adminContent = document.getElementById('admin-content');
+  const adminSignOutButton = document.getElementById('admin-sign-out');
+  const adminSignOutStatus = document.getElementById('admin-sign-out-status');
   const authApi = {
     prepareDailyQuotesAdminSignIn,
     observeDailyQuotesAdminSession,
@@ -599,6 +601,7 @@ async function initializeAdminPage() {
   let contentInitialized = false;
   let redirecting = false;
   let signingIn = false;
+  let signingOut = false;
 
   function routeHome() {
     window.location.replace(new URL('home.html', window.location.href).href);
@@ -639,6 +642,27 @@ async function initializeAdminPage() {
     if (!authorized) void leaveAdmin();
   });
   authCancel.addEventListener('click', () => void leaveAdmin());
+  adminSignOutButton.addEventListener('click', async () => {
+    if (!authorized || signingOut) return;
+    signingOut = true;
+    authorized = false;
+    adminControls.setAdmin(false);
+    adminSignOutButton.disabled = true;
+    adminSignOutStatus.hidden = false;
+    adminSignOutStatus.textContent = 'Signing out…';
+    try {
+      await authApi.signOutDailyQuotesAdmin();
+      adminSignOutStatus.textContent = 'Signed out. Returning Home…';
+      routeHome();
+    } catch (error) {
+      console.warn('Unable to sign out of Admin Settings.', error);
+      authorized = true;
+      adminControls.setAdmin(true);
+      adminSignOutButton.disabled = false;
+      adminSignOutStatus.textContent = 'Unable to sign out. Please try again.';
+      signingOut = false;
+    }
+  });
 
   authForm.addEventListener('submit', async event => {
     event.preventDefault();

@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <link rel="stylesheet" href="../styles/admin.css">
+    <link rel="stylesheet" href="../styles/admin.css?v=admin-signout-1">
     <script type="module" src="../scripts/keyboard.mjs" defer></script>
-    <script type="module" src="../scripts/admin.js?v=admin-single-file-1" defer></script>
+    <script type="module" src="../scripts/admin.js?v=admin-signout-1" defer></script>
     <title>Admin Settings · Mosher Lawns Timekeeper</title>
   </head>
   <body>
@@ -36,7 +36,11 @@
         <h1>Admin Settings</h1>
         <p>Edit employee and customer profiles here, and manage the shared daily quote rotation.</p>
         <p class="admin-navigation-note">Need to add or delete employee or customer records? <a href="basic-data.html" target="main-content">Open People Data</a>.</p>
-        <span class="admin-badge">Owner-only editing controls</span>
+        <div class="admin-header-actions">
+          <span class="admin-badge">Owner-only editing controls</span>
+          <button class="admin-button admin-button-secondary" id="admin-sign-out" type="button">Sign out</button>
+        </div>
+        <p class="admin-sign-out-status" id="admin-sign-out-status" role="status" aria-live="polite" hidden></p>
       </header>
 
     <!-- QUOTES -->

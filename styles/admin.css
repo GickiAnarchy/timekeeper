@@ -10,6 +10,17 @@
   margin-bottom: 24px;
 }
 
+.admin-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.admin-sign-out-status { margin: 10px 0 0; }
+
 .admin-header h1 {
   margin: 8px 0;
   font-size: clamp(1.8rem, 4vw, 2.35rem);
