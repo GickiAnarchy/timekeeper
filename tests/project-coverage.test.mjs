@@ -164,12 +164,17 @@ test('the no-login clock screen retains multi-employee selection and clock actio
   assert.match(model, /async saveShift\(shift\)/);
 });
 
-test('Firestore rules keep public access except owner-only daily quote settings writes', () => {
+test('Firestore rules keep reads public, restrict ledger writes to the owner, and preserve other public writes', () => {
   const rules = readProjectFile('firestore.rules');
   assert.match(rules, /match \/\{collection\}\/\{document=\*\*\}/);
-  assert.match(rules, /allow write: if collection != 'appSettings'/);
+  assert.match(rules, /allow read: if true;/);
+  assert.match(rules, /collection != 'appSettings' &&\s*collection != 'ledgerRows' &&\s*collection != 'ledgerArchives' &&\s*collection != 'ledgerArchiveRows'/);
+  for (const collection of ['ledgerRows', 'ledgerArchives', 'ledgerArchiveRows']) {
+    assert.ok(rules.includes(`match /${collection}/{ledgerDocument=**}`), `${collection} should have an explicit protected match`);
+  }
+  assert.match(rules, /allow write: if isApprovedOwner\(\);/);
   assert.match(rules, /match \/appSettings\/\{settingsDocument\}/);
-  assert.match(rules, /settingsDocument != 'dailyQuotes' \|\| isDailyQuotesOwner\(\)/);
+  assert.match(rules, /settingsDocument != 'dailyQuotes' \|\| isApprovedOwner\(\)/);
   assert.match(rules, /request\.auth != null && request\.auth\.uid == 'N9fh9kr98neSYBSNdyDHBZn9IGv1'/);
   assert.match(rules, /match \/appSettings\/\{settingsDocument\}\/\{subcollection\}\/\{nestedDocument=\*\*\}/);
   assert.doesNotMatch(rules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if true;/);

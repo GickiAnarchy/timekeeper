@@ -2,7 +2,7 @@
 
 A JavaScript app for tracking work hours. The workspace includes clock in/out, breaks, shift history, employee and customer records, invoices, an employee ledger with completed-shift entry, settled-ledger archives, and planned jobs. When an employee ledger reaches a zero balance, its entries are archived and the active ledger is cleared. The Home dashboard summarizes today's and this week's break-adjusted hours, highlights active shifts and upcoming jobs, and updates active totals every minute. Themes and text-size preferences are saved in the current browser.
 
-> **Access model:** This app intentionally uses a fully public shared workflow. Firestore rules allow anyone—signed in or not—to read, create, update, and delete every document in every collection and subcollection. Do not put confidential or sensitive information in this Firebase project while these rules are deployed.
+> **Access model:** Firestore remains publicly readable. Writes to `ledgerRows`, `ledgerArchives`, and `ledgerArchiveRows` (including nested documents) require the approved owner account. The `appSettings/dailyQuotes` document is also owner-write-only. Other app data—including shifts, employees, customers, invoices, payments, planned jobs, and other settings—remains publicly writable, so do not store confidential information in this Firebase project.
 
 The hosted app is available at [GickiAnarchy.github.io/timekeeper](https://www.gickianarchy.github.io/timekeeper/).
 
@@ -42,7 +42,7 @@ The emulator command binds to loopback and uses the `demo-timekeeper` project ID
 
 ## Rules deployment
 
-The recursive public rule is in `firestore.rules`. Deploy only Firestore rules to the production project by explicitly specifying its project ID:
+The Firestore rules source is in `firestore.rules`. Deploy only Firestore rules to the production project by explicitly specifying its project ID, and only after the owner explicitly approves deployment:
 
 ```sh
 ./node_modules/.bin/firebase deploy --only firestore:rules --project timekeeper-ad253

@@ -8,7 +8,8 @@ import {
   getDoc,
   getDocs,
   setDoc,
-  updateDoc
+  updateDoc,
+  writeBatch
 } from '@firebase/firestore';
 import {
   assertFails,
@@ -17,7 +18,7 @@ import {
 } from '@firebase/rules-unit-testing';
 
 const PROJECT_ID = 'demo-timekeeper';
-const DAILY_QUOTES_OWNER_UID = 'N9fh9kr98neSYBSNdyDHBZn9IGv1';
+const APPROVED_OWNER_UID = 'N9fh9kr98neSYBSNdyDHBZn9IGv1';
 const firestoreHost = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
 const [firestoreHostname, firestorePortText] = firestoreHost.split(':');
 let environment;
@@ -38,9 +39,9 @@ after(async () => {
   await environment?.cleanup();
 });
 
-test('unauthenticated users can read, create, update, and delete all established app collections', async () => {
+test('unauthenticated users retain full access to established non-ledger app collections, including shifts', async () => {
   const anonymous = environment.unauthenticatedContext().firestore();
-  const collections = ['employees', 'customers', 'payments', 'invoices', 'ledgerRows', 'ledgerArchives', 'ledgerArchiveRows', 'planned', 'shifts'];
+  const collections = ['employees', 'customers', 'payments', 'invoices', 'planned', 'shifts'];
 
   await environment.withSecurityRulesDisabled(async context => {
     const adminDb = context.firestore();
@@ -60,6 +61,67 @@ test('unauthenticated users can read, create, update, and delete all established
   }
 });
 
+test('ledger records and nested documents stay public-read but only the approved owner can write', async () => {
+  const anonymous = environment.unauthenticatedContext().firestore();
+  const unrelatedUser = environment.authenticatedContext('not-an-owner').firestore();
+  const owner = environment.authenticatedContext(APPROVED_OWNER_UID).firestore();
+  const ledgerCollections = ['ledgerRows', 'ledgerArchives', 'ledgerArchiveRows'];
+
+  await environment.withSecurityRulesDisabled(async context => {
+    const adminDb = context.firestore();
+    for (const collectionName of ledgerCollections) {
+      await setDoc(doc(adminDb, collectionName, 'existing'), { value: 'seed' });
+    }
+  });
+
+  for (const collectionName of ledgerCollections) {
+    const publicRef = doc(anonymous, collectionName, 'existing');
+    const unrelatedRef = doc(unrelatedUser, collectionName, 'existing');
+    const ownerRef = doc(owner, collectionName, 'existing');
+
+    assert.equal((await assertSucceeds(getDoc(publicRef))).data().value, 'seed', `${collectionName} should be publicly readable`);
+    assert.ok((await assertSucceeds(getDocs(collection(anonymous, collectionName)))).size >= 1,
+      `${collectionName} should be publicly queryable`);
+    await assertFails(setDoc(doc(anonymous, collectionName, 'anonymous-created'), { value: 'blocked' }));
+    await assertFails(updateDoc(publicRef, { value: 'anonymous-update' }));
+    await assertFails(deleteDoc(publicRef));
+    await assertFails(setDoc(doc(unrelatedUser, collectionName, 'unrelated-created'), { value: 'blocked' }));
+    await assertFails(updateDoc(unrelatedRef, { value: 'unrelated-update' }));
+    await assertFails(deleteDoc(unrelatedRef));
+
+    await assertSucceeds(updateDoc(ownerRef, { value: 'owner-update' }));
+    const ownerCreatedRef = doc(owner, collectionName, 'owner-created');
+    await assertSucceeds(setDoc(ownerCreatedRef, { value: 'owner-create' }));
+    await assertSucceeds(updateDoc(ownerCreatedRef, { value: 'owner-updated' }));
+    await assertSucceeds(deleteDoc(ownerCreatedRef));
+    assert.equal((await assertSucceeds(getDoc(publicRef))).data().value, 'owner-update',
+      `${collectionName} owner writes should remain publicly readable`);
+  }
+
+  const nestedPublicRef = doc(anonymous, 'ledgerRows', 'existing', 'metadata', 'nested');
+  const nestedOwnerRef = doc(owner, 'ledgerRows', 'existing', 'metadata', 'nested');
+  await assertFails(setDoc(nestedPublicRef, { value: 'nested write blocked' }));
+  await assertSucceeds(setDoc(nestedOwnerRef, { value: 'nested owner write' }));
+  assert.equal((await assertSucceeds(getDoc(nestedPublicRef))).data().value, 'nested owner write');
+});
+
+test('a backup-style mixed batch cannot partially update public shifts when a ledger write is unauthorized', async () => {
+  const anonymous = environment.unauthenticatedContext().firestore();
+  await environment.withSecurityRulesDisabled(async context => {
+    const adminDb = context.firestore();
+    await setDoc(doc(adminDb, 'shifts', 'work-shift'), { note: 'original' });
+    await setDoc(doc(adminDb, 'ledgerRows', 'entry'), { amount: 10 });
+  });
+
+  const batch = writeBatch(anonymous);
+  batch.update(doc(anonymous, 'shifts', 'work-shift'), { note: 'restore attempt' });
+  batch.update(doc(anonymous, 'ledgerRows', 'entry'), { amount: 20 });
+  await assertFails(batch.commit());
+  assert.equal((await assertSucceeds(getDoc(doc(anonymous, 'shifts', 'work-shift')))).data().note, 'original',
+    'the failed atomic batch must not partially restore public shift data');
+  assert.equal((await assertSucceeds(getDoc(doc(anonymous, 'ledgerRows', 'entry')))).data().amount, 10);
+});
+
 test('the recursive public rule covers arbitrary collections and nested subcollections', async () => {
   const anonymous = environment.unauthenticatedContext().firestore();
   const nestedRef = doc(anonymous, 'unlistedCollection', 'parent', 'childCollection', 'nested-document');
@@ -70,7 +132,7 @@ test('the recursive public rule covers arbitrary collections and nested subcolle
   await assertSucceeds(deleteDoc(nestedRef));
 });
 
-test('an unrelated authenticated user has the same unrestricted access', async () => {
+test('an unrelated authenticated user has unrestricted access to non-ledger data', async () => {
   const unrelatedUser = environment.authenticatedContext('not-an-owner').firestore();
   const reference = doc(unrelatedUser, 'employees', 'public-to-everyone');
 
@@ -83,7 +145,7 @@ test('an unrelated authenticated user has the same unrestricted access', async (
 test('daily quote settings are public-read and writable only by the approved owner UID', async () => {
   const anonymous = environment.unauthenticatedContext().firestore();
   const unrelatedUser = environment.authenticatedContext('not-an-owner').firestore();
-  const owner = environment.authenticatedContext(DAILY_QUOTES_OWNER_UID).firestore();
+  const owner = environment.authenticatedContext(APPROVED_OWNER_UID).firestore();
   const anonymousQuoteRef = doc(anonymous, 'appSettings', 'dailyQuotes');
   const unrelatedQuoteRef = doc(unrelatedUser, 'appSettings', 'dailyQuotes');
   const ownerQuoteRef = doc(owner, 'appSettings', 'dailyQuotes');

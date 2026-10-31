@@ -1,22 +1,42 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isDailyQuotesOwner() {
+    function isApprovedOwner() {
       return request.auth != null && request.auth.uid == 'N9fh9kr98neSYBSNdyDHBZn9IGv1';
     }
 
-    // Preserve the existing public read/write behavior for every other top-level collection.
-    // appSettings is handled below so this broad rule cannot make dailyQuotes writes public.
+    // Keep reads public and preserve public writes outside the protected paths.
+    // These collection exclusions are required because Firestore grants access
+    // when any matching rule allows it; a broader public write rule cannot be
+    // overridden by a narrower denial.
     match /{collection}/{document=**} {
       allow read: if true;
-      allow write: if collection != 'appSettings';
+      allow write: if collection != 'appSettings' &&
+        collection != 'ledgerRows' &&
+        collection != 'ledgerArchives' &&
+        collection != 'ledgerArchiveRows';
+    }
+
+    // Ledger entries, archive headers, archive rows, and any future nested
+    // documents below these collections are writable only by the owner.
+    match /ledgerRows/{ledgerDocument=**} {
+      allow read: if true;
+      allow write: if isApprovedOwner();
+    }
+    match /ledgerArchives/{ledgerDocument=**} {
+      allow read: if true;
+      allow write: if isApprovedOwner();
+    }
+    match /ledgerArchiveRows/{ledgerDocument=**} {
+      allow read: if true;
+      allow write: if isApprovedOwner();
     }
 
     // Only this exact settings document requires the approved owner UID.
     // Other direct documents in appSettings remain publicly readable and writable.
     match /appSettings/{settingsDocument} {
       allow read: if true;
-      allow write: if settingsDocument != 'dailyQuotes' || isDailyQuotesOwner();
+      allow write: if settingsDocument != 'dailyQuotes' || isApprovedOwner();
     }
 
     // Preserve the prior public behavior for nested documents under any appSettings document.
