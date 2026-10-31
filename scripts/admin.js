@@ -212,6 +212,23 @@ function initializeWageManager() {
     wageCard.hidden = expanded;
   });
   
+  if (wageTable) {
+    wageTable.innerHTML = "";
+    store.employees.forEach(emp => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+      <td><p>${emp.name}</p><td>
+      <td><p>${emp.wage}</p></td>
+      `
+      
+      wageTable.appendChild(row);
+    });
+  }
+  
+  
+  
+  
+  
 }
 
 
