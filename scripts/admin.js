@@ -203,6 +203,7 @@ function initializeQuoteManager() {
 function initializeWageManager() {
   const wageToggle = document.getElementById('wage-toggle');
   const wageCard = document.getElementById('wage-card');
+  const wageTable = document.getElementById('wage-table-body');
   
   
   wageToggle.addEventListener('click', () => {
@@ -232,8 +233,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   let authorized = false;
   let redirecting = false;
   let signingIn = false;
-  
-  const wageTable = document.getElementById('wage-table-body');
 
   function routeHome() {
     window.location.replace(new URL('home.html', window.location.href).href);
