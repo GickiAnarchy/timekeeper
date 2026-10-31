@@ -203,6 +203,14 @@ function initializeQuoteManager() {
 function initializeWageManager() {
   const wageToggle = document.getElementById('wage-toggle');
   const wageCard = document.getElementById('wage-card');
+  
+  
+  wageToggle.addEventListener('click', () => {
+    const expanded = wageToggle.getAttribute('aria-expanded') === 'true';
+    wageToggle.setAttribute('aria-expanded', String(!expanded));
+    wageCard.hidden = expanded;
+  });
+  
 }
 
 
@@ -289,6 +297,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       authDialog.close();
       adminContent.hidden = false;
       initializeQuoteManager();
+      initializeWageManager();
     } catch (error) {
       console.warn('Owner sign-in failed.', error);
       authStatus.textContent = 'Sign-in was not accepted. Returning Home…';
