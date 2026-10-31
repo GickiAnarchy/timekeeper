@@ -145,7 +145,11 @@ export function isDailyQuotesAdmin(user) {
 
 export async function signOutDailyQuotesAdmin() {
   const api = await configureDailyQuotesAdminAuth();
-  if (auth.currentUser) await api.signOut(auth);
+  if (auth.currentUser) {
+    await api.signOut(auth);
+    const badge = document.getElementById('admin-access-badge');
+    badge.hidden = true;
+  }
 }
 
 function makeElement(tag, className, text) {
@@ -750,7 +754,7 @@ if (typeof document !== 'undefined') {
   const start = () => {
     void initializeAdminPage().catch(error => {
       console.error('Unable to initialize the admin controller.', error);
-      const badge = document.getElementById('admin-access-badge');
+      
       if (badge) badge.hidden = true;
     });
   };
