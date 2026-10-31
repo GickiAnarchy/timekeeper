@@ -180,7 +180,7 @@ test('index keeps nine main routes, omits People Data, and defines the three nam
 
 test('compact navigation styles and versioned assets are present', () => {
   const html = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8'); const css = fs.readFileSync(path.join(projectRoot, 'styles/style.css'), 'utf8');
-  assert.match(html, /(?:index\.js|style\.css)\?v=compact-nav-1/);
+  assert.match(html, /(?:index\.js|style\.css)\?v=owner-session-1/);
   assert.match(css, /\.sidebar-nav[^{}]*\[hidden\]|\[hidden\][^{}]*\.sidebar-nav/s);
   assert.match(css, /@media[^{]*(?:max-width|min-width)[^{]*\{[\s\S]*?sidebar-nav/s);
 });
@@ -195,7 +195,7 @@ function shellFixture(readyState = 'loading') {
   const navigation = routes.map(([, page, title], index) => { const button = new StubElement({ classes: ['nav-link'] }); button.dataset = { page, title }; if (!index) button.setAttribute('aria-current', 'page'); panels[index < 4 ? 0 : index < 8 ? 1 : 2].append(button); return button; });
   const title = { textContent: 'Home' }; const date = { textContent: '' }; const frame = new StubElement(); frame.src = 'html/home.html'; frame.contentWindow = { location: { href: 'https://local.test/timekeeper/html/home.html' }, postMessage() {} };
   document.documentElement = { style: { setProperty() {} }, dataset: {}, clientHeight: 800 }; document.body = { classList: new ClassList() }; document.querySelectorAll = selector => selector === '.nav-link[data-page]' ? navigation : [];
-  document.querySelector = selector => selector === '.sidebar' ? sidebar : selector === '.sidebar-nav' ? nav : frame; document.getElementById = id => id === 'active-page-title' ? title : date;
+  document.querySelector = selector => selector === '.sidebar' ? sidebar : selector === '.sidebar-nav' ? nav : frame; document.getElementById = id => id === 'active-page-title' ? title : id === 'topbar-date' ? date : null;
   const window = { innerHeight: 800, location: { href: 'https://local.test/timekeeper/', origin: 'https://local.test' }, localStorage: { getItem() { return null; } }, addEventListener() {} };
   vm.runInNewContext(shell.replace(/^export /gm, ''), { document, window, Intl, URL, console });
   return { document, frame, navigation, title, date, groups, toggles, panels, pickerToggle, pickerLabel };

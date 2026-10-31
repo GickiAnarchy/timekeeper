@@ -27,6 +27,13 @@ function makeElement(tag, className = '', text = undefined) {
   return element;
 }
 
+function makeAdminControlGroup(className, label) {
+  const group = makeElement('fieldset', className);
+  group.dataset.adminOnly = '';
+  group.appendChild(makeElement('legend', 'sr-only', label));
+  return group;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
 
@@ -222,8 +229,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           makeCell(entry.notes || '')
         );
         const actionCell = document.createElement('td');
-        const rowActions = document.createElement('div');
-        rowActions.className = 'ledger-row-actions';
+        const rowActions = makeAdminControlGroup('ledger-row-actions ledger-admin-control-group', 'Ledger entry actions');
         const editButton = document.createElement('button');
         editButton.type = 'button';
         editButton.className = 'edit-ledger-btn';
@@ -259,7 +265,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         addField('Hours', Number(entry.hours || 0).toFixed(2));
         addField('Amount', amountText);
         addField('Notes', entry.notes || '—');
-        const mobileActions = makeElement('div', 'ledger-mobile-actions');
+        const mobileActions = makeAdminControlGroup('ledger-mobile-actions ledger-admin-control-group', 'Ledger entry actions');
         const mobileEdit = makeElement('button', 'edit-ledger-btn', 'Edit');
         mobileEdit.type = 'button';
         mobileEdit.dataset.id = entry.id;

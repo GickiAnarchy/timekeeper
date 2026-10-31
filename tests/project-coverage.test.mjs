@@ -27,10 +27,10 @@ test('the parent shell monitors keyboard focus and viewport changes in its activ
   assert.match(script, /visualViewport\?\.addEventListener\('resize'/);
 });
 
-test('the footer links to the GitHub profile and centers the Android download link', () => {
+test('the footer links to Admin Settings and centers the Android download link', () => {
   const markup = readProjectFile('index.html');
   const stylesheet = readProjectFile('styles', 'style.css');
-  assert.match(markup, /<a class="site-footer-link" href="https:\/\/github\.com\/GickiAnarchy"[^>]*>© 2026 GickiStudios<\/a>/);
+  assert.match(markup, /<a class="site-footer-link" href="html\/admin-settings\.html" target="main-content"[^>]*>© 2026 GickiStudios<\/a>/);
   assert.match(markup, /<a class="site-footer-app-link" href="https:\/\/github\.com\/GickiAnarchy\/timekeeper\/releases\/download\/[^"]+"[^>]*><u>Get the app<\/u><\/a>/);
   assert.match(markup, /<div class="site-footer-meta">[\s\S]*?Timekeeping made simple[\s\S]*?version-badge/);
   assert.match(stylesheet, /\.site-footer-link\s*\{\s*color:\s*inherit;\s*text-decoration:\s*none;/);
@@ -115,7 +115,7 @@ test('settled employee ledgers are archived and browsable without losing backup 
   assert.match(settings, /archived ledger history/);
 });
 
-test('the workspace opens directly to Home without authentication UI or owner-only gates', () => {
+test('the workspace opens to Home with no login UI and shows an active-admin badge only for the approved owner', () => {
   const markup = readProjectFile('index.html');
   const shellScript = readProjectFile('scripts', 'index.js');
   const sharedStylesheet = readProjectFile('styles', 'style.css');
@@ -123,12 +123,19 @@ test('the workspace opens directly to Home without authentication UI or owner-on
 
   assert.match(markup, /<iframe[^>]*src="html\/home\.html"/);
   assert.doesNotMatch(markup, /sign.?in|sign.?out|password|guest-access-badge|owner-access-badge/i);
-  assert.doesNotMatch(shellScript, /firebase\.js|AuthState|signIn|signOut|isOwner|data-owner-only/i);
+  assert.match(markup, /id="admin-access-badge"[^>]*hidden>Admin privileges/);
+  assert.match(shellScript, /prepareDailyQuotesAdminSignIn\(\)/);
+  assert.match(shellScript, /observeDailyQuotesAdminSession/);
+  assert.match(shellScript, /isDailyQuotesAdmin\(user\)/);
+  assert.match(sharedStylesheet, /\.admin-access-badge\s*\{[^}]*position:\s*fixed;[^}]*left:\s*0;[^}]*bottom:\s*0/);
   assert.doesNotMatch(sharedStylesheet + embeddedStylesheet, /data-owner-only|data-owner=/i);
 
   for (const file of embeddedPages) {
     const page = readProjectFile('html', file);
-    assert.doesNotMatch(page, /data-owner-only|data-owner=/i, `${file} should have no role-gated controls`);
+    assert.doesNotMatch(page, /data-owner-only|data-owner=/i, `${file} should not use legacy owner markers`);
+    if (/data-admin-only/.test(page)) {
+      assert.match(page, /scripts\/admin-page-controls\.mjs/, `${file} should load the shared admin-control gate`);
+    }
   }
 });
 
@@ -250,9 +257,34 @@ test('Admin Settings prompts for the approved Firebase owner and routes rejected
   assert.match(adminScript, /authApi\.isDailyQuotesAdmin\(user\)/);
   assert.match(adminScript, /authDialog\.addEventListener\('cancel'/);
   assert.match(adminScript, /new URL\('home\.html'/);
+  assert.match(adminScript, /const currentUser = await authApi\.prepareDailyQuotesAdminSignIn\(\)/);
+  assert.match(adminScript, /showAdminContent\(\)/);
   assert.match(authScript, /signInWithEmailAndPassword\(auth, email, password\)/);
-  assert.match(authScript, /setPersistence\(auth, inMemoryPersistence\)/);
+  assert.match(authScript, /setPersistence\(auth, browserLocalPersistence\)/);
+  assert.match(authScript, /observeDailyQuotesAdminSession/);
+  assert.doesNotMatch(authScript, /inMemoryPersistence/);
+  const prepareSession = authScript.match(/export async function prepareDailyQuotesAdminSignIn\(\) \{([^}]*)\}/)?.[1] || '';
+  assert.doesNotMatch(prepareSession, /signOut/);
   assert.match(authScript, /DAILY_QUOTES_OWNER_UID = 'N9fh9kr98neSYBSNdyDHBZn9IGv1'/);
+});
+
+test('ledger mutation controls are admin-only while read-only ledger tools stay available', () => {
+  const ledgerMarkup = readProjectFile('html', 'payledger.html');
+  const ledgerScript = readProjectFile('scripts', 'ledger.js');
+  const archiveMarkup = readProjectFile('html', 'ledger-archive.html');
+  const settingsMarkup = readProjectFile('html', 'settings.html');
+
+  assert.match(ledgerMarkup, /class="ledger-admin-control-group ledger-add-control-group" data-admin-only/);
+  assert.match(ledgerMarkup, /class="ledger-admin-control-group ledger-edit-control-group" data-admin-only/);
+  assert.match(ledgerScript, /group\.dataset\.adminOnly = ''/);
+  assert.match(ledgerScript, /makeAdminControlGroup\('ledger-row-actions/);
+  assert.match(ledgerScript, /makeAdminControlGroup\('ledger-mobile-actions/);
+  assert.match(archiveMarkup, /class="archive-admin-control" data-admin-only/);
+  assert.match(settingsMarkup, /class="backup-restore-control" data-admin-only/);
+  assert.doesNotMatch(settingsMarkup.match(/id="download-backup-btn"[^>]*>/)?.[0] || '', /data-admin-only/);
+  assert.match(ledgerMarkup, /id="ledger-employee-filter"/);
+  assert.match(ledgerMarkup, /class="table-sort-button"/);
+  assert.match(archiveMarkup, /id="archive-employee-filter"/);
 });
 
 test('Shift History keeps filters and its Add action together near the top', () => {
@@ -286,13 +318,13 @@ test('dense mobile records use expandable cards instead of horizontal scrolling'
   assert.doesNotMatch(ledgerScript, /Entry \$\{entry\.index\}/);
   assert.match(ledgerScript, /mobileList\.addEventListener\('click', handleLedgerAction\)/);
   assert.match(ledgerStyles, /@media \(max-width: 700px\)[\s\S]*?\.table-div \{ display: none/);
-  assert.match(ledgerStyles, /\.ledger-mobile-card > summary[^}]*min-height: 54px/);
+  assert.match(ledgerStyles, /\.ledger-mobile-card\s*>\s*summary[^}]*min-height:\s*54px/);
 
   assert.match(reviewMarkup, /id="review-people-mobile"/);
   assert.match(reviewMarkup, /id="review-shifts-mobile"/);
   assert.match(reviewScript, /function reviewCard\(/);
-  assert.match(reviewStyles, /@media \(max-width: 760px\)[\s\S]*?\.review-table-wrap \{ display: none/);
-  assert.match(reviewStyles, /\.review-mobile-card > summary[^}]*min-height: 52px/);
+  assert.match(reviewStyles, /@media \(max-width: 760px\)[\s\S]*?\.review-table-wrap\s*\{\s*display:\s*none/);
+  assert.match(reviewStyles, /\.review-mobile-card\s*>\s*summary[^}]*min-height:\s*52px/);
 
   assert.match(invoiceScript, /className = 'invoice-type-details'/);
   assert.match(invoiceStyles, /\.table-box \{ overflow: visible/);

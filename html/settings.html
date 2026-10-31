@@ -3,8 +3,9 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <link rel="stylesheet" href="../styles/settings.css">
+    <link rel="stylesheet" href="../styles/settings.css?v=ledger-admin-1">
     <script type="module" src="../scripts/keyboard.mjs" defer></script>
+    <script type="module" src="../scripts/admin-page-controls.mjs" defer></script>
     <script type="module" src="../scripts/settings.js" defer></script>
     <title>Settings · Mosher Lawns Timekeeper</title>
   </head>
@@ -84,7 +85,10 @@
         </label>
         <div id="backup-preview" class="backup-preview" aria-live="polite">No backup selected.</div>
         <p class="settings-warning">Restore replaces the current records included in the backup. Backups with archived-ledger data replace archive history; older backups leave the current archive collections unchanged. Review the preview carefully before continuing. One atomic restore is limited to 500 Firestore writes; larger restores are rejected before changing data.</p>
-        <button class="backup-button backup-restore-button" id="restore-backup-btn" type="button" disabled>Restore backup</button>
+        <fieldset class="backup-restore-control" data-admin-only aria-label="Restore workspace backup">
+          <legend class="sr-only">Restore workspace backup</legend>
+          <button class="backup-button backup-restore-button" id="restore-backup-btn" type="button" disabled>Restore backup</button>
+        </fieldset>
         <p class="settings-help" id="backup-status" role="status" aria-live="polite">Loading workspace data…</p>
       </section>
 

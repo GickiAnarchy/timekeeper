@@ -3,9 +3,10 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <link rel="stylesheet" href="../styles/ledger.css">
+    <link rel="stylesheet" href="../styles/ledger.css?v=ledger-admin-1">
     <script type="module" src="../scripts/keyboard.mjs" defer></script>
-    <script type="module" src="../scripts/ledger.js" defer></script>
+    <script type="module" src="../scripts/admin-page-controls.mjs" defer></script>
+    <script type="module" src="../scripts/ledger.js?v=ledger-admin-1" defer></script>
     <title>Employee Ledger · Timekeeper</title>
   </head>
   <body>
@@ -29,6 +30,8 @@
         <h2>Add to this ledger</h2>
         <p>Choose an action to add a record.</p>
       </div>
+      <fieldset class="ledger-admin-control-group ledger-add-control-group" data-admin-only aria-label="Add ledger entries">
+        <legend class="sr-only">Add ledger entries</legend>
       <details class="form-container shift-ledger-container">
         <summary class="shift-ledger-summary" id="shift-ledger-title">Add completed shift</summary>
         <div class="shift-ledger-content">
@@ -75,6 +78,7 @@
           <button type="submit">Add Entry</button>
         </form>
       </details>
+      </fieldset>
     </section>
 
     <div class="table-div">
@@ -109,6 +113,8 @@
 
     <dialog class="ledger-edit-modal" id="ledger-edit-modal" aria-labelledby="ledger-edit-title" aria-describedby="ledger-edit-help ledger-edit-error">
       <form class="ledger-edit-form" id="ledger-edit-form">
+        <fieldset class="ledger-admin-control-group ledger-edit-control-group" data-admin-only aria-label="Edit ledger entry">
+        <legend class="sr-only">Edit ledger entry</legend>
         <div class="ledger-edit-heading">
           <p class="ledger-edit-eyebrow">LEDGER ENTRY</p>
           <h2 id="ledger-edit-title">Edit ledger entry</h2>
@@ -140,6 +146,7 @@
           <button type="button" class="ledger-cancel-btn" id="ledger-edit-cancel">Cancel</button>
           <button type="submit" class="ledger-save-btn" id="ledger-edit-save">Save changes</button>
         </div>
+        </fieldset>
       </form>
     </dialog>
   </body>

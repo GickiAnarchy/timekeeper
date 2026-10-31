@@ -12,6 +12,8 @@ body { display: flex; flex-direction: column; align-items: stretch; gap: 12px; p
 .ledger-add-heading { grid-column: 1 / -1; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 9px; }
 .ledger-add-heading h2 { margin: 0; color: var(--green-deep); font-size: 13px; letter-spacing: -.02em; }
 .ledger-add-heading p { margin: 0; color: var(--muted); font-size: 11px; }
+.ledger-admin-control-group { min-width: 0; margin: 0; padding: 0; border: 0; }
+.ledger-add-control-group { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
 .ledger-add-actions .form-container { width: 100%; margin: 0; padding: 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
 .ledger-add-actions .form-container > summary { display: list-item; min-height: 40px; padding: 8px 11px; color: var(--green-deep); background: var(--surface); border: 1px solid var(--green-line); border-radius: 10px; font-size: 12px; line-height: 1.4; }
 .ledger-add-actions .form-container > summary:hover { background: var(--surface-hover); }
@@ -78,6 +80,7 @@ tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight
 }
 .ledger-edit-modal::backdrop { background: rgba(19, 35, 27, .52); backdrop-filter: blur(3px); }
 .ledger-edit-form { display: grid; gap: 20px; padding: clamp(20px, 4vw, 30px); }
+.ledger-edit-control-group { display: grid; gap: 20px; }
 .ledger-edit-heading { display: grid; gap: 6px; }
 .ledger-edit-heading h2 { margin: 0; color: var(--ink); font-size: 21px; letter-spacing: -.035em; }
 .ledger-edit-heading > p:last-child { margin: 0; color: var(--muted); font-size: 13px; }
@@ -105,6 +108,7 @@ tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight
 }
 @media (max-width: 600px) {
   .ledger-add-actions { grid-template-columns: 1fr; }
+  .ledger-add-control-group { grid-template-columns: 1fr; }
 }
 @media (max-width: 700px) {
   .table-div { display: none; }

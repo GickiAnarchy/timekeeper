@@ -410,6 +410,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const adminContent = document.getElementById('admin-content');
   let authApi;
   let authorized = false;
+  let contentInitialized = false;
   let redirecting = false;
   let signingIn = false;
 
@@ -423,12 +424,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     authSubmit.disabled = true;
     authCancel.disabled = true;
     authStatus.textContent = 'Returning Home…';
-    try {
-      await authApi?.signOutDailyQuotesAdmin();
-    } catch (error) {
-      console.warn('Unable to clear the temporary owner session.', error);
-    }
     routeHome();
+  }
+
+  function showAdminContent() {
+    authorized = true;
+    authPassword.value = '';
+    if (authDialog.open) authDialog.close();
+    adminContent.hidden = false;
+    if (contentInitialized) return;
+    contentInitialized = true;
+    initializeAdminSectionToggles(document);
+    initializeQuoteManager();
+    initializePeopleManager();
+  }
+
+  function showAuthDialog(message = '') {
+    adminContent.hidden = true;
+    authStatus.textContent = message;
+    if (!authDialog.open) authDialog.showModal();
   }
 
   authDialog.addEventListener('cancel', event => {
@@ -470,13 +484,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      authorized = true;
-      authPassword.value = '';
-      authDialog.close();
-      adminContent.hidden = false;
-      initializeAdminSectionToggles(document);
-      initializeQuoteManager();
-      initializePeopleManager();
+      showAdminContent();
     } catch (error) {
       console.warn('Owner sign-in failed.', error);
       authStatus.textContent = 'Sign-in was not accepted. Returning Home…';
@@ -495,9 +503,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   try {
-    authApi = await import('./admin-auth.mjs');
-    await authApi.prepareDailyQuotesAdminSignIn();
-    if (!authDialog.open) authDialog.showModal();
+    authApi = await import('./admin-auth.mjs?v=owner-session-1');
+    const currentUser = await authApi.prepareDailyQuotesAdminSignIn();
+    if (currentUser && !authApi.isDailyQuotesAdmin(currentUser)) {
+      await authApi.signOutDailyQuotesAdmin();
+    }
+    if (authApi.isDailyQuotesAdmin(currentUser)) showAdminContent();
+    else showAuthDialog();
+    authApi.observeDailyQuotesAdminSession(user => {
+      if (authApi.isDailyQuotesAdmin(user)) {
+        showAdminContent();
+      } else if (authorized) {
+        authorized = false;
+        showAuthDialog('The owner session ended. Sign in again to continue.');
+      }
+    }, error => {
+      console.warn('Unable to observe the owner session.', error);
+      if (authorized) {
+        authorized = false;
+        showAuthDialog('Owner status could not be verified. Sign in again to continue.');
+      }
+    });
   } catch (error) {
     console.error('Owner authentication is unavailable.', error);
     await leaveAdmin();

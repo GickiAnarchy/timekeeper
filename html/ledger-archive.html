@@ -3,8 +3,9 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <link rel="stylesheet" href="../styles/ledger-archive.css">
+    <link rel="stylesheet" href="../styles/ledger-archive.css?v=ledger-admin-1">
     <script type="module" src="../scripts/keyboard.mjs" defer></script>
+    <script type="module" src="../scripts/admin-page-controls.mjs" defer></script>
     <script type="module" src="../scripts/ledger-archive.js" defer></script>
     <title>Ledger Archive · Timekeeper</title>
   </head>
@@ -25,7 +26,10 @@
       </header>
       <div class="archive-toolbar">
         <p id="archive-status" role="status" aria-live="polite">Loading archived ledgers…</p>
-        <button id="retry-archive-button" type="button" hidden>Retry pending archive</button>
+        <fieldset class="archive-admin-control" data-admin-only aria-label="Ledger archive maintenance">
+          <legend class="sr-only">Ledger archive maintenance</legend>
+          <button id="retry-archive-button" type="button" hidden>Retry pending archive</button>
+        </fieldset>
       </div>
       <div id="ledger-archive-list" class="archive-list" aria-live="polite"></div>
     </main>
