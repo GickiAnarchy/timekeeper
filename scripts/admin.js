@@ -219,7 +219,7 @@ function initializeWageManager() {
       row.innerHTML = `
       <td><p>${emp.name}</p><td>
       <td><p>${emp.wage}</p></td>
-      `
+      `;
       
       wageTable.appendChild(row);
     });
