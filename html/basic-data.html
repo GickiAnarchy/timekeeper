@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <link rel="stylesheet" href="../styles/data.css?v=people-edit-20261009"/>
+    <link rel="stylesheet" href="../styles/data.css?v=people-admin-20261031"/>
     <script type="module" src="../scripts/keyboard.mjs" defer></script>
-    <script type="module" src="../scripts/data.js?v=people-edit-20261009" defer></script>
+    <script type="module" src="../scripts/data.js?v=people-admin-20261031" defer></script>
     <title>Mosher Lawns</title>
   </head>
   <body>
@@ -14,6 +14,7 @@
     </header>
 
     <main class="main-container">
+      <p class="people-admin-note">To edit employee or customer details, open <a href="admin-settings.html" target="main-content">Admin Settings</a> with the approved owner account. Adding and deleting records stays here.</p>
       <!-- Employees Section -->
       <details class="management-section" id="employees-section" closed>
         <summary>Employees</summary>
@@ -83,54 +84,5 @@
         </div>
       </details>
     </main>
-
-    <dialog class="people-edit-modal" id="people-edit-modal" aria-labelledby="people-edit-title" aria-describedby="people-edit-help people-edit-error">
-      <form class="people-edit-form" id="people-edit-form">
-        <div class="people-edit-heading">
-          <p class="people-edit-eyebrow" id="people-edit-eyebrow">CUSTOMER PROFILE</p>
-          <h2 id="people-edit-title">Edit record</h2>
-          <p id="people-edit-help">Update this profile. Changes are saved to your shared records.</p>
-        </div>
-
-        <fieldset class="people-edit-fields" id="employee-edit-fields" hidden disabled>
-          <legend class="visually-hidden">Employee details</legend>
-          <div class="edit-field">
-            <label for="edit-emp-name">Name</label>
-            <input type="text" id="edit-emp-name" name="employee-name" autocomplete="name" required>
-          </div>
-          <div class="edit-field">
-            <label for="edit-emp-wage">Wage ($)</label>
-            <input type="number" id="edit-emp-wage" name="employee-wage" min="0" step="0.01" inputmode="decimal" required>
-          </div>
-        </fieldset>
-
-        <fieldset class="people-edit-fields" id="customer-edit-fields" hidden disabled>
-          <legend class="visually-hidden">Customer details</legend>
-          <div class="edit-field">
-            <label for="edit-cust-name">Name</label>
-            <input type="text" id="edit-cust-name" name="customer-name" required>
-          </div>
-          <div class="edit-field">
-            <label for="edit-cust-location">Location</label>
-            <input type="text" id="edit-cust-location" name="customer-location" required>
-          </div>
-          <div class="edit-field edit-field-wide">
-            <label for="edit-cust-billing-rate">Hourly billing rate ($)</label>
-            <input type="number" id="edit-cust-billing-rate" name="customer-billing-rate" min="0" step="0.01" inputmode="decimal" placeholder="Not set">
-            <small>Changing this rate recalculates linked labor lines, including paid invoices. Clearing it keeps existing invoice amounts at their last saved rate.</small>
-          </div>
-          <div class="edit-field edit-field-wide">
-            <label for="edit-cust-note">Note</label>
-            <textarea id="edit-cust-note" name="customer-note" rows="4"></textarea>
-          </div>
-        </fieldset>
-
-        <p class="form-error" id="people-edit-error" role="alert" aria-live="polite"></p>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" id="people-edit-cancel">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="people-edit-save">Save changes</button>
-        </div>
-      </form>
-    </dialog>
   </body>
 </html>

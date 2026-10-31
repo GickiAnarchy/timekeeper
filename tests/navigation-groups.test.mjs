@@ -168,10 +168,11 @@ test('missing navigation roots are graceful', () => {
   assert.equal(typeof setupNavigationGroups(null), 'function'); assert.equal(typeof setupNavigationPicker(null), 'function');
 });
 
-test('index keeps all ten routes and defines the three named navigation groups', () => {
+test('index keeps nine main routes, omits People Data, and defines the three named navigation groups', () => {
   const html = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8');
   const routes = [...html.matchAll(/data-page=["']([^"']+)["']/g)].map(match => match[1]);
-  assert.deepEqual(routes, ['html/home.html', 'html/clock.html', 'html/viewshifts.html', 'html/planned.html', 'html/pay-period-review.html', 'html/basic-data.html', 'html/payledger.html', 'html/ledger-archive.html', 'html/invoice.html', 'html/settings.html']);
+  assert.deepEqual(routes, ['html/home.html', 'html/clock.html', 'html/viewshifts.html', 'html/planned.html', 'html/pay-period-review.html', 'html/payledger.html', 'html/ledger-archive.html', 'html/invoice.html', 'html/settings.html']);
+  assert.doesNotMatch(html, /data-page=["']html\/basic-data\.html["']/);
   const classAttributes = [...html.matchAll(/class=["']([^"']+)["']/g)].map(match => match[1]);
   assert.equal(classAttributes.filter(value => value.split(/\s+/).includes('nav-group')).length, 3);
   assert.match(html, /Workspace/i); assert.match(html, /Manage/i); assert.match(html, /Preferences/i);
@@ -191,7 +192,7 @@ function shellFixture(readyState = 'loading') {
   const sidebar = new StubElement({ classes: ['sidebar'], children: [pickerToggle, pickerLabel, nav] });
   const document = new StubElement(); document.ownerDocument = document; document.readyState = readyState; document.activeElement = null; setOwnerDocument(sidebar, document); document.append(sidebar);
   const routes = [...html.matchAll(/data-page="([^"]+)" data-title="([^"]+)"/g)];
-  const navigation = routes.map(([, page, title], index) => { const button = new StubElement({ classes: ['nav-link'] }); button.dataset = { page, title }; if (!index) button.setAttribute('aria-current', 'page'); panels[index < 4 ? 0 : index < 9 ? 1 : 2].append(button); return button; });
+  const navigation = routes.map(([, page, title], index) => { const button = new StubElement({ classes: ['nav-link'] }); button.dataset = { page, title }; if (!index) button.setAttribute('aria-current', 'page'); panels[index < 4 ? 0 : index < 8 ? 1 : 2].append(button); return button; });
   const title = { textContent: 'Home' }; const date = { textContent: '' }; const frame = new StubElement(); frame.src = 'html/home.html'; frame.contentWindow = { location: { href: 'https://local.test/timekeeper/html/home.html' }, postMessage() {} };
   document.documentElement = { style: { setProperty() {} }, dataset: {}, clientHeight: 800 }; document.body = { classList: new ClassList() }; document.querySelectorAll = selector => selector === '.nav-link[data-page]' ? navigation : [];
   document.querySelector = selector => selector === '.sidebar' ? sidebar : selector === '.sidebar-nav' ? nav : frame; document.getElementById = id => id === 'active-page-title' ? title : date;
@@ -202,10 +203,10 @@ function shellFixture(readyState = 'loading') {
 
 test('self-contained shell boots and every route updates the frame, title, active group, and picker label', () => {
   const { document, frame, navigation, title, date, toggles, panels, pickerLabel } = shellFixture(); document.dispatchEvent(event('DOMContentLoaded')); assert.notEqual(date.textContent, '');
-  assert.equal(navigation.length, 10);
-  for (const [index, button] of navigation.entries()) { const groupIndex = index < 4 ? 0 : index < 9 ? 1 : 2; if (panels[groupIndex].hidden) toggles[groupIndex].click(); button.click(); assert.equal(frame.src, button.dataset.page); assert.equal(title.textContent, button.dataset.title); assert.equal(button.getAttribute('aria-current'), 'page'); assert.equal(navigation.filter(item => item.getAttribute('aria-current') === 'page').length, 1); assert.equal(panels[groupIndex].hidden, false); assert.equal(toggles[groupIndex].getAttribute('data-current'), 'true'); assert.equal(pickerLabel.textContent, button.dataset.title); }
+  assert.equal(navigation.length, 9);
+  for (const [index, button] of navigation.entries()) { const groupIndex = index < 4 ? 0 : index < 8 ? 1 : 2; if (panels[groupIndex].hidden) toggles[groupIndex].click(); button.click(); assert.equal(frame.src, button.dataset.page); assert.equal(title.textContent, button.dataset.title); assert.equal(button.getAttribute('aria-current'), 'page'); assert.equal(navigation.filter(item => item.getAttribute('aria-current') === 'page').length, 1); assert.equal(panels[groupIndex].hidden, false); assert.equal(toggles[groupIndex].getAttribute('data-current'), 'true'); assert.equal(pickerLabel.textContent, button.dataset.title); }
 });
 
 test('shell initializes when loaded after DOMContentLoaded and follows in-frame navigation', () => {
-  const { frame, navigation, title, date, panels } = shellFixture('complete'); assert.notEqual(date.textContent, ''); frame.contentWindow.location.href = 'https://local.test/timekeeper/html/settings.html'; frame.dispatchEvent(event('load')); assert.equal(title.textContent, 'Settings'); assert.equal(navigation[9].getAttribute('aria-current'), 'page'); assert.equal(panels[2].hidden, false); assert.equal(panels[0].hidden, true);
+  const { frame, navigation, title, date, panels } = shellFixture('complete'); assert.notEqual(date.textContent, ''); frame.contentWindow.location.href = 'https://local.test/timekeeper/html/settings.html'; frame.dispatchEvent(event('load')); assert.equal(title.textContent, 'Settings'); assert.equal(navigation[8].getAttribute('aria-current'), 'page'); assert.equal(panels[2].hidden, false); assert.equal(panels[0].hidden, true);
 });

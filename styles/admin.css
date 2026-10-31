@@ -23,6 +23,9 @@
   line-height: 1.6;
 }
 
+.admin-header a { color: var(--green-deep); font-weight: 700; }
+.admin-header a:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; border-radius: 2px; }
+
 .admin-kicker {
   margin-bottom: 0;
   color: var(--green);
@@ -183,6 +186,107 @@
   height: auto;
 }
 
+.people-management-note,
+.customer-rate-note {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: .88rem;
+  line-height: 1.5;
+}
+
+.customer-rate-note {
+  padding: 10px 12px;
+  color: var(--ink-soft);
+  background: var(--surface-muted);
+  border-left: 3px solid var(--green);
+  border-radius: 7px;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 11px;
+  background: var(--surface);
+}
+
+.admin-table {
+  width: 100%;
+  min-width: 500px;
+  border-collapse: collapse;
+  color: var(--ink);
+  font-size: .88rem;
+}
+
+.customer-table { min-width: 780px; }
+
+.admin-table th,
+.admin-table td {
+  padding: 11px 13px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.admin-table th {
+  color: var(--ink-soft);
+  background: var(--surface-muted);
+  font-size: .78rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.admin-table tbody tr:last-child td { border-bottom: 0; }
+.admin-table-actions { white-space: nowrap; }
+.admin-table-empty { padding: 20px !important; color: var(--muted); text-align: center !important; }
+.admin-edit-record-button { min-height: 34px; padding: 6px 11px; }
+
+.admin-edit-dialog {
+  width: min(92vw, 620px);
+  max-width: none;
+  max-height: min(90vh, 760px);
+  max-height: min(90dvh, 760px);
+  padding: 0;
+  overflow: auto;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 28px 90px rgba(12, 25, 18, .28);
+}
+
+.admin-edit-dialog::backdrop { background: rgba(12, 23, 18, .58); backdrop-filter: blur(4px); }
+.admin-edit-form { display: grid; gap: 18px; padding: clamp(18px, 4vw, 28px); }
+.admin-edit-heading { display: grid; gap: 7px; }
+.admin-edit-heading h2 { margin: 0; font-size: clamp(1.35rem, 4vw, 1.75rem); line-height: 1.2; }
+.admin-edit-heading > p:last-child { margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.5; }
+
+.admin-edit-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+
+.admin-edit-fields:not([hidden]) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.admin-edit-fields[hidden] { display: none; }
+#employee-edit-fields:not([hidden]) { grid-template-columns: minmax(0, 1.5fr) minmax(150px, .85fr); }
+.admin-edit-field { display: grid; min-width: 0; gap: 6px; }
+.admin-edit-field-wide { grid-column: 1 / -1; }
+.admin-edit-field label { color: var(--ink-soft); font-size: .82rem; font-weight: 700; }
+.admin-edit-field input,
+.admin-edit-field textarea { width: 100%; min-height: 42px; padding: 10px 12px; }
+.admin-edit-field textarea { min-height: 96px; resize: vertical; }
+.admin-edit-field small { color: var(--muted); font-size: .75rem; line-height: 1.45; }
+.admin-edit-error { min-height: 1.35em; margin: 0; color: var(--red); font-size: .85rem; line-height: 1.45; }
+.admin-edit-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 9px; }
+.admin-edit-actions .admin-button { min-width: 108px; min-height: 42px; }
+
+.admin-button:disabled { cursor: not-allowed; opacity: .58; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
 @media (max-width: 620px) {
   .admin-page { padding: 16px 13px 28px; }
   .quote-item { flex-direction: column; gap: 12px; }
@@ -195,4 +299,9 @@
   .quote-field-wide { grid-column: auto; }
   .settings-card { padding: 14px; }
   .admin-auth-actions { grid-template-columns: 1fr; }
+  .admin-edit-fields:not([hidden]),
+  #employee-edit-fields:not([hidden]) { grid-template-columns: 1fr; }
+  .admin-edit-field-wide { grid-column: auto; }
+  .admin-edit-actions { flex-direction: column-reverse; }
+  .admin-edit-actions .admin-button { width: 100%; }
 }

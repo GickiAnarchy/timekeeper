@@ -1,6 +1,7 @@
 import { loadDailyQuotes, saveDailyQuotes } from './models.js';
 import { normalizeDailyQuotes } from './daily-quotes.mjs';
 import { store } from './models.js';
+import { initializeAdminSectionToggles } from './admin-section-toggles.mjs';
 
 function makeElement(tag, className, text) {
   const element = document.createElement(tag);
@@ -15,7 +16,6 @@ function createQuoteId() {
 }
 
 function initializeQuoteManager() {
-  const quoteToggle = document.getElementById('quote-toggle');
   const quoteCard = document.getElementById('quote-card');
   const quoteList = document.getElementById('quote-list');
   const quoteStatus = document.getElementById('quote-status');
@@ -36,12 +36,6 @@ function initializeQuoteManager() {
   let editingId = null;
   let ready = false;
   let saving = false;
-
-  quoteToggle.addEventListener('click', () => {
-    const expanded = quoteToggle.getAttribute('aria-expanded') === 'true';
-    quoteToggle.setAttribute('aria-expanded', String(!expanded));
-    quoteCard.hidden = expanded;
-  });
 
   function clearForm() {
     quoteForm.reset();
@@ -200,40 +194,208 @@ function initializeQuoteManager() {
 
 
 
-function initializeWageManager() {
-  const wageToggle = document.getElementById('wage-toggle');
-  const wageCard = document.getElementById('wage-card');
-  const wageTable = document.getElementById('wage-table-body');
-  
-  
-  wageToggle.addEventListener('click', () => {
-    const expanded = wageToggle.getAttribute('aria-expanded') === 'true';
-    wageToggle.setAttribute('aria-expanded', String(!expanded));
-    wageCard.hidden = expanded;
-  });
-  
-  if (wageTable) {
-    wageTable.innerHTML = "";
-    store.employees.forEach(emp => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-      <td><p>${emp.name}</p><td>
-      <td><p>${emp.wage}</p></td>
-      `;
-      
-      wageTable.appendChild(row);
-    });
+function initializePeopleManager() {
+  const employeeBody = document.getElementById('wage-table-body');
+  const customerBody = document.getElementById('customer-table-body');
+  const employeeStatus = document.getElementById('wage-status');
+  const customerStatus = document.getElementById('customer-status');
+  const editDialog = document.getElementById('people-edit-dialog');
+  const editForm = document.getElementById('people-edit-form');
+  const editEyebrow = document.getElementById('people-edit-eyebrow');
+  const editTitle = document.getElementById('people-edit-title');
+  const editHelp = document.getElementById('people-edit-help');
+  const editError = document.getElementById('people-edit-error');
+  const editSave = document.getElementById('people-edit-save');
+  const editCancel = document.getElementById('people-edit-cancel');
+  const employeeFields = document.getElementById('employee-edit-fields');
+  const customerFields = document.getElementById('customer-edit-fields');
+  const editEmpName = document.getElementById('edit-emp-name');
+  const editEmpWage = document.getElementById('edit-emp-wage');
+  const editCustName = document.getElementById('edit-cust-name');
+  const editCustLocation = document.getElementById('edit-cust-location');
+  const editCustBillingRate = document.getElementById('edit-cust-billing-rate');
+  const editCustNote = document.getElementById('edit-cust-note');
+  const dataReady = store.loadFailures.length === 0;
+  let editingType = null;
+  let editingId = null;
+  let editTrigger = null;
+  let saving = false;
+
+  function textCell(value) {
+    return makeElement('td', '', value === null || value === undefined || value === '' ? '—' : String(value));
   }
-  
-  
-  
-  
-  
+
+  function makeEditButton(type, record) {
+    const button = makeElement('button', 'admin-button admin-button-secondary admin-edit-record-button', 'Edit');
+    button.type = 'button';
+    button.dataset.peopleEditType = type;
+    button.dataset.peopleId = record.id;
+    button.disabled = !dataReady;
+    button.setAttribute('aria-label', `Edit ${type} ${record.name}`);
+    return button;
+  }
+
+  function appendEmptyRow(body, columnCount, message) {
+    const row = makeElement('tr');
+    const cell = makeElement('td', 'admin-table-empty', message);
+    cell.colSpan = columnCount;
+    row.appendChild(cell);
+    body.replaceChildren(row);
+  }
+
+  function renderEmployees() {
+    const employees = [...store.employees.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    if (!employees.length) {
+      appendEmptyRow(employeeBody, 3, 'No employees are available. Add one from People Data.');
+    } else {
+      const rows = employees.map(employee => {
+        const row = makeElement('tr');
+        row.append(textCell(employee.name), textCell(`$${Number(employee.wage).toFixed(2)}/hr`));
+        const actions = makeElement('td', 'admin-table-actions');
+        actions.appendChild(makeEditButton('employee', employee));
+        row.appendChild(actions);
+        return row;
+      });
+      employeeBody.replaceChildren(...rows);
+    }
+    employeeStatus.textContent = dataReady
+      ? `${employees.length} ${employees.length === 1 ? 'employee' : 'employees'} available. Add and delete records from People Data.`
+      : 'Workspace data did not load completely. Refresh after the connection is restored before editing.';
+  }
+
+  function renderCustomers() {
+    const customers = [...store.customers.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    if (!customers.length) {
+      appendEmptyRow(customerBody, 5, 'No customers are available. Add one from People Data.');
+    } else {
+      const rows = customers.map(customer => {
+        const row = makeElement('tr');
+        const billing = customer.billingRate === null || customer.billingRate === undefined
+          ? 'Not set'
+          : `$${Number(customer.billingRate).toFixed(2)}/hr`;
+        row.append(textCell(customer.name), textCell(customer.location), textCell(billing), textCell(customer.note));
+        const actions = makeElement('td', 'admin-table-actions');
+        actions.appendChild(makeEditButton('customer', customer));
+        row.appendChild(actions);
+        return row;
+      });
+      customerBody.replaceChildren(...rows);
+    }
+    customerStatus.textContent = dataReady
+      ? `${customers.length} ${customers.length === 1 ? 'customer' : 'customers'} available. Changing a billing rate can update linked invoice lines.`
+      : 'Workspace data did not load completely. Refresh after the connection is restored before editing.';
+  }
+
+  function openEditDialog(type, id, trigger) {
+    if (!dataReady) return;
+    const isEmployee = type === 'employee';
+    const record = isEmployee ? store.employees.get(id) : store.customers.get(id);
+    if (!record) return;
+    editingType = type;
+    editingId = id;
+    editTrigger = trigger;
+    editError.textContent = '';
+    editForm.reset();
+    employeeFields.hidden = !isEmployee;
+    employeeFields.disabled = !isEmployee;
+    customerFields.hidden = isEmployee;
+    customerFields.disabled = isEmployee;
+    if (isEmployee) {
+      editEyebrow.textContent = 'EMPLOYEE PROFILE';
+      editTitle.textContent = 'Edit employee';
+      editHelp.textContent = 'Update this employee’s name and hourly wage.';
+      editEmpName.value = record.name;
+      editEmpWage.value = String(record.wage);
+    } else {
+      editEyebrow.textContent = 'CUSTOMER PROFILE';
+      editTitle.textContent = 'Edit customer';
+      editHelp.textContent = 'Update this customer’s details and billing information.';
+      editCustName.value = record.name;
+      editCustLocation.value = record.location || '';
+      editCustBillingRate.value = record.billingRate === null || record.billingRate === undefined
+        ? ''
+        : String(record.billingRate);
+      editCustNote.value = record.note || '';
+    }
+    editDialog.showModal();
+    (isEmployee ? editEmpName : editCustName).focus();
+  }
+
+  function restoreEditFocus() {
+    const type = editingType;
+    const id = editingId;
+    const trigger = editTrigger;
+    editingType = null;
+    editingId = null;
+    editTrigger = null;
+    if (trigger?.isConnected) {
+      trigger.focus();
+      return;
+    }
+    const body = type === 'employee' ? employeeBody : customerBody;
+    const replacement = [...body.querySelectorAll('button[data-people-edit-type]')]
+      .find(button => button.dataset.peopleEditType === type && button.dataset.peopleId === id);
+    replacement?.focus();
+  }
+
+  function handleEditClick(event, type) {
+    const button = event.target.closest('button[data-people-edit-type]');
+    if (!button || button.dataset.peopleEditType !== type || !dataReady) return;
+    openEditDialog(type, button.dataset.peopleId, button);
+  }
+
+  employeeBody.addEventListener('click', event => handleEditClick(event, 'employee'));
+  customerBody.addEventListener('click', event => handleEditClick(event, 'customer'));
+  editDialog.addEventListener('close', restoreEditFocus);
+  editDialog.addEventListener('cancel', event => {
+    if (saving) event.preventDefault();
+  });
+  editCancel.addEventListener('click', () => {
+    if (!saving) editDialog.close();
+  });
+  editForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    editError.textContent = '';
+    if (saving || !editForm.reportValidity()) return;
+    saving = true;
+    editSave.disabled = true;
+    editCancel.disabled = true;
+    editSave.textContent = 'Saving…';
+    editDialog.setAttribute('aria-busy', 'true');
+    try {
+      if (editingType === 'employee') {
+        await store.updateEmployee(editingId, editEmpName.value, editEmpWage.value);
+        renderEmployees();
+        employeeStatus.textContent = 'Employee profile saved.';
+      } else if (editingType === 'customer') {
+        const billingRate = editCustBillingRate.value === '' ? null : Number(editCustBillingRate.value);
+        await store.updateCustomer(
+          editingId,
+          editCustName.value,
+          editCustLocation.value,
+          editCustNote.value,
+          billingRate
+        );
+        renderCustomers();
+        customerStatus.textContent = 'Customer profile saved. Linked invoice labor lines were updated if the billing rate changed.';
+      } else {
+        return;
+      }
+      editDialog.close();
+    } catch (error) {
+      editError.textContent = error.message || 'Unable to save changes. Please try again.';
+    } finally {
+      saving = false;
+      editSave.disabled = false;
+      editCancel.disabled = false;
+      editSave.textContent = 'Save changes';
+      editDialog.removeAttribute('aria-busy');
+    }
+  });
+
+  renderEmployees();
+  renderCustomers();
 }
-
-
-
-
 
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
@@ -312,8 +474,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       authPassword.value = '';
       authDialog.close();
       adminContent.hidden = false;
+      initializeAdminSectionToggles(document);
       initializeQuoteManager();
-      initializeWageManager();
+      initializePeopleManager();
     } catch (error) {
       console.warn('Owner sign-in failed.', error);
       authStatus.textContent = 'Sign-in was not accepted. Returning Home…';
