@@ -198,6 +198,17 @@ function initializeQuoteManager() {
   }).finally(() => setBusy(false));
 }
 
+
+
+function initializeWageManager() {
+  const wageToggle = document.getElementById('wage-toggle');
+  const wageCard = document.getElementById('wage-card');
+}
+
+
+
+
+
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
   
@@ -213,6 +224,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let authorized = false;
   let redirecting = false;
   let signingIn = false;
+  
+  const wageTable = document.getElementById('wage-table-body');
 
   function routeHome() {
     window.location.replace(new URL('home.html', window.location.href).href);
