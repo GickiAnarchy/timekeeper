@@ -11,5 +11,42 @@
     "@firebase/firestore": "4.17.2",
     "@firebase/rules-unit-testing": "5.0.2",
     "firebase-tools": "15.32.1"
-  }
+  },
+  "version": "1.0.0",
+  "description": "A JavaScript app for tracking work hours. The workspace includes clock in/out, breaks, shift history, employee and customer records, invoices, an employee ledger with completed-shift entry, settled-ledger archives, and planned jobs. When an employee ledger reaches a zero balance, its entries are archived and the active ledger is cleared. The Home dashboard summarizes today's and this week's break-adjusted hours, highlights active shifts and upcoming jobs, and updates active totals every minute. Themes and text-size preferences are saved in the current browser.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "at-least-node": "^1.0.0",
+    "bplist-creator": "^0.1.0",
+    "bplist-parser": "^0.3.2",
+    "define-lazy-prop": "^2.0.0",
+    "fd-slicer": "^1.1.0",
+    "is-docker": "^2.2.1",
+    "pend": "^1.2.0",
+    "sax": "^1.1.4",
+    "simple-plist": "^1.3.1",
+    "sisteransi": "^1.0.5",
+    "stream-buffers": "^2.2.0",
+    "tree-kill": "^1.2.2",
+    "undici-types": "^8.9.0",
+    "xcode": "^4.0.0",
+    "yauzl": "^2.10.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GickiAnarchy/timekeeper.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GickiAnarchy/timekeeper/issues"
+  },
+  "homepage": "https://github.com/GickiAnarchy/timekeeper#readme"
 }
