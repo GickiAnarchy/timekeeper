@@ -36,6 +36,10 @@ tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight
 .edit-ledger-btn, .delete-btn { min-height: 32px; padding: 0 10px; font-size: 11px; font-weight: 650; }
 #ledger-table th:last-child, #ledger-table td:last-child { min-width: 126px; }
 .ledger-mobile-list { display: none; }
+.ledger-mobile-summary { display: none; }
+.ledger-mobile-summary-item { display: grid; min-width: 0; gap: 3px; }
+.ledger-mobile-summary-item span { color: var(--muted); font-size: 10px; font-weight: 650; }
+.ledger-mobile-summary-item strong { color: var(--ink); font-size: 15px; font-variant-numeric: tabular-nums; }
 .edit-ledger-btn { color: var(--green-deep); background: var(--green-soft); }
 .edit-ledger-btn:hover { background: var(--surface-hover); }
 .delete-btn { color: var(--red); background: var(--red-soft); }
@@ -112,6 +116,7 @@ tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight
 }
 @media (max-width: 700px) {
   .table-div { display: none; }
+  .ledger-mobile-summary:not([hidden]) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: min(100%, 1060px); margin: 0 auto; padding: 11px 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; box-shadow: var(--shadow-soft); }
   .ledger-mobile-list { display: grid; gap: 9px; width: min(100%, 1060px); margin: 0 auto; }
   .ledger-mobile-card { overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; box-shadow: var(--shadow-soft); }
   .ledger-mobile-card > summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; min-height: 54px; padding: 11px 13px; color: var(--ink); cursor: pointer; font-size: 13px; font-weight: 700; list-style-position: inside; }

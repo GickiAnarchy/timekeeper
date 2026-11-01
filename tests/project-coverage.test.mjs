@@ -82,9 +82,14 @@ test('invoice labor rows group by employee but retain expandable shift details a
 test('employee ledger footer includes a separate total-hours summary after the balance', () => {
   const markup = readProjectFile('html', 'payledger.html');
   const script = readProjectFile('scripts', 'ledger.js');
+  const styles = readProjectFile('styles', 'ledger.css');
   assert.match(markup, /id="ledger-hours-total"/);
   assert.match(markup, /<strong>Total hours<\/strong>[\s\S]*?id="ledger-hours-total"/);
   assert.match(script, /sumLedgerHours\(entries\)/);
+  assert.match(markup, /<section id="ledger-mobile-summary"[^>]*\bhidden>[\s\S]*?id="ledger-mobile-balance"[\s\S]*?id="ledger-mobile-hours"/);
+  assert.match(styles, /@media \(max-width: 700px\)[\s\S]*?\.ledger-mobile-summary:not\(\[hidden\]\)[\s\S]*?display: grid/);
+  assert.match(script, /mobileBalance\.textContent = balanceText/);
+  assert.match(script, /mobileHours\.textContent = `\$\{totalHours\.toFixed\(2\)\} h`/);
 });
 
 test('employee ledger can add completed shifts and offer adjustments to the new entry', () => {

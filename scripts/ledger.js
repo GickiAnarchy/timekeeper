@@ -52,6 +52,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const ledgerOwner = document.getElementById('ledger-owner');
   const tableBody = document.getElementById('ledger-body');
   const mobileList = document.getElementById('ledger-mobile-list');
+  const mobileSummary = document.getElementById('ledger-mobile-summary');
+  const mobileBalance = document.getElementById('ledger-mobile-balance');
+  const mobileHours = document.getElementById('ledger-mobile-hours');
   const totalRow = document.getElementById('ledger-total');
   const hoursTotal = document.getElementById('ledger-hours-total');
   const ledgerTable = document.getElementById('ledger-table');
@@ -178,6 +181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     mobileList.replaceChildren();
     const filterValue = ledgerFilter.value;
     if (!filterValue) {
+      mobileSummary.hidden = true;
       const row = document.createElement('tr');
       const message = makeCell('Choose an employee to view their ledger.');
       message.colSpan = 7;
@@ -190,6 +194,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    mobileSummary.hidden = false;
     const employee = store.employees.get(filterValue);
     ledgerOwner.textContent = filterValue === 'unassigned'
       ? 'Legacy entries without an employee assignment'
@@ -284,9 +289,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       const amount = Number(entry.amount || 0);
       return sum + (String(entry.type || '').toLowerCase() === 'advance' ? -amount : amount);
     }, 0);
-    totalRow.innerHTML = `<strong>Balance: $${total.toFixed(2)}</strong>`;
+    const balanceText = `$${total.toFixed(2)}`;
+    totalRow.innerHTML = `<strong>Balance: ${balanceText}</strong>`;
+    mobileBalance.textContent = balanceText;
     const totalHours = sumLedgerHours(entries);
     hoursTotal.innerHTML = `<strong>${totalHours.toFixed(2)}</strong>`;
+    mobileHours.textContent = `${totalHours.toFixed(2)} h`;
   }
 
   ledgerFilter.addEventListener('change', () => {
