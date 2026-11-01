@@ -16,13 +16,7 @@ The review deliberately loads data without `store.init()`, so opening or refresh
 
 Restructuring and consolidating the project directory.
 
-Should be able to remove:
-
--  ***/scripts/planned-job-confirmation.***
--  ***/scripts/planned-urgency.mjs***
-
-
-
+Feature-specific helpers now live with their existing primary scripts: planned jobs in `planned.js`, shift viewport behavior in `shifts.js`, pay-period calculations and read-only loading in `pay-period-review.js`, the `Invoice` entity in `models.js`, and ledger labels in `ledger.js`. Shared modules such as `domain.mjs`, keyboard handling, table sorting, and daily quotes remain separate because multiple features use them.
 
 ## Tests
 

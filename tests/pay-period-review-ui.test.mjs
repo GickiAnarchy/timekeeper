@@ -2,8 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
-import { buildPayPeriodReview, currentWeekRange } from '../scripts/pay-period-review.mjs';
-import { loadPayPeriodReviewData } from '../scripts/pay-period-data.mjs';
+import { actualShiftHours, invoiceShiftIds, ledgerBalanceCents } from '../scripts/domain.mjs';
 
 class Node {
   constructor(tag = 'div', text = '') {
@@ -43,9 +42,11 @@ async function boot({ fail = false } = {}) {
     store[method] = async () => { calls.push(method); };
   }
   if (fail) store.loadLedger = async () => { store.loadFailures.push(new Error('offline')); };
-  const code = readFileSync(new URL('../scripts/pay-period-review.js', import.meta.url), 'utf8').replace(/^import .*;\n/gm, '');
+  const code = readFileSync(new URL('../scripts/pay-period-review.js', import.meta.url), 'utf8')
+    .replace(/^import\s+[\s\S]*?from\s+['"][^'"]+['"];\s*/gm, '')
+    .replace(/\bexport\s+(?=(?:async\s+)?function\s)/g, '');
   vm.runInNewContext(code, {
-    document, store, buildPayPeriodReview, currentWeekRange, loadPayPeriodReviewData, Intl, Date, console,
+    document, store, actualShiftHours, invoiceShiftIds, ledgerBalanceCents, Intl, Date, console,
     Option: function(text, value) { const option = new Node('option', text); option.value = value; return option; }
   });
   await document.dispatch('DOMContentLoaded');

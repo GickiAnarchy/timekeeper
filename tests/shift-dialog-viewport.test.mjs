@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { resetShiftDialogViewport, syncShiftDialogViewport } from '../scripts/shift-dialog-viewport.mjs';
+import { readFileSync } from 'node:fs';
+import { isFocusableElement } from '../scripts/keyboard.mjs';
+
+// Exercise the inlined helpers without evaluating shifts.js's DOM controller.
+const shiftsSource = readFileSync(new URL('../scripts/shifts.js', import.meta.url), 'utf8');
+const viewportSection = shiftsSource.match(/\/\/ SHIFT DIALOG VIEWPORT HELPERS\n([\s\S]*?)\n\/\/ END SHIFT DIALOG VIEWPORT HELPERS/);
+assert.ok(viewportSection, 'viewport helpers should stay in shifts.js');
+const viewportHelpers = new Function('isFocusableElement', `${viewportSection[1]}\nreturn { resetShiftDialogViewport, syncShiftDialogViewport };`)(isFocusableElement);
+const { resetShiftDialogViewport, syncShiftDialogViewport } = viewportHelpers;
 
 function createDialog(activeElement = null) {
   const values = new Map();

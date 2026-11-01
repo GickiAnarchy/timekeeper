@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadPayPeriodReviewData } from '../scripts/pay-period-data.mjs';
+import { readFileSync } from 'node:fs';
+
+const reviewSource = readFileSync(new URL('../scripts/pay-period-review.js', import.meta.url), 'utf8');
+const loaderSection = reviewSource.match(/\/\/ PAY-PERIOD READ-ONLY DATA LOADER\n([\s\S]*?)\n\/\/ END PAY-PERIOD READ-ONLY DATA LOADER/);
+assert.ok(loaderSection, 'read-only loader should stay in pay-period-review.js');
+const loadPayPeriodReviewData = new Function(`${loaderSection[1].replace('export async function ', 'async function ')}\nreturn loadPayPeriodReviewData;`)();
 
 function fixture() {
   const calls = [];

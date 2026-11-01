@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildPayPeriodReview, currentWeekRange } from '../scripts/pay-period-review.mjs';
+import { readFileSync } from 'node:fs';
+import { actualShiftHours, invoiceShiftIds, ledgerBalanceCents } from '../scripts/domain.mjs';
+
+const reviewSource = readFileSync(new URL('../scripts/pay-period-review.js', import.meta.url), 'utf8');
+const calculationSection = reviewSource.match(/\/\/ PAY-PERIOD REVIEW CALCULATIONS\n([\s\S]*?)\n\/\/ END PAY-PERIOD REVIEW CALCULATIONS/);
+assert.ok(calculationSection, 'review calculations should stay in pay-period-review.js');
+const reviewFunctions = new Function('actualShiftHours', 'invoiceShiftIds', 'ledgerBalanceCents', `${calculationSection[1].replaceAll('export function ', 'function ')}\nreturn { buildPayPeriodReview, currentWeekRange };`)(actualShiftHours, invoiceShiftIds, ledgerBalanceCents);
+const { buildPayPeriodReview, currentWeekRange } = reviewFunctions;
 
 const base = {
   startDate: '2026-10-12', endDate: '2026-10-18',

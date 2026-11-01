@@ -1,6 +1,6 @@
 import { loadDailyQuotes, store } from './models.js';
 import { DAILY_QUOTES, selectDailyQuote } from './daily-quotes.mjs';
-import { plannedJobUrgency, updatePlannedAlert, watchPlannedDayChange } from './planned-urgency.mjs';
+import { plannedJobUrgency, updatePlannedAlert, watchPlannedDayChange } from './planned.js';
 import { ledgerBalanceCents } from './domain.mjs';
 
 const hourFormat = new Intl.NumberFormat(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });

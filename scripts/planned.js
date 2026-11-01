@@ -4,7 +4,9 @@ import {
   populateCustomerDropdowns
 } from './models.js';
 import { asValidDate, plannedDateStatus, plannedJobsForCompletedShift } from './domain.mjs';
-//import { plannedJobUrgency, updatePlannedAlert, watchPlannedDayChange } from './planned-urgency.mjs';
+
+// Planned-job helpers are shared by Home, Clock, Shifts, and this page. Keep the
+// page controller scoped to Planned so those imports do not bind unrelated DOM.
 
 const formatJobDate = new Intl.DateTimeFormat(undefined, {
   weekday: 'long',
@@ -112,7 +114,7 @@ export function watchPlannedDayChange(refresh, doc = document, view = window) {
 
 
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function initializePlannedPage() {
   const plannedList = document.getElementById('planned-list');
   const addButton = document.getElementById('add-button');
   const modal = document.getElementById('add-modal');
@@ -384,4 +386,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   renderJobs();
   watchPlannedDayChange(renderJobs);
-});
+}
+
+if (document.getElementById('planned-list')) {
+  document.addEventListener('DOMContentLoaded', initializePlannedPage);
+}

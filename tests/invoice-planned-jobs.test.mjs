@@ -4,14 +4,19 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Invoice } from '../scripts/invoice-model.mjs';
 import {
+  createInvoiceItem,
   groupInvoiceItemsByType,
+  invoiceTotal,
   plannedJobsForCompletedShift
 } from '../scripts/domain.mjs';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const readProjectFile = (...parts) => readFileSync(join(projectRoot, ...parts), 'utf8');
+const modelsSource = readProjectFile('scripts', 'models.js');
+const invoiceSection = modelsSource.match(/\/\/ INVOICE MODEL BEGIN\n([\s\S]*?)\n\/\/ INVOICE MODEL END/);
+assert.ok(invoiceSection, 'Invoice model should stay in models.js');
+const Invoice = new Function('createInvoiceItem', 'invoiceTotal', `${invoiceSection[1].replace('export class Invoice', 'class Invoice')}\nreturn Invoice;`)(createInvoiceItem, invoiceTotal);
 
 function job(id, customerId, date, description = id, isComplete = false) {
   return {
@@ -111,26 +116,25 @@ test('planned-job candidates match the shift customer and include due dates on t
 test('shift completion prompts are explicit, deduplicated, and persist across normal saves and backups', () => {
   const shifts = readProjectFile('scripts', 'shifts.js');
   const clock = readProjectFile('scripts', 'clock.js');
-  const prompts = readProjectFile('scripts', 'planned-job-confirmation.mjs');
-  const models = readProjectFile('scripts', 'models.js');
-  const invoiceModel = readProjectFile('scripts', 'invoice-model.mjs');
+  const planned = readProjectFile('scripts', 'planned.js');
+  const models = modelsSource;
 
   assert.match(shifts, /completedNow = !wasComplete && activeShift\.isComplete/);
   assert.match(shifts, /promptForCompletedPlannedJobs\(savedShift, store, window\)/);
   assert.match(clock, /promptForCompletedPlannedJobs\(shiftToStop, store, window\)/);
-  assert.match(prompts, /ui\.confirm\(prompt\)/);
-  assert.match(prompts, /markShiftPlannedJobsPrompted\(shift\.id\)/);
+  assert.match(planned, /ui\.confirm\(prompt\)/);
+  assert.match(planned, /markShiftPlannedJobsPrompted\(shift\.id\)/);
   assert.match(models, /shift\.plannedJobsPrompted = data\.plannedJobsPrompted === true/);
   assert.match(models, /plannedJobsPrompted: Boolean\(shift\.plannedJobsPrompted\)/);
   assert.match(models, /plannedJobsPrompted: Boolean\(shiftData\.plannedJobsPrompted\)/);
   assert.match(models, /async markShiftPlannedJobsPrompted\(shiftId\)/);
-  assert.match(invoiceModel, /addItem\(name, type = 'general', value = undefined\)/);
-  assert.match(models, /import \{ Invoice \} from '\.\/invoice-model\.mjs'/);
-  assert.match(models, /export \{ Invoice \}/);
+  assert.match(models, /export class Invoice/);
+  assert.match(models, /addItem\(name, type = 'general', value = undefined\)/);
+  assert.doesNotMatch(models, /invoice-model\.mjs/);
   execFileSync(process.execPath, ['--check', join(projectRoot, 'scripts', 'models.js')]);
-  execFileSync(process.execPath, ['--check', join(projectRoot, 'scripts', 'invoice-model.mjs')]);
   execFileSync(process.execPath, ['--check', join(projectRoot, 'scripts', 'invoice.js')]);
   execFileSync(process.execPath, ['--check', join(projectRoot, 'scripts', 'shifts.js')]);
   execFileSync(process.execPath, ['--check', join(projectRoot, 'scripts', 'clock.js')]);
-  execFileSync(process.execPath, ['--check', join(projectRoot, 'scripts', 'planned-job-confirmation.mjs')]);
+  execFileSync(process.execPath, ['--check', join(projectRoot, 'scripts', 'planned.js')]);
+  execFileSync(process.execPath, ['--check', join(projectRoot, 'scripts', 'pay-period-review.js')]);
 });

@@ -2,7 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
-import { promptForCompletedPlannedJobs } from '../scripts/planned-job-confirmation.mjs';
+import { isFocusableElement } from '../scripts/keyboard.mjs';
+import { plannedJobsForCompletedShift } from '../scripts/domain.mjs';
+
+const plannedSource = readFileSync(new URL('../scripts/planned.js', import.meta.url), 'utf8');
+const promptSection = plannedSource.match(/\/\/ PLANNED-JOB-CONFIRMATION\n([\s\S]*?)\n\/\/:END PLANNED-JOB-CONFIRMATION/);
+assert.ok(promptSection, 'completion prompt helper should stay in planned.js');
+const promptForCompletedPlannedJobs = new Function('plannedJobsForCompletedShift', `${promptSection[1].replace('export async function ', 'async function ')}\nreturn promptForCompletedPlannedJobs;`)(plannedJobsForCompletedShift);
 
 class FakeElement {
   constructor(tag = 'div', ownerDocument = null) {
@@ -125,7 +131,7 @@ function makeFixture() {
 
 async function boot(fixture) {
   const source = readFileSync(new URL('../scripts/shifts.js', import.meta.url), 'utf8');
-  const script = source.split('\n').slice(8).join('\n');
+  const script = source.replace(/^import\s+[\s\S]*?from\s+['"][^'"]+['"];\s*/gm, '');
   vm.runInNewContext(script, {
     console,
     Date,
@@ -140,8 +146,7 @@ async function boot(fixture) {
     },
     WorkShift: class {},
     promptForCompletedPlannedJobs,
-    resetShiftDialogViewport() {},
-    syncShiftDialogViewport() {},
+    isFocusableElement,
     setTimeout
   });
   await fixture.document.dispatchEvent({ type: 'DOMContentLoaded' });

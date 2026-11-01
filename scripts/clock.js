@@ -6,7 +6,7 @@ import {
   populateEmployeeDropdowns, 
   populateCustomerDropdowns 
 } from './models.js';
-import { promptForCompletedPlannedJobs } from './planned-job-confirmation.mjs';
+import { promptForCompletedPlannedJobs } from './planned.js';
 
 function formatBreakDuration(milliseconds) {
   const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));

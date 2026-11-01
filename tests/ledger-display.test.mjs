@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ledgerItemLabel } from '../scripts/ledger-display.mjs';
+import { readFileSync } from 'node:fs';
+
+const ledgerSource = readFileSync(new URL('../scripts/ledger.js', import.meta.url), 'utf8');
+const labelSection = ledgerSource.match(/\/\/ LEDGER DISPLAY LABEL HELPER\n([\s\S]*?)\n\/\/ END LEDGER DISPLAY LABEL HELPER/);
+assert.ok(labelSection, 'display label helper should stay in ledger.js');
+const ledgerItemLabel = new Function(`${labelSection[1]}\nreturn ledgerItemLabel;`)();
 
 test('shift-linked ledger items use the customer identity instead of repeating the full note', () => {
   assert.equal(ledgerItemLabel({

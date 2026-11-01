@@ -1,11 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  plannedJobUrgency,
-  plannedOverdueMessage,
-  updatePlannedAlert,
-  watchPlannedDayChange
-} from '../scripts/planned-urgency.mjs';
+import { readFileSync } from 'node:fs';
+import { asValidDate } from '../scripts/domain.mjs';
+
+// Planned helpers now live in the browser entrypoint; evaluate only their
+// marked, side-effect-free section so these tests remain Node-only.
+const plannedSource = readFileSync(new URL('../scripts/planned.js', import.meta.url), 'utf8');
+const urgencySection = plannedSource.match(/\/\/ PLANNED-URGENCY\n([\s\S]*?)\n\/\/ END PLANNED-URGENCY/);
+assert.ok(urgencySection, 'planned urgency helpers should stay in planned.js');
+const plannedHelpers = new Function('asValidDate', `${urgencySection[1].replaceAll('export function ', 'function ')}\nreturn { plannedJobUrgency, plannedOverdueMessage, updatePlannedAlert, watchPlannedDayChange };`)(asValidDate);
+const { plannedJobUrgency, plannedOverdueMessage, updatePlannedAlert, watchPlannedDayChange } = plannedHelpers;
+
+test('shared planned.js binds its page controller only when Planned-page markup exists', () => {
+  assert.match(plannedSource, /if \(document\.getElementById\('planned-list'\)\) \{\s*document\.addEventListener\('DOMContentLoaded', initializePlannedPage\);/);
+  for (const page of ['home', 'clock', 'shifts']) {
+    const script = readFileSync(new URL(`../scripts/${page}.js`, import.meta.url), 'utf8');
+    assert.match(script, /from '\.\/planned\.js'/);
+  }
+});
 
 const day = (year, month, date, hour = 12) => new Date(year, month - 1, date, hour, 0, 0, 0);
 const today = day(2026, 1, 15);

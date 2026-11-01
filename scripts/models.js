@@ -7,11 +7,47 @@ import {
   shiftIsAttachedElsewhere,
   makeShiftLedgerEntryData,
   ledgerBalanceCents,
-  repriceInvoiceShiftItems
+  repriceInvoiceShiftItems,
+  createInvoiceItem,
+  invoiceTotal
 } from './domain.mjs';
-import { Invoice } from './invoice-model.mjs';
 import { DAILY_QUOTES, normalizeDailyQuotes } from './daily-quotes.mjs';
-export { Invoice };
+
+// The invoice entity belongs with the app's other persisted models. This keeps
+// the public Invoice export intact without a separate single-class module.
+// INVOICE MODEL BEGIN
+function todayDateString() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export class Invoice {
+  constructor(cust, items = [], id = null, isPaid = false, date = todayDateString(), shiftIds = []) {
+    this.id = id || crypto.randomUUID();
+    this.customer = cust;
+    this.items = items;
+    this.isPaid = Boolean(isPaid);
+    this.date = date || null;
+    this.shiftIds = Array.isArray(shiftIds) ? [...new Set(shiftIds.map(String))] : [];
+  }
+
+  addItem(name, type = 'general', value = undefined) {
+    this.items.push(createInvoiceItem(name, type, value));
+  }
+
+  deleteItem(name, value) {
+    const dItem = this.items.find(i => i.name === name && i.value === value);
+    this.items = this.items.filter(i => i !== dItem);
+  }
+
+  totalBill() {
+    return invoiceTotal(this.items);
+  }
+}
+// INVOICE MODEL END
 
 /*
   Firebase Setup
