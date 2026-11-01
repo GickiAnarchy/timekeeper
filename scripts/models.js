@@ -379,6 +379,14 @@ export class Ledger {
     }, 0);
   }
   
+  getHours() {
+    return Number(this.entries.reduce((total, { hours = 0 }) => {
+      const hrs = Number(hours) || 0;
+      return total + hrs;
+    }, 0).toFixed(2));
+  }
+
+  
   toJSON() {
     return this.entries;
   }
