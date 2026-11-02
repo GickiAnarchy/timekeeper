@@ -159,6 +159,30 @@
   --shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.24);
 }
 
+:root[data-theme="admin"] {
+  color-scheme: dark;
+  --ink: #e5edf2;
+  --ink-soft: #c5d2dc;
+  --muted: #94a5b1;
+  --canvas: #141c23;
+  --surface: #1d2831;
+  --surface-muted: #25323c;
+  --surface-hover: #2c3b46;
+  --control-surface: #18232b;
+  --border: #3b4b57;
+  --border-soft: #2e3d47;
+  --green: #ACaaB2;
+  --green-deep: #8Daa89;
+  --green-soft: #AAaaAF;
+  --green-line: #A3aa63BD;
+  --amber: #a0aa71;
+  --amber-soft: #A8956C;
+  --red: #aaaaaa;
+  --red-soft: #aFaaB0;
+  --focus-ring: rgba(119, 178, 208, 0.35);
+  --shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.24);
+}
+
 @font-face {
   font-family: 'Sapoe';
   src: url('../fonts/Sapoe-Regular.otf') format('otf');
