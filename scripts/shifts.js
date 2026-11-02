@@ -385,6 +385,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     completeShifts.forEach(shift => {
       const item = makeElement('li', `shift-card${shift.isPaid ? ' is-paid' : ''}`);
+      if (shift.isPaid) {
+        item.classList.append('paid-border');
+      }
       const date = makeElement('div', 'date-div');
       date.appendChild(makeElement('p', '', shift.clockInTime?.toLocaleDateString() || 'Unknown date'));
       const summary = makeElement('div', 'emp-cust-div');
