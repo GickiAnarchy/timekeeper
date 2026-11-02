@@ -4,7 +4,7 @@ const themeSelect = document.getElementById('theme-select');
 const fontScaleInputs = [...document.querySelectorAll('input[name="font-scale"]')];
 const THEME_KEY = 'timekeeper-theme';
 const FONT_SCALE_KEY = 'timekeeper-font-scale';
-const themes = new Set(['forest', 'coastal', 'harvest', 'midnight', 'lavender', 'rose', 'slate']);
+const themes = new Set(['forest', 'coastal', 'harvest', 'midnight', 'lavender', 'rose', 'slate', 'admin']);
 const fontScales = new Set([1, 1.15, 1.3, 1.5]);
 
 function applySettingsState(theme, fontScale) {
