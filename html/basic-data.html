@@ -1,40 +1,31 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <link rel="stylesheet" href="../styles/data.css?v=people-admin-20261031"/>
+    <link rel="stylesheet" href="../styles/data.css">
     <script type="module" src="../scripts/keyboard.mjs" defer></script>
-    <script type="module" src="../scripts/data.js?v=people-admin-20261031" defer></script>
-    <title>Mosher Lawns</title>
+    <script type="module" src="../scripts/data.js" defer></script>
+    <title>People Data · Timekeeper 2.0 Skeleton</title>
   </head>
   <body>
     <header class="page-header">
-      <h1>Mosher Lawns Management</h1>
+      <h1>People and job sites</h1>
     </header>
-
     <main class="main-container">
-      <p class="people-admin-note">To edit employee or customer details, open Admin Settings from the Settings page with the approved owner account. Adding and deleting records stays here.</p>
-      <!-- Employees Section -->
-      <details class="management-section" id="employees-section" closed>
+      <p class="people-admin-note">Add or remove employees and customers used by the clock and shift history.</p>
+      <details class="management-section" id="employees-section">
         <summary>Employees</summary>
         <div class="section-content">
           <div class="list-container">
-            <ol class="data-list emp-list" id="emp-list">
-              <li class="empty-list emp-item">No Employees</li>
-            </ol>
+            <ol class="data-list emp-list" id="emp-list"><li class="empty-list emp-item">Loading employees…</li></ol>
           </div>
-
           <details class="form-container add-form-disclosure">
             <summary>Add Employee</summary>
             <form class="add-form" id="add-emp-form">
               <div class="form-group">
                 <label for="emp-name">Name:</label>
-                <input type="text" id="emp-name" name="emp-name" required>
-              </div>
-              <div class="form-group">
-                <label for="emp-wage">Wage ($):</label>
-                <input type="number" id="emp-wage" name="emp-wage" step="0.01" min="0" inputmode="decimal" required>
+                <input type="text" id="emp-name" name="emp-name" autocomplete="name" required>
               </div>
               <div class="form-actions">
                 <button type="submit" id="add-emp-btn" class="btn btn-primary">Add Employee</button>
@@ -44,36 +35,26 @@
           </details>
         </div>
       </details>
-
-      <!-- Customers Section -->
-      <details class="management-section" id="customers-section" closed>
+      <details class="management-section" id="customers-section">
         <summary>Customers</summary>
         <div class="section-content">
           <div class="list-container">
-            <ol class="data-list cust-list" id="cust-list">
-              <li class="empty-list cust-item">No Customers</li>
-            </ol>
+            <ol class="data-list cust-list" id="cust-list"><li class="empty-list cust-item">Loading customers…</li></ol>
           </div>
-
           <details class="form-container add-form-disclosure">
             <summary>Add Customer</summary>
             <form class="add-form" id="add-cust-form">
               <div class="form-group">
                 <label for="cust-name">Name:</label>
-                <input type="text" id="cust-name" name="cust-name" required>
+                <input type="text" id="cust-name" name="cust-name" autocomplete="organization" required>
               </div>
               <div class="form-group">
-                <label for="cust-loc">Location:</label>
+                <label for="cust-loc">Job-site location:</label>
                 <input type="text" id="cust-loc" name="cust-loc" required>
               </div>
               <div class="form-group">
-                <label for="cust-billing-rate">Hourly billing rate ($):</label>
-                <input type="number" id="cust-billing-rate" name="cust-billing-rate" min="0" step="0.01" inputmode="decimal" placeholder="Not set">
-                <small>Used to calculate labor lines from attached work shifts.</small>
-              </div>
-              <div class="form-group">
-                <label for="cust-note">Note:</label>
-                <textarea id="cust-note" name="cust-note" cols="15" rows="4"></textarea>
+                <label for="cust-note">Note (optional):</label>
+                <textarea id="cust-note" name="cust-note" cols="15" rows="3"></textarea>
               </div>
               <div class="form-actions">
                 <button type="submit" id="add-cust-btn" class="btn btn-primary">Add Customer</button>

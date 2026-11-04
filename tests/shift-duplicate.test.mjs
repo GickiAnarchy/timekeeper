@@ -9,6 +9,12 @@ const formatTime24 = date => {
   if (!date || !(date instanceof Date) || Number.isNaN(date.getTime())) return '';
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
+const asDate = value => {
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
 
 function extractClass(source, className) {
   const start = source.indexOf(`export class ${className} {`);
@@ -41,6 +47,7 @@ const WorkShift = vm.runInNewContext(
   {
     Date,
     actualShiftHours,
+    asDate,
     crypto: { randomUUID: () => `generated-shift-${++uuid}` },
     formatTime24
   }

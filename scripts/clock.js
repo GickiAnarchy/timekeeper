@@ -6,7 +6,6 @@ import {
   populateEmployeeDropdowns, 
   populateCustomerDropdowns 
 } from './models.js';
-import { promptForCompletedPlannedJobs } from './planned.js';
 
 function formatBreakDuration(milliseconds) {
   const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
@@ -180,12 +179,6 @@ document.addEventListener('DOMContentLoaded', async () => {
               shiftError.textContent = error.message || 'Unable to clock out. Please try again.';
               renderActiveShifts();
               return;
-            }
-            try {
-              await promptForCompletedPlannedJobs(shiftToStop, store, window);
-            } catch (error) {
-              console.error('Unable to check planned jobs after clock-out:', error);
-              window.alert('The shift was saved, but planned jobs could not be checked. You can review them in Planned Jobs.');
             }
           }
             

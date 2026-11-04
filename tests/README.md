@@ -1,4 +1,4 @@
-# Timekeeper tests
+# Timekeeper 2.0 Skeleton tests
 
 Run the local Node.js tests with Node.js 18 or newer:
 
@@ -6,7 +6,7 @@ Run the local Node.js tests with Node.js 18 or newer:
 npm test
 ```
 
-The default suite checks domain behavior, keyboard/dialog handling, shift-edit Notes behavior, app-page coverage, and the app's data-access contract. It does not connect to Firebase.
+The suite covers the clock-in/out controller with synthetic in-memory records, multi-employee selection, duplicate-active protection, breaks, and clock-out. It also tests quarter-hour rounding, break-adjusted shift hours, the reduced routes/data-access contract, keyboard/dialog visibility, and shift duplication.
 
 Run the Firestore Rules tests with:
 
@@ -14,6 +14,4 @@ Run the Firestore Rules tests with:
 npm run test:firebase-emulator
 ```
 
-This starts only the local Firestore emulator bound to `127.0.0.1:8080`, using the `demo-timekeeper` emulator project ID. It verifies that all records remain publicly readable, only the approved owner can write active and archived ledger data, daily quotes remain owner-write-only, and shifts plus other non-ledger data retain public writes. It also checks that a failed backup-style batch cannot partially update shifts when its ledger writes are denied. It does not read or modify production Firestore data.
-
-The production rules keep every document publicly readable. Only the approved owner can write active and archived ledger records or the daily quote settings document; other app data remains publicly writable. Keep sensitive data out of this project while those rules are deployed.
+This starts the Firestore emulator on `127.0.0.1:8080` with the `demo-timekeeper` project ID. It checks the existing rules against synthetic data only; it does not connect to production Firestore or deploy rules.

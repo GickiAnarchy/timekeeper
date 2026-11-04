@@ -1,12 +1,8 @@
-import { loadDailyQuotes, store } from './models.js';
-import { DAILY_QUOTES, selectDailyQuote } from './daily-quotes.mjs';
-import { plannedJobUrgency, updatePlannedAlert, watchPlannedDayChange } from './planned.js';
-import { ledgerBalanceCents } from './domain.mjs';
+import { actualShiftHours } from './domain.mjs';
+import { store } from './models.js';
 
 const hourFormat = new Intl.NumberFormat(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const timeFormat = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
-const jobDateFormat = new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-const currencyFormat = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' });
 
 function makeElement(tag, className, text) {
   const element = document.createElement(tag);
@@ -25,20 +21,17 @@ function shiftHoursInRange(shift, rangeStart, rangeEnd, now) {
   const start = validDate(shift.clockInTime);
   if (!start) return 0;
   const end = validDate(shift.clockOutTime) || now;
-  const activeStart = Math.max(start.getTime(), rangeStart.getTime());
-  const activeEnd = Math.min(end.getTime(), rangeEnd.getTime());
-  if (activeEnd <= activeStart) return 0;
+  const clippedStart = Math.max(start.getTime(), rangeStart.getTime());
+  const clippedEnd = Math.min(end.getTime(), rangeEnd.getTime());
+  if (clippedEnd <= clippedStart) return 0;
 
-  let workedMs = activeEnd - activeStart;
-  for (const pause of shift.breaks || []) {
-    const breakStart = validDate(pause.start);
-    if (!breakStart) continue;
-    const breakEnd = validDate(pause.end) || now;
-    const overlapStart = Math.max(activeStart, breakStart.getTime());
-    const overlapEnd = Math.min(activeEnd, breakEnd.getTime());
-    if (overlapEnd > overlapStart) workedMs -= overlapEnd - overlapStart;
-  }
-  return Math.max(0, workedMs);
+  // Treat an open break as lasting through now, then let the shared calculator
+  // clip and merge breaks inside this particular day/week interval.
+  const breaks = (shift.breaks || []).map(item => ({
+    start: validDate(item.start),
+    end: validDate(item.end) || now
+  }));
+  return actualShiftHours(new Date(clippedStart), new Date(clippedEnd), breaks) * 60 * 60 * 1000;
 }
 
 function hoursLabel(milliseconds) {
@@ -49,7 +42,7 @@ function elapsedLabel(milliseconds) {
   const totalMinutes = Math.max(0, Math.floor(milliseconds / 60_000));
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  if (hours === 0) return `${minutes}m elapsed`;
+  if (!hours) return `${minutes}m elapsed`;
   return minutes ? `${hours}h ${minutes}m elapsed` : `${hours}h elapsed`;
 }
 
@@ -57,179 +50,62 @@ function isActive(shift) {
   return Boolean(validDate(shift.clockInTime) && !validDate(shift.clockOutTime));
 }
 
-function makeLink(text, href) {
-  const link = makeElement('a', 'empty-state-link', text);
-  link.href = href;
-  link.target = 'main-content';
-  return link;
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
   const todayHours = document.getElementById('today-hours');
-  const todayHoursNote = document.getElementById('today-hours-note');
+  const todayNote = document.getElementById('today-hours-note');
   const weekHours = document.getElementById('week-hours');
   const activeCount = document.getElementById('active-count');
   const activeCountNote = document.getElementById('active-count-note');
   const activeList = document.getElementById('active-shift-list');
-  const upcomingList = document.getElementById('upcoming-job-list');
-  const ledgerList = document.getElementById('ledger-work-list');
-  let dailyQuotes = DAILY_QUOTES;
-  function renderDailyQuote() {
-    const dailyQuote = selectDailyQuote(new Date(), dailyQuotes);
-    document.getElementById('daily-quote-text').textContent = dailyQuote.text;
-    document.getElementById('daily-quote-author').textContent = dailyQuote.author;
-    const quoteSource = document.getElementById('daily-quote-source');
-    quoteSource.textContent = dailyQuote.work;
-    quoteSource.href = dailyQuote.source;
-  }
-  renderDailyQuote();
-  loadDailyQuotes().then(quotes => {
-    dailyQuotes = quotes;
-    renderDailyQuote();
-  }).catch(error => {
-    console.warn('Unable to load shared daily quotes; showing the built-in list.', error);
-  });
-  window.setInterval(renderDailyQuote, 60_000);
 
   function renderOverview() {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekStart = new Date(todayStart);
     weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
-
     const todayTotal = store.shifts.reduce((total, shift) =>
       total + shiftHoursInRange(shift, todayStart, now, now), 0);
     const weekTotal = store.shifts.reduce((total, shift) =>
       total + shiftHoursInRange(shift, weekStart, now, now), 0);
-    const running = store.shifts.filter(isActive).sort((a, b) =>
+    const active = store.shifts.filter(isActive).sort((a, b) =>
       (validDate(a.clockInTime)?.getTime() || 0) - (validDate(b.clockInTime)?.getTime() || 0));
 
     todayHours.textContent = hoursLabel(todayTotal);
     weekHours.textContent = hoursLabel(weekTotal);
-    todayHoursNote.textContent = running.length
-      ? 'Includes live time on active shifts'
-      : 'Recorded work time for today';
-    activeCount.textContent = String(running.length);
-    activeCountNote.textContent = running.length === 1 ? 'One shift is in progress' : 'Crew currently clocked in';
+    todayNote.textContent = active.length ? 'Includes live time on active shifts' : 'Recorded work time for today';
+    activeCount.textContent = String(active.length);
+    activeCountNote.textContent = active.length === 1 ? 'One shift is in progress' : 'Crew currently clocked in';
 
     activeList.replaceChildren();
-    if (running.length === 0) {
+    if (!active.length) {
       activeList.appendChild(makeElement('li', 'dashboard-empty', 'No active shifts right now.'));
       return;
     }
 
-    running.forEach(shift => {
+    for (const shift of active) {
       const started = validDate(shift.clockInTime);
-      const isOnBreak = Boolean((shift.breaks || []).some(pause => pause.start && !pause.end));
+      const onBreak = Boolean((shift.breaks || []).some(item => item.start && !item.end));
       const item = makeElement('li', 'active-shift-item');
       const copy = makeElement('div', 'shift-copy');
       copy.append(
         makeElement('strong', 'shift-title', `${shift.employee?.name || 'Unknown employee'} · ${shift.customer?.name || 'Unknown job site'}`),
-        makeElement('small', 'shift-meta', `Started ${timeFormat.format(started)} · ${elapsedLabel(now.getTime() - started.getTime())}`)
+        makeElement('small', 'shift-meta', `Started ${timeFormat.format(started)} · ${elapsedLabel(now - started)}`)
       );
-      const status = makeElement('span', `shift-status${isOnBreak ? ' is-on-break' : ''}`, isOnBreak ? 'On break' : 'Working');
-      item.append(copy, status);
+      item.append(copy, makeElement('span', `shift-status${onBreak ? ' is-on-break' : ''}`, onBreak ? 'On break' : 'Working'));
       activeList.appendChild(item);
-    });
-  }
-
-  function renderPlannedJobs() {
-    upcomingList.replaceChildren();
-    updatePlannedAlert(document.getElementById('planned-overdue-alert'), store.plannedJobs);
-    const jobs = store.plannedJobs
-      .filter(job => !job.isComplete)
-      .filter(job => {
-        const daysAway = plannedJobUrgency(job).daysAway;
-        return daysAway !== null && daysAway <= 7;
-      })
-      .sort((a, b) => {
-        const dateA = validDate(a.scheduledDate)?.getTime() ?? null;
-        const dateB = validDate(b.scheduledDate)?.getTime() ?? null;
-        if (dateA === null && dateB !== null) return 1;
-        if (dateA !== null && dateB === null) return -1;
-        return (dateA ?? 0) - (dateB ?? 0);
-      })
-      .slice(0, 3);
-
-    if (jobs.length === 0) {
-      const empty = makeElement('li', 'dashboard-empty', 'No overdue jobs or jobs due in the next 7 days.');
-      empty.appendChild(makeLink('View the full schedule', 'planned.html'));
-      upcomingList.appendChild(empty);
-      return;
-    }
-
-    jobs.forEach(job => {
-      const date = validDate(job.scheduledDate);
-      const urgency = plannedJobUrgency(job);
-      const item = makeElement('li', `planned-job-item urgency-${urgency.level}`);
-      const dateTile = makeElement('span', 'job-date-tile', date ? jobDateFormat.format(date) : 'Date TBD');
-      const copy = makeElement('div', 'job-copy');
-      copy.append(
-        makeElement('strong', 'job-title', job.description || 'Scheduled job'),
-        makeElement('small', 'job-meta', job.customer?.name || 'Customer not available')
-      );
-      item.append(dateTile, copy, makeElement('span', 'job-timing urgency-label', urgency.label));
-      upcomingList.appendChild(item);
-    });
-  }
-
-  function renderLedgerWork() {
-    ledgerList.replaceChildren();
-    if (store.loadFailures?.length) {
-      ledgerList.appendChild(makeElement('li', 'dashboard-empty', 'Ledger balances could not be loaded completely. Refresh to try again.'));
-      return;
-    }
-
-    const balances = [...store.employees.values()]
-      .map(employee => {
-        const entries = store.ledger.entries.filter(entry => String(entry.employeeId) === String(employee.id));
-        return { employee, entries, balanceCents: ledgerBalanceCents(entries) };
-      })
-      .filter(item => item.balanceCents !== 0)
-      .sort((a, b) => Math.abs(b.balanceCents) - Math.abs(a.balanceCents) || String(a.employee.name || '').localeCompare(String(b.employee.name || '')))
-      .slice(0, 3);
-
-    if (balances.length === 0) {
-      const empty = makeElement('li', 'dashboard-empty', 'No current employee balances need attention.');
-      empty.appendChild(makeLink('Open the ledger', 'payledger.html'));
-      ledgerList.appendChild(empty);
-      return;
-    }
-
-    for (const { employee, entries, balanceCents } of balances) {
-      const item = makeElement('li', 'ledger-work-item');
-      const link = makeElement('a', 'ledger-work-link');
-      link.href = `payledger.html?employee=${encodeURIComponent(employee.id)}`;
-      link.target = 'main-content';
-      const employeeName = employee.name || 'Unknown employee';
-      link.setAttribute('aria-label', `Open ledger for ${employeeName}, current balance ${currencyFormat.format(balanceCents / 100)}`);
-      link.append(
-        makeElement('strong', '', employeeName),
-        makeElement('span', 'ledger-balance', currencyFormat.format(balanceCents / 100)),
-        makeElement('span', 'ledger-entry-count', `${entries.length} active ${entries.length === 1 ? 'entry' : 'entries'}`)
-      );
-      item.appendChild(link);
-      ledgerList.appendChild(item);
     }
   }
 
   try {
-    await store.loadEmployees();
-    await store.loadCustomers();
-    await store.loadShifts();
-    await store.loadLedger();
-    await store.loadPlanned();
+    await store.init();
+    if (store.loadFailures.length) throw store.loadFailures[0];
     renderOverview();
-    renderPlannedJobs();
-    renderLedgerWork();
     window.setInterval(renderOverview, 60_000);
-    watchPlannedDayChange(renderPlannedJobs);
   } catch (error) {
     console.error('Unable to load the Timekeeper dashboard.', error);
     todayHours.textContent = '—';
     weekHours.textContent = '—';
+    activeCount.textContent = '—';
     activeList.replaceChildren(makeElement('li', 'dashboard-empty', 'Could not load shift data. Try refreshing the page.'));
-    upcomingList.replaceChildren(makeElement('li', 'dashboard-empty', 'Could not load planned jobs. Try refreshing the page.'));
-    ledgerList.replaceChildren(makeElement('li', 'dashboard-empty', 'Could not load ledger balances. Try refreshing the page.'));
   }
 });

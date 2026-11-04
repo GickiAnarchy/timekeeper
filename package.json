@@ -1,5 +1,5 @@
 {
-  "name": "timekeeper-live-fork",
+  "name": "timekeeper-v2-skeleton",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,8 +12,8 @@
     "@firebase/rules-unit-testing": "5.0.2",
     "firebase-tools": "15.32.1"
   },
-  "version": "1.0.0",
-  "description": "A JavaScript app for tracking work hours. The workspace includes clock in/out, breaks, shift history, employee and customer records, invoices, an employee ledger with completed-shift entry, settled-ledger archives, and planned jobs. When an employee ledger reaches a zero balance, its entries are archived and the active ledger is cleared. The Home dashboard summarizes today's and this week's break-adjusted hours, highlights active shifts and upcoming jobs, and updates active totals every minute. Themes and text-size preferences are saved in the current browser.",
+  "version": "2.0.0",
+  "description": "Minimal Timekeeper 2.0 core for work-hour logging",
   "main": "index.js",
   "directories": {
     "test": "tests"

@@ -5,7 +5,6 @@ import {
   WorkShift
 } from './models.js';
 import { isFocusableElement } from './keyboard.mjs';
-import { promptForCompletedPlannedJobs } from './planned.js';
 
 // Keep the shift dialog's visual-viewport behavior beside its controller; the
 // focusability predicate remains shared with the app-wide keyboard module.
@@ -301,7 +300,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     okBtn.disabled = true;
     okBtn.textContent = 'Saving…';
     try {
-      let completedNow = false;
       if (isNewShift) {
         activeShift.employee = employee;
         activeShift.customer = customer;
@@ -313,9 +311,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         activeShift.paidHours = paidHoursValue;
         await store.saveShift(activeShift);
         store.shifts.push(activeShift);
-        completedNow = activeShift.isComplete;
       } else {
-        const wasComplete = activeShift.isComplete;
         await store.updateShift(
           activeShift.id,
           employee,
@@ -327,7 +323,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           breaks,
           paidHoursValue
         );
-        completedNow = !wasComplete && activeShift.isComplete;
       }
       // Keep the new employee’s shift visible even when the source was filtered.
       if (duplicateSource) empFilter.value = employee.id;
@@ -335,14 +330,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       modal.close();
       activeShift = null;
       renderList();
-      if (completedNow) {
-        try {
-          await promptForCompletedPlannedJobs(savedShift, store, window);
-        } catch (error) {
-          console.error('Unable to check planned jobs after shift completion:', error);
-          window.alert('The shift was saved, but planned jobs could not be checked. You can review them in Planned Jobs.');
-        }
-      }
     } catch (error) {
       console.error('Unable to save shift:', error);
       formError.textContent = error.message || 'Unable to save this shift. Please try again.';
@@ -386,7 +373,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     completeShifts.forEach(shift => {
       const item = makeElement('li', `shift-card${shift.isPaid ? ' is-paid' : ''}`);
       if (shift.isPaid) {
-        item.classList.append('paid-border');
+        item.classList.add('paid-border');
       }
       const date = makeElement('div', 'date-div');
       date.appendChild(makeElement('p', '', shift.clockInTime?.toLocaleDateString() || 'Unknown date'));
