@@ -103,6 +103,20 @@ test('Firestore rules retain the public shift writes and owner-only ledger/quote
 test('the rules test command is pinned to the local demo emulator', () => {
   const packageJson = JSON.parse(readProjectFile('package.json'));
   assert.match(packageJson.scripts['test:firebase-emulator'], /demo-timekeeper/);
-  assert.match(packageJson.scripts['test:firebase-emulator'], /127\.0\.0\.1/);
+  assert.match(packageJson.scripts['test:firebase-emulator'], /--only auth,firestore/);
+  assert.match(readProjectFile('firebase.json'), /"auth"[\s\S]*"port": 9099/);
+  assert.match(readProjectFile('firebase.json'), /"firestore"[\s\S]*"port": 8080/);
   assert.match(readProjectFile('tests', 'security-emulator.mjs'), /PROJECT_ID = 'demo-timekeeper'/);
+});
+
+test('the browser Firebase client is demo-only and always connects to local Auth and Firestore emulators', () => {
+  const model = readProjectFile('scripts', 'models.js');
+  const firebaseConfig = JSON.parse(readProjectFile('firebase.json'));
+  assert.match(model, /projectId: 'demo-timekeeper'/);
+  assert.match(model, /apiKey: 'demo-key'/);
+  assert.match(model, /connectAuthEmulator\(auth, AUTH_EMULATOR_URL/);
+  assert.match(model, /connectFirestoreEmulator\(db, FIRESTORE_EMULATOR_HOST, 8080\)/);
+  assert.doesNotMatch(model, /timekeeper-ad253|AIza[A-Za-z0-9_-]{20,}/);
+  assert.deepEqual(firebaseConfig.emulators.auth, { host: '127.0.0.1', port: 9099 });
+  assert.deepEqual(firebaseConfig.emulators.firestore, { host: '127.0.0.1', port: 8080 });
 });

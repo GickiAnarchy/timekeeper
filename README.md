@@ -4,7 +4,17 @@ This branch is an isolated starting point for the 2.0 redesign. It keeps the exi
 
 The app reads and writes the existing Firestore collections `employees`, `customers`, and `shifts`. Shift documents retain the current fields and IDs, including `employeeId`, `custId`, ISO clock/break times, `paidHours`, and the legacy `plannedJobsPrompted` value. No data migration or Firebase rules change is part of this branch.
 
-> **Existing data access:** the current Firestore rules allow public reads and writes for shift, employee, and customer data. Do not put confidential information in this Firebase project. The core tests below use synthetic data and the local emulator; they do not connect to production Firestore.
+> **Emulator-only branch:** this skeleton uses the `demo-timekeeper` project ID and local Auth and Firestore emulators only. If either emulator is unavailable, its requests fail locally; the app does not fall back to the production Firebase project. The core tests use synthetic data and never connect to production.
+
+## Run the app with local emulators
+
+Start both emulators from this branch, then serve the app over HTTP (not `file://`):
+
+```sh
+firebase emulators:start --project demo-timekeeper --only auth,firestore
+```
+
+The browser client is pinned to `127.0.0.1:9099` for Auth and `127.0.0.1:8080` for Firestore. Keep these emulators running while using Clock and Shift History.
 
 ## Run the tests
 
@@ -14,10 +24,10 @@ Use Node.js 18 or newer:
 npm test
 ```
 
-Run Firestore rules tests against the local emulator only:
+Run the Firestore rules tests and Auth emulator check locally:
 
 ```sh
 npm run test:firebase-emulator
 ```
 
-The emulator uses the `demo-timekeeper` project ID and binds to `127.0.0.1`; it does not read or write production Firestore.
+The test command starts both emulators with the `demo-timekeeper` project ID, bound to `127.0.0.1`; it does not read or write production Firebase services.

@@ -61,6 +61,53 @@ test('unauthenticated users retain full access to established non-ledger app col
   }
 });
 
+test('the local Auth emulator accepts a synthetic account using the demo project key', async () => {
+  const email = `emulator-test-${Date.now()}@example.test`;
+  const response = await fetch('http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=demo-key', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password: 'local-test-password-123', returnSecureToken: true })
+  });
+  const result = await response.json();
+  assert.equal(response.status, 200, JSON.stringify(result));
+  assert.equal(result.email, email);
+  assert.ok(result.localId, 'Auth emulator should return a synthetic local user ID');
+});
+
+test('the Firestore emulator stores clock-in, clock-out, and shift-history records', async () => {
+  const db = environment.unauthenticatedContext().firestore();
+  const employee = doc(db, 'employees', 'emulator-flow-employee');
+  const customer = doc(db, 'customers', 'emulator-flow-customer');
+  const shift = doc(db, 'shifts', 'emulator-flow-shift');
+  const clockInTime = '2026-11-04T09:00:00.000Z';
+  const clockOutTime = '2026-11-04T10:00:00.000Z';
+
+  await assertSucceeds(setDoc(employee, { name: 'Synthetic Employee', wage: 20 }));
+  await assertSucceeds(setDoc(customer, { name: 'Synthetic Site', location: 'Local Test' }));
+  await assertSucceeds(setDoc(shift, {
+    employeeId: employee.id,
+    custId: customer.id,
+    clockInTime,
+    clockOutTime: null,
+    note: null,
+    isPaid: false,
+    breaks: [],
+    paidHours: null,
+    plannedJobsPrompted: false
+  }));
+
+  const active = await assertSucceeds(getDocs(collection(db, 'shifts')));
+  assert.ok([...active.docs].some(snapshot => snapshot.id === shift.id && snapshot.data().clockOutTime === null));
+  await assertSucceeds(updateDoc(shift, { clockOutTime }));
+
+  const history = await assertSucceeds(getDocs(collection(db, 'shifts')));
+  const savedShift = history.docs.find(snapshot => snapshot.id === shift.id)?.data();
+  assert.equal(savedShift?.employeeId, employee.id);
+  assert.equal(savedShift?.custId, customer.id);
+  assert.equal(savedShift?.clockInTime, clockInTime);
+  assert.equal(savedShift?.clockOutTime, clockOutTime);
+});
+
 test('ledger records and nested documents stay public-read but only the approved owner can write', async () => {
   const anonymous = environment.unauthenticatedContext().firestore();
   const unrelatedUser = environment.authenticatedContext('not-an-owner').firestore();

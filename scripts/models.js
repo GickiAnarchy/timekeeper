@@ -2,11 +2,13 @@ import { actualShiftHours, roundTo15Minutes } from './domain.mjs';
 
 export { roundTo15Minutes };
 
-// Keep the existing Firebase project and canonical collections; the 2.0 skeleton
-// reads and writes only the people and shift data needed for timekeeping.
+// Preserve the canonical collections and shift shape while this isolated 2.0
+// skeleton routes all Firebase access to local emulators.
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+import { connectAuthEmulator, getAuth } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import {
   collection,
+  connectFirestoreEmulator,
   deleteDoc as firestoreDeleteDoc,
   doc,
   getDocs as firestoreGetDocs,
@@ -16,17 +18,26 @@ import {
   writeBatch
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
+// This branch is deliberately isolated from production: use Firebase's demo
+// project ID and non-production app settings, regardless of where the page runs.
 const firebaseConfig = {
-  apiKey: 'AIzaSyDn_y846YGhK689a3-2S6VvO46uElD1JXw',
-  authDomain: 'timekeeper-ad253.firebaseapp.com',
-  projectId: 'timekeeper-ad253',
-  storageBucket: 'timekeeper-ad253.firebasestorage.app',
-  messagingSenderId: '516577372091',
-  appId: '1:516577372091:web:3bb56f8017058ffcd9869e'
+  apiKey: 'demo-key',
+  authDomain: 'localhost',
+  projectId: 'demo-timekeeper',
+  storageBucket: 'demo-timekeeper.appspot.com',
+  messagingSenderId: '000000000000',
+  appId: '1:000000000000:web:demo-timekeeper'
 };
+const AUTH_EMULATOR_URL = 'http://127.0.0.1:9099';
+const FIRESTORE_EMULATOR_HOST = '127.0.0.1';
 
 export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+// Connect unconditionally before any app operation. The SDKs talk only to these
+// loopback emulators; an unavailable emulator fails locally and never falls back.
+connectAuthEmulator(auth, AUTH_EMULATOR_URL, { disableWarnings: true });
 const db = getFirestore(app);
+connectFirestoreEmulator(db, FIRESTORE_EMULATOR_HOST, 8080);
 
 function showFirestoreError(message, retryOperation) {
   if (!globalThis.document?.body) return;
