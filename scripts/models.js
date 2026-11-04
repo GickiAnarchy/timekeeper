@@ -808,6 +808,12 @@ export class AppDataStore {
       shiftIds: Array.isArray(invoice.shiftIds) ? invoice.shiftIds : []
     });
   }
+
+  // Use a field-level update for paid-state corrections so item lines and
+  // every other saved invoice field remain exactly as they were.
+  async updateInvoicePaidStatus(invoiceId, isPaid) {
+    await updateDoc(doc(db, 'invoices', invoiceId), { isPaid: Boolean(isPaid) });
+  }
   
   async deleteInvoice(invoiceId) {
     await deleteDoc(doc(db, "invoices", invoiceId));

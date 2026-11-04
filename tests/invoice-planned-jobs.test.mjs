@@ -88,6 +88,20 @@ test('invoice UI removes Add Payment, offers a Payment line type, and renders co
   assert.match(script, /className = 'invoice-shift-details'/);
 });
 
+test('paid invoices can be marked unpaid through an isPaid-only Firestore update', () => {
+  const script = readProjectFile('scripts', 'invoice.js');
+  const styles = readProjectFile('styles', 'invoices.css');
+  const updateMethod = modelsSource.match(/async updateInvoicePaidStatus\(invoiceId, isPaid\) \{([\s\S]*?)\n  \}/)?.[1];
+
+  assert.ok(updateMethod, 'store should have a focused paid-status update method');
+  assert.match(updateMethod, /updateDoc\(doc\(db, 'invoices', invoiceId\), \{ isPaid: Boolean\(isPaid\) \}\)/);
+  assert.doesNotMatch(updateMethod, /\b(?:items|custId|date|shiftIds)\s*:/);
+  assert.match(script, /invoice\.isPaid \? 'mark-unpaid-btn' : 'mark-paid-btn'/);
+  assert.match(script, /updateInvoicePaidStatus\(current\.id, current\.isPaid\)/);
+  assert.match(script, /persistInvoicePaidStatus\(invoice, isPaid/);
+  assert.match(styles, /#mark-unpaid-btn/);
+});
+
 test('planned-job candidates match the shift customer and include due dates on the same day or later', () => {
   const shiftDate = new Date(2026, 9, 24, 17, 30);
   const shift = {

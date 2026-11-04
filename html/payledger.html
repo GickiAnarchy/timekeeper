@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <link rel="stylesheet" href="../styles/ledger.css?v=ledger-admin-1">
+    <link rel="stylesheet" href="../styles/ledger.css?v=ledger-download-1">
     <script type="module" src="../scripts/keyboard.mjs" defer></script>
     <script type="module" src="../scripts/admin.js?v=admin-modal-reentry-3" defer></script>
-    <script type="module" src="../scripts/ledger.js?v=ledger-admin-1" defer></script>
+    <script type="module" src="../scripts/ledger.js?v=ledger-download-1" defer></script>
     <title>Employee Ledger · Timekeeper</title>
   </head>
   <body>
@@ -16,12 +16,15 @@
           <h1>Employee Ledger</h1>
           <p id="ledger-owner" class="ledger-owner">Choose an employee to view their ledger.</p>
         </div>
-        <label class="ledger-filter" for="ledger-employee-filter">
-          Ledger for
-          <select id="ledger-employee-filter">
-            <option value="">Choose an employee</option>
-          </select>
-        </label>
+        <div class="ledger-heading-actions">
+          <label class="ledger-filter" for="ledger-employee-filter">
+            Ledger for
+            <select id="ledger-employee-filter">
+              <option value="">Choose an employee</option>
+            </select>
+          </label>
+          <button id="download-ledger-btn" class="download-ledger-btn" type="button" disabled>Download Ledger</button>
+        </div>
       </div>
     </section>
 

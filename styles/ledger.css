@@ -4,10 +4,14 @@ body { display: flex; flex-direction: column; align-items: stretch; gap: 12px; p
 .ledger-section, .table-div, .form-container { width: min(100%, 1060px); margin: 0 auto; }
 .ledger-section { padding: 0 2px; }
 .ledger-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.ledger-heading-actions { display: flex; align-items: flex-end; gap: 9px; min-width: min(100%, 430px); }
 .ledger-heading h1 { margin: 0 0 4px; color: var(--ink); font-size: 20px; letter-spacing: -.04em; }
 .ledger-owner { margin: 0; color: var(--muted); font-size: 11px; }
 .ledger-filter { display: grid; min-width: min(260px, 45%); gap: 5px; color: var(--ink-soft); font-size: 10px; font-weight: 650; }
 .ledger-filter select { width: 100%; min-height: 38px; padding: 7px 9px; font-size: 10px; }
+.download-ledger-btn { min-height: 38px; padding: 0 12px; color: #fff; background: var(--green); font-size: 10px; font-weight: 700; white-space: nowrap; }
+.download-ledger-btn:hover:not(:disabled) { background: var(--green-deep); }
+.download-ledger-btn:disabled { opacity: .55; cursor: not-allowed; }
 .ledger-add-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; width: min(100%, 1060px); margin: 0 auto; padding: 12px; background: var(--green-soft); border: 1px solid var(--green-line); border-radius: 14px; }
 .ledger-add-heading { grid-column: 1 / -1; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 9px; }
 .ledger-add-heading h2 { margin: 0; color: var(--green-deep); font-size: 13px; letter-spacing: -.02em; }
@@ -107,10 +111,12 @@ tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight
 
 @media (max-width: 760px) {
   .ledger-heading { align-items: stretch; flex-direction: column; }
+  .ledger-heading-actions { align-items: stretch; min-width: 0; }
   .ledger-filter { min-width: 0; }
   #ledger-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 600px) {
+  .ledger-heading-actions { flex-direction: column; }
   .ledger-add-actions { grid-template-columns: 1fr; }
   .ledger-add-control-group { grid-template-columns: 1fr; }
 }

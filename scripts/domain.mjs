@@ -215,6 +215,27 @@ export function makeShiftLedgerEntryData(shift) {
   };
 }
 
+// Persist a paid-state change without touching invoice items or other fields.
+// If the write fails, restore the exact prior status so the UI can safely retry.
+export async function persistInvoicePaidStatus(invoice, isPaid, persist) {
+  if (!invoice || typeof invoice !== 'object') throw new TypeError('An invoice is required.');
+  if (typeof persist !== 'function') throw new TypeError('A persistence function is required.');
+
+  const previousStatus = invoice.isPaid;
+  const nextStatus = Boolean(isPaid);
+  if (Boolean(previousStatus) === nextStatus) return invoice;
+
+  invoice.isPaid = nextStatus;
+  try {
+    await persist(invoice);
+    return invoice;
+  } catch (error) {
+    if (previousStatus === undefined) delete invoice.isPaid;
+    else invoice.isPaid = previousStatus;
+    throw error;
+  }
+}
+
 export function shiftInvoiceLineStatus(line, currentShift) {
   if (!currentShift) return 'missing';
   const recorded = line?.shiftSnapshot;

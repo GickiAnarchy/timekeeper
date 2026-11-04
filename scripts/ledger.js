@@ -30,6 +30,56 @@ function ledgerItemLabel(entry, shifts = []) {
 }
 // END LEDGER DISPLAY LABEL HELPER
 
+// LEDGER DOWNLOAD REPORT HELPER
+function formatLedgerReport({ owner, entries, total, totalHours, generatedOn }) {
+  const lines = [
+    'Employee Ledger',
+    `Ledger: ${owner}`,
+    `Generated: ${generatedOn}`,
+    '',
+    `Balance: $${total.toFixed(2)}`,
+    `Total hours: ${totalHours.toFixed(2)}`,
+    '',
+    'Entries',
+    '--------'
+  ];
+  if (!entries.length) {
+    lines.push('No entries.');
+  } else {
+    entries.forEach((entry, index) => {
+      const type = String(entry.type || '').toLowerCase();
+      const typeLabel = entry.sourceShiftId && type === 'normal'
+        ? 'Shift pay'
+        : type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Unspecified';
+      const amount = Number(entry.amount || 0);
+      const amountText = type === 'advance'
+        ? `-$${Math.abs(amount).toFixed(2)}`
+        : `$${amount.toFixed(2)}`;
+      lines.push(
+        `${index + 1}. ${entry.itemLabel}`,
+        `   Date: ${entry.date || 'Undated'}`,
+        `   Type: ${typeLabel}`,
+        `   Hours: ${Number(entry.hours || 0).toFixed(2)}`,
+        `   Amount: ${amountText}`,
+        `   Notes: ${entry.notes ? String(entry.notes).trim() : '—'}`,
+        ''
+      );
+    });
+    lines.pop();
+  }
+  return `${lines.join('\n')}\n`;
+}
+// END LEDGER DOWNLOAD REPORT HELPER
+
+function ledgerDownloadFilename(owner, date = new Date()) {
+  const safeOwner = String(owner || 'ledger')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48) || 'ledger';
+  return `ledger-${safeOwner}-${localDateInputValue(date)}.txt`;
+}
+
 function localDateInputValue(date = new Date()) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -80,6 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const mobileHours = document.getElementById('ledger-mobile-hours');
   const totalRow = document.getElementById('ledger-total');
   const hoursTotal = document.getElementById('ledger-hours-total');
+  const downloadLedgerButton = document.getElementById('download-ledger-btn');
   const ledgerTable = document.getElementById('ledger-table');
   const editDialog = document.getElementById('ledger-edit-modal');
   const editForm = document.getElementById('ledger-edit-form');
@@ -204,6 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     mobileList.replaceChildren();
     const filterValue = ledgerFilter.value;
     if (!filterValue) {
+      downloadLedgerButton.disabled = true;
       mobileSummary.hidden = true;
       const row = document.createElement('tr');
       const message = makeCell('Choose an employee to view their ledger.');
@@ -224,6 +276,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       : `Ledger for ${employee?.name || 'this employee'}`;
 
     const entries = filteredEntries();
+    downloadLedgerButton.disabled = false;
     if (entries.length === 0) {
       const row = document.createElement('tr');
       const message = makeCell('No entries for this employee yet.');
@@ -319,6 +372,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     hoursTotal.innerHTML = `<strong>${totalHours.toFixed(2)}</strong>`;
     mobileHours.textContent = `${totalHours.toFixed(2)} h`;
   }
+
+  downloadLedgerButton.addEventListener('click', () => {
+    if (!ledgerFilter.value) return;
+    const entries = filteredEntries();
+    const total = entries.reduce((sum, entry) => {
+      const amount = Number(entry.amount || 0);
+      return sum + (String(entry.type || '').toLowerCase() === 'advance' ? -amount : amount);
+    }, 0);
+    const totalHours = sumLedgerHours(entries);
+    const owner = ledgerOwner.textContent || 'Selected ledger';
+    const report = formatLedgerReport({
+      owner,
+      entries: entries.map(entry => ({
+        ...entry,
+        itemLabel: ledgerItemLabel(entry, store.shifts)
+      })),
+      total,
+      totalHours,
+      generatedOn: new Date().toLocaleString()
+    });
+    const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = ledgerDownloadFilename(owner);
+    link.click();
+    URL.revokeObjectURL(url);
+  });
 
   ledgerFilter.addEventListener('change', () => {
     if (store.employees.has(ledgerFilter.value)) employeeSelect.value = ledgerFilter.value;
