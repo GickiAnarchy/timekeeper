@@ -15,7 +15,8 @@ import {
   shiftInvoiceLineStatus,
   shiftIsAttachedElsewhere,
   repriceInvoiceShiftItems,
-  groupInvoiceItemsByEmployee
+  groupInvoiceItemsByEmployee,
+  persistInvoicePaidStatus
 } from '../scripts/domain.mjs';
 
 const date = value => new Date(value);
@@ -214,6 +215,42 @@ test('customer rate changes reprice linked shift items on paid invoices without 
   assert.equal(repriced[1], manual);
   assert.equal(invoice.items[0].value, 165);
   assert.equal(invoice.isPaid, true);
+});
+
+test('reverting a paid invoice changes only its paid flag and preserves payment lines and all other data', async () => {
+  const invoice = {
+    id: 'invoice-1',
+    customer: { id: 'customer-1', name: 'Oak Street' },
+    date: '2026-10-09',
+    isPaid: true,
+    shiftIds: ['shift-1'],
+    items: [
+      { name: 'Labor', value: 120, shiftId: 'shift-1', billedHours: 2 },
+      { name: 'Payment received', type: 'payment', value: 35 }
+    ]
+  };
+  const original = structuredClone(invoice);
+  let savedInvoice;
+
+  await persistInvoicePaidStatus(invoice, false, async value => {
+    savedInvoice = structuredClone(value);
+  });
+
+  const expected = { ...original, isPaid: false };
+  assert.deepEqual(invoice, expected);
+  assert.deepEqual(savedInvoice, expected);
+  assert.deepEqual(invoice.items, original.items);
+});
+
+test('invoice paid-status change restores its previous flag when persistence fails', async () => {
+  const invoice = { id: 'invoice-2', isPaid: true, items: [{ name: 'Payment', type: 'payment', value: 10 }] };
+  const original = structuredClone(invoice);
+
+  await assert.rejects(
+    persistInvoicePaidStatus(invoice, false, async () => { throw new Error('save failed'); }),
+    /save failed/
+  );
+  assert.deepEqual(invoice, original);
 });
 
 test('legacy linked labor without saved hours can use its source shift to get repriced', () => {

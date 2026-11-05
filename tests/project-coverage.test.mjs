@@ -135,7 +135,7 @@ test('the workspace opens to Home with no login UI and shows an active-admin bad
   assert.match(markup, /<iframe[^>]*src="html\/home\.html"/);
   assert.doesNotMatch(markup, /sign.?in|sign.?out|password|guest-access-badge|owner-access-badge/i);
   assert.match(markup, /id="admin-access-badge"[^>]*hidden>Admin privileges/);
-  assert.match(markup, /scripts\/admin\.js\?v=admin-session-sync-2/);
+  assert.match(markup, /scripts\/admin\.js\?v=admin-modal-reentry-3/);
   assert.match(sharedAdminScript, /prepareDailyQuotesAdminSignIn\(\)/);
   assert.match(sharedAdminScript, /observeDailyQuotesAdminSession/);
   assert.match(sharedAdminScript, /isDailyQuotesAdmin\(user\)/);
@@ -146,7 +146,7 @@ test('the workspace opens to Home with no login UI and shows an active-admin bad
     const page = readProjectFile('html', file);
     assert.doesNotMatch(page, /data-owner-only|data-owner=/i, `${file} should not use legacy owner markers`);
     if (/data-admin-only/.test(page)) {
-      assert.match(page, /scripts\/admin\.js\?v=admin-session-sync-2/, `${file} should load the shared admin controller`);
+      assert.match(page, /scripts\/admin\.js\?v=admin-modal-reentry-3/, `${file} should load the shared admin controller`);
     }
   }
 });

@@ -11,6 +11,13 @@ const peopleMarkup = readFileSync(join(projectRoot, 'html', 'basic-data.html'), 
 const adminController = readFileSync(join(projectRoot, 'scripts', 'admin.js'), 'utf8');
 const peopleController = readFileSync(join(projectRoot, 'scripts', 'data.js'), 'utf8');
 
+test('the shared admin controller loads independently of Settings page initialization', () => {
+  // The direct import above is also a module-link smoke test. Pulling in the
+  // Settings page broke all admin pages before their auth dialog could open.
+  assert.doesNotMatch(adminController, /from\s+['"]\.\/settings\.js['"]/);
+  assert.doesNotMatch(adminController, /sendSettingsUpdate/);
+});
+
 function getSectionMarkup(sectionClass) {
   const section = adminMarkup.match(new RegExp(`<section\\b(?=[^>]*\\bclass="[^"]*\\b${sectionClass}\\b[^"]*")[^>]*>[\\s\\S]*?<\\/section>`, 'i'));
   assert.ok(section, `expected ${sectionClass} settings section`);

@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <link rel="stylesheet" href="../styles/ledger.css?v=ledger-admin-1">
+    <link rel="stylesheet" href="../styles/ledger.css?v=ledger-download-3">
     <script type="module" src="../scripts/keyboard.mjs" defer></script>
-    <script type="module" src="../scripts/admin.js?v=admin-session-sync-2" defer></script>
-    <script type="module" src="../scripts/ledger.js?v=ledger-admin-1" defer></script>
+    <script type="module" src="../scripts/admin.js?v=admin-modal-reentry-3" defer></script>
+    <script type="module" src="../scripts/ledger.js?v=ledger-sheet-1" defer></script>
     <title>Employee Ledger · Timekeeper</title>
   </head>
   <body>
@@ -16,13 +16,24 @@
           <h1>Employee Ledger</h1>
           <p id="ledger-owner" class="ledger-owner">Choose an employee to view their ledger.</p>
         </div>
-        <label class="ledger-filter" for="ledger-employee-filter">
-          Ledger for
-          <select id="ledger-employee-filter">
-            <option value="">Choose an employee</option>
-          </select>
-        </label>
+        <div class="ledger-heading-actions">
+          <label class="ledger-filter" for="ledger-employee-filter">
+            Ledger for
+            <select id="ledger-employee-filter">
+              <option value="">Choose an employee</option>
+            </select>
+          </label>
+          <label class="ledger-filter ledger-export-format" for="ledger-download-format">
+            File format
+            <select id="ledger-download-format">
+              <option value="xlsx" selected>Spreadsheet (.xlsx)</option>
+              <option value="csv">CSV (.csv)</option>
+            </select>
+          </label>
+          <button id="download-ledger-btn" class="download-ledger-btn" type="button" aria-label="Download ledger for Google Sheets or Excel" title="Spreadsheet (.xlsx) avoids CSV text-encoding detection" disabled>Download spreadsheet</button>
+        </div>
       </div>
+      <p class="ledger-csv-help">Recommended for Google Sheets: Spreadsheet (.xlsx). CSV is available for other tools.</p>
     </section>
 
     <section class="ledger-add-actions" aria-label="Add ledger items">
