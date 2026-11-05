@@ -380,7 +380,9 @@ export function invoiceItemSignedValue(item) {
 export function invoiceTotal(items = []) {
   const total = (Array.isArray(items) ? items : [])
     .reduce((sum, item) => sum + invoiceItemSignedValue(item), 0);
-  return Number(total.toFixed(2));
+  const tot = Number(total.toFixed(2));
+  if (tot < 75) return 75;
+  return tot;
 }
 
 export function groupInvoiceItemsByType(items = [], shifts = [], employees = new Map()) {
