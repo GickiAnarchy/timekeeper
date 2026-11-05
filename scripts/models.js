@@ -48,10 +48,19 @@ function showFirestoreError(message, retryOperation) {
     banner.setAttribute('role', 'alert');
     banner.setAttribute('aria-live', 'assertive');
     Object.assign(banner.style, {
-      position: 'fixed', inset: '12px 12px auto', zIndex: '2147483647',
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      gap: '12px', padding: '12px 16px', color: '#521b1b', background: '#fff0ee',
-      border: '1px solid #d98b83', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,.18)',
+      position: 'fixed',
+      inset: '12px 12px auto',
+      zIndex: '2147483647',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: '12px',
+      padding: '12px 16px',
+      color: '#521b1b',
+      background: '#fff0ee',
+      border: '1px solid #d98b83',
+      borderRadius: '10px',
+      boxShadow: '0 8px 24px rgba(0,0,0,.18)',
       font: '600 14px/1.4 system-ui, sans-serif'
     });
     const text = document.createElement('span');
@@ -60,8 +69,13 @@ function showFirestoreError(message, retryOperation) {
     retry.type = 'button';
     retry.textContent = 'Retry';
     Object.assign(retry.style, {
-      padding: '8px 13px', color: '#fff', background: '#8f302b', border: '0',
-      borderRadius: '7px', font: 'inherit', cursor: 'pointer'
+      padding: '8px 13px',
+      color: '#fff',
+      background: '#8f302b',
+      border: '0',
+      borderRadius: '7px',
+      font: 'inherit',
+      cursor: 'pointer'
     });
     retry.addEventListener('click', async () => {
       retry.disabled = true;
@@ -123,7 +137,7 @@ export class Employee {
     this.name = String(name || '').trim();
     this.wage = Number(wage);
   }
-
+  
   getPay(hours) {
     return Number((this.wage * hours).toFixed(2));
   }
@@ -138,7 +152,7 @@ export class Customer {
     const rate = billingRate === null || billingRate === undefined || billingRate === '' ? null : Number(billingRate);
     this.billingRate = Number.isFinite(rate) && rate >= 0 ? rate : null;
   }
-
+  
   customInfo() {
     return this.location ? `${this.name} · ${this.location}` : this.name;
   }
@@ -158,11 +172,11 @@ export class WorkShift {
     this.paidHours = paidHours === null || paidHours === undefined || paidHours === '' ? null : Number(paidHours);
     this.plannedJobsPrompted = false;
   }
-
+  
   startBreak() {
     this.breaks.push({ start: roundTo15Minutes(), end: null });
   }
-
+  
   stopBreak() {
     const activeBreak = this.breaks.find(item => item.start && !item.end);
     if (!activeBreak) return;
@@ -173,11 +187,11 @@ export class WorkShift {
       activeBreak.end = endTime;
     }
   }
-
+  
   get isOnBreak() {
     return this.breaks.some(item => item.start && !item.end);
   }
-
+  
   getTotalBreakTimeMs() {
     return this.breaks.reduce((total, item) => {
       const start = asDate(item.start);
@@ -185,27 +199,27 @@ export class WorkShift {
       return start && end ? total + Math.max(0, end - start) : total;
     }, 0);
   }
-
+  
   startShift(clockInTime = roundTo15Minutes()) {
     this.clockInTime = clockInTime;
     this.clockOutTime = null;
   }
-
+  
   stopShift() {
     if (!this.clockInTime) return;
     if (this.isOnBreak) this.stopBreak();
     this.clockOutTime = roundTo15Minutes();
   }
-
+  
   addNote(note) {
     const nextNote = cleanName(note);
     if (nextNote) this.note = this.note ? `${this.note}\n${nextNote}` : nextNote;
   }
-
+  
   get isComplete() {
     return Boolean(this.clockInTime && this.clockOutTime);
   }
-
+  
   duplicateFor(employee) {
     if (!employee?.id || employee.id === this.employee?.id) {
       throw new Error('Choose a different employee for the duplicate shift.');
@@ -223,16 +237,16 @@ export class WorkShift {
     duplicate.clockOutTime = new Date(end);
     return duplicate;
   }
-
+  
   getHoursWorked() {
     if (!this.isComplete) return 0;
     return actualShiftHours(this.clockInTime, this.clockOutTime, this.breaks);
   }
-
+  
   getPaidHours() {
     return Number.isFinite(this.paidHours) ? this.paidHours : this.getHoursWorked();
   }
-
+  
   getShiftPay() {
     return this.isPaid || !this.employee ? 0 : this.employee.getPay(this.getPaidHours());
   }
@@ -264,7 +278,7 @@ export class AppDataStore {
     this.shifts = [];
     this.loadFailures = [];
   }
-
+  
   async init() {
     this.loadFailures = [];
     // Only read records required by shift logging; this avoids unrelated archive
@@ -272,7 +286,7 @@ export class AppDataStore {
     await Promise.all([this.loadEmployees(), this.loadCustomers()]);
     await this.loadShifts();
   }
-
+  
   async loadEmployees() {
     this.employees.clear();
     try {
@@ -286,27 +300,27 @@ export class AppDataStore {
       this.loadFailures.push(error);
     }
   }
-
+  
   async addEmployee(name, wage = 0) {
     const employeeName = cleanName(name);
     const employeeWage = Number(wage);
     if (!employeeName) throw new Error('Employee name cannot be empty.');
     if (!Number.isFinite(employeeWage) || employeeWage < 0) throw new Error('Employee wage must be a non-negative number.');
     if ([...this.employees.values()].some(employee => normalize(employee.name) === normalize(employeeName))) return null;
-
+    
     const employee = new Employee(null, employeeName, employeeWage);
     await setDoc(doc(db, 'employees', employee.id), { name: employee.name, wage: employee.wage });
     this.employees.set(employee.id, employee);
     return employee;
   }
-
+  
   async deleteEmployee(id) {
     if (!this.employees.has(id)) return false;
     await deleteDoc(doc(db, 'employees', id));
     this.employees.delete(id);
     return true;
   }
-
+  
   async loadCustomers() {
     this.customers.clear();
     try {
@@ -322,7 +336,7 @@ export class AppDataStore {
       this.loadFailures.push(error);
     }
   }
-
+  
   async addCustomer(name, location, note = null, billingRate = null) {
     const customerName = cleanName(name);
     const customerLocation = cleanName(location);
@@ -331,9 +345,9 @@ export class AppDataStore {
     if (!customerLocation) throw new Error('Customer location cannot be empty.');
     if (rate !== null && (!Number.isFinite(rate) || rate < 0)) throw new Error('Hourly billing rate must be a non-negative number.');
     if ([...this.customers.values()].some(customer =>
-      normalize(customer.name) === normalize(customerName) && normalize(customer.location) === normalize(customerLocation)
-    )) return null;
-
+        normalize(customer.name) === normalize(customerName) && normalize(customer.location) === normalize(customerLocation)
+      )) return null;
+    
     const customer = new Customer(null, customerName, customerLocation, note, rate);
     await setDoc(doc(db, 'customers', customer.id), {
       name: customer.name,
@@ -344,24 +358,24 @@ export class AppDataStore {
     this.customers.set(customer.id, customer);
     return customer;
   }
-
+  
   async deleteCustomer(id) {
     if (!this.customers.has(id)) return false;
     await deleteDoc(doc(db, 'customers', id));
     this.customers.delete(id);
     return true;
   }
-
+  
   async loadShifts() {
     this.shifts = [];
     try {
       const snapshot = await getDocs(collection(db, 'shifts'));
       snapshot.forEach(docSnapshot => {
         const data = docSnapshot.data();
-        const employee = this.employees.get(data.employeeId)
-          || new Employee(data.employeeId, 'Unknown Employee', 0);
-        const customer = this.customers.get(data.custId)
-          || new Customer(data.custId, 'Unknown Site');
+        const employee = this.employees.get(data.employeeId) ||
+          new Employee(data.employeeId, 'Unknown Employee', 0);
+        const customer = this.customers.get(data.custId) ||
+          new Customer(data.custId, 'Unknown Site');
         const breaks = (data.breaks || []).map(item => ({
           start: item.start ? new Date(item.start) : null,
           end: item.end ? new Date(item.end) : null
@@ -380,12 +394,12 @@ export class AppDataStore {
       this.loadFailures.push(error);
     }
   }
-
+  
   async saveShift(shift) {
     await setDoc(doc(db, 'shifts', shift.id), serializeShift(shift));
     return shift;
   }
-
+  
   async saveShifts(shifts) {
     if (!Array.isArray(shifts) || shifts.length === 0) return;
     if (shifts.length > 500) throw new Error('A single clock-in batch cannot contain more than 500 shifts.');
@@ -395,22 +409,22 @@ export class AppDataStore {
     shifts.forEach(shift => batch.set(doc(db, 'shifts', shift.id), serializeShift(shift)));
     await commitBatch(batch);
   }
-
+  
   async deleteShift(shiftId) {
     await deleteDoc(doc(db, 'shifts', shiftId));
     this.shifts = this.shifts.filter(shift => shift.id !== shiftId);
   }
-
+  
   async updateShift(shiftId, employee, customer, clockInTime, clockOutTime, note = null, isPaid = false, breaks = null, paidHours = undefined) {
     const shift = this.shifts.find(candidate => candidate.id === shiftId);
     if (!shift) throw new Error('Shift could not be found.');
     if (!employee || !customer) throw new Error('Please select an employee and customer.');
-
+    
     const start = asDate(clockInTime);
     const end = asDate(clockOutTime);
     if (!start || !end) throw new Error('Please provide valid start and end times.');
     if (end <= start) throw new Error('End time must be after start time.');
-
+    
     const normalizedBreaks = (Array.isArray(breaks) ? breaks : shift.breaks).map((item, index) => {
       const breakStart = asDate(item.start);
       const breakEnd = asDate(item.end);
@@ -424,13 +438,13 @@ export class AppDataStore {
         throw new Error('Break times cannot overlap.');
       }
     }
-
-    const nextPaidHours = paidHours === undefined ? shift.paidHours
-      : paidHours === null || paidHours === '' ? null : Number(paidHours);
+    
+    const nextPaidHours = paidHours === undefined ? shift.paidHours :
+      paidHours === null || paidHours === '' ? null : Number(paidHours);
     if (nextPaidHours !== null && (!Number.isFinite(nextPaidHours) || nextPaidHours < 0)) {
       throw new Error('Paid hours must be a valid non-negative number, or left blank to use worked hours.');
     }
-
+    
     const updates = {
       employeeId: employee.id,
       custId: customer.id,
@@ -443,15 +457,20 @@ export class AppDataStore {
       plannedJobsPrompted: Boolean(shift.plannedJobsPrompted)
     };
     await updateDoc(doc(db, 'shifts', shiftId), updates);
-
+    
     Object.assign(shift, {
-      employee, customer, clockInTime: start, clockOutTime: end,
-      note: updates.note, isPaid: updates.isPaid,
-      breaks: normalizedBreaks, paidHours: nextPaidHours
+      employee,
+      customer,
+      clockInTime: start,
+      clockOutTime: end,
+      note: updates.note,
+      isPaid: updates.isPaid,
+      breaks: normalizedBreaks,
+      paidHours: nextPaidHours
     });
     return shift;
   }
-
+  
   async howManyActive() {
     return this.shifts.filter(shift => !shift.isComplete).length;
   }
