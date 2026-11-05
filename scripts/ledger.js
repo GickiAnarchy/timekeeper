@@ -31,8 +31,52 @@ function ledgerItemLabel(entry, shifts = []) {
 // END LEDGER DISPLAY LABEL HELPER
 
 // LEDGER CSV EXPORT HELPER
+const WINDOWS_1252_TO_BYTE = new Map([
+  ['€', 0x80], ['‚', 0x82], ['ƒ', 0x83], ['„', 0x84], ['…', 0x85], ['†', 0x86], ['‡', 0x87],
+  ['ˆ', 0x88], ['‰', 0x89], ['Š', 0x8A], ['‹', 0x8B], ['Œ', 0x8C], ['Ž', 0x8E], ['‘', 0x91],
+  ['’', 0x92], ['“', 0x93], ['”', 0x94], ['•', 0x95], ['–', 0x96], ['—', 0x97], ['˜', 0x98],
+  ['™', 0x99], ['š', 0x9A], ['›', 0x9B], ['œ', 0x9C], ['ž', 0x9E], ['Ÿ', 0x9F]
+]);
+
+function hasMojibakeMarker(text) {
+  return /(?:[ÃÂÐÑ][\u0080-\u00BF]|â(?:[\u0080-\u00BF]|[€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ])|ï»¿|ð[\u0080-\u00BF])/.test(text);
+}
+
+const MOJIBAKE_SEQUENCE = /(?:[ÃÂÐÑ][\u0080-\u00BF]|â[\u0080-\u00BF€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ]{1,2}|ï»¿|ð[\u0080-\u00BF])/g;
+
+function repairMojibake(text) {
+  if (!hasMojibakeMarker(text)) return text;
+
+  // Decode matching byte-like runs separately so real Unicode elsewhere stays untouched.
+  return text.replace(MOJIBAKE_SEQUENCE, sequence => {
+    try {
+      const bytes = [];
+      for (const character of sequence) {
+        const codePoint = character.codePointAt(0);
+        const byte = codePoint <= 0xFF ? codePoint : WINDOWS_1252_TO_BYTE.get(character);
+        if (byte === undefined) return sequence;
+        bytes.push(byte);
+      }
+      const repaired = new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes));
+      return hasMojibakeMarker(repaired) ? sequence : repaired;
+    } catch {
+      // Keep an incomplete or otherwise non-reversible sequence unchanged.
+      return sequence;
+    }
+  });
+}
+
+function normalizeCsvText(value) {
+  return repairMojibake(String(value ?? ''))
+    // Remove stray embedded BOMs and invisible spacing/format controls from saved text.
+    .replace(/[\uFEFF\u200B-\u200F\u202A-\u202E\u2060-\u2069]/g, '')
+    .replace(/\u00A0/g, ' ')
+    // Spreadsheet cells should not contain C0/C1 control bytes (newlines and tabs remain valid).
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '');
+}
+
 function csvCell(value, protectFormula = false) {
-  const text = String(value ?? '');
+  const text = normalizeCsvText(value);
   // Prevent spreadsheet apps from treating user-entered text as a formula.
   const safeText = protectFormula && /^[\u0000-\u0020]*[=+\-@]/.test(text) ? `'${text}` : text;
   return `"${safeText.replaceAll('"', '""')}"`;
@@ -395,7 +439,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       total,
       totalHours
     });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    // Encode bytes explicitly so the UTF-8 BOM and any international text survive download unchanged.
+    const blob = new Blob([new TextEncoder().encode(csv)], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;

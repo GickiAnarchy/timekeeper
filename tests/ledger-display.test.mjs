@@ -86,14 +86,44 @@ test('CSV export escapes quotes, commas, newlines, and spreadsheet formulas in t
   assert.match(csv, /"'=2\+2","2026-11-04","Repair, ""front""","Other credit","0\.00","12\.00","'=HYPERLINK\(""https:\/\/example\.test""\)\nsecond line"/);
 });
 
+test('CSV repairs common mojibake and invisible controls while preserving genuine Unicode', () => {
+  const csv = formatLedgerCsv({
+    owner: 'JosÃ© ï»¿',
+    total: 1,
+    totalHours: 1,
+    entries: [{
+      itemLabel: 'Coffee break',
+      date: '2026-11-04',
+      type: 'general',
+      amount: 1,
+      hours: 1,
+      notes: 'smokeÂ break “café”\u200B\u0001'
+    }]
+  });
+
+  assert.ok(csv.startsWith('\uFEFF'));
+  assert.ok(csv.includes('"José "'));
+  assert.ok(csv.includes('"smoke break “café”"'));
+  assert.ok(!csv.includes('JosÃ©'));
+  assert.ok(!csv.includes('ï»¿'));
+  assert.ok(!csv.includes('Â '));
+  assert.ok(!csv.includes('\u200B'));
+  assert.ok(!csv.includes('\u0001'));
+
+  const bytes = new TextEncoder().encode(csv);
+  assert.deepEqual(Array.from(bytes.slice(0, 3)), [0xEF, 0xBB, 0xBF]);
+  assert.equal(new TextDecoder('utf-8').decode(bytes), csv.slice(1));
+});
+
 test('selected ledger exposes a Google Sheets-friendly CSV download', () => {
   const markup = readFileSync(new URL('../html/payledger.html', import.meta.url), 'utf8');
 
   assert.match(markup, /<button id="download-ledger-btn"[^>]*disabled>Download CSV<\/button>/);
   assert.match(markup, /Google Sheets or Excel/);
+  assert.match(markup, /ledger\.js\?v=ledger-csv-2/);
   assert.match(ledgerSource, /downloadLedgerButton\.addEventListener\('click'/);
   assert.match(ledgerSource, /const entries = filteredEntries\(\)/);
-  assert.match(ledgerSource, /new Blob\(\[csv\], \{ type: 'text\/csv;charset=utf-8' \}\)/);
+  assert.match(ledgerSource, /new Blob\(\[new TextEncoder\(\)\.encode\(csv\)\], \{ type: 'text\/csv;charset=utf-8' \}\)/);
   assert.match(ledgerSource, /link\.download = ledgerDownloadFilename\(owner\)/);
   assert.match(ledgerSource, /\.csv`/);
   assert.match(ledgerSource, /downloadLedgerButton\.disabled = false/);
