@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Mosher Lawns HR</string>
-    <string name="title_activity_main">Mosher Lawns HR</string>
+    <string name="app_name">Mosher Lawns Manager</string>
+    <string name="title_activity_main">Mosher Lawns Manager</string>
     <string name="package_name">com.gickistudios.moshertime</string>
     <string name="custom_url_scheme">com.gickistudios.moshertime</string>
 </resources>

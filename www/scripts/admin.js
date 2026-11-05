@@ -1,0 +1,804 @@
+import { sendSettingsUpdate } from './settings.js';
+
+
+const FIREBASE_AUTH_MODULE_URL = 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+const ADMIN_ONLY_SELECTOR = '[data-admin-only]';
+export const DAILY_QUOTES_OWNER_UID = 'N9fh9kr98neSYBSNdyDHBZn9IGv1';
+export const ADMIN_SESSION_MESSAGE_TYPE = 'timekeeper-admin-session-state';
+
+let firebaseAuthApi;
+let auth;
+let authModulePromise;
+let persistencePromise;
+let store;
+let loadDailyQuotes;
+let saveDailyQuotes;
+let normalizeDailyQuotes;
+
+export function watchAdminOnlyControls(root, initialIsAdmin = false) {
+  if (!root?.querySelectorAll) throw new TypeError('An admin-control root is required.');
+
+  let isAdmin = Boolean(initialIsAdmin);
+  const originalDisabledStates = new Map();
+
+  function synchronize() {
+    const controls = new Set(root.querySelectorAll(ADMIN_ONLY_SELECTOR));
+
+    for (const [control, originalDisabled] of originalDisabledStates) {
+      if (controls.has(control)) continue;
+      control.disabled = originalDisabled;
+      originalDisabledStates.delete(control);
+    }
+
+    for (const control of controls) {
+      if (!('disabled' in control)) continue;
+      if (!originalDisabledStates.has(control)) {
+        originalDisabledStates.set(control, Boolean(control.disabled));
+      }
+      control.disabled = !isAdmin || originalDisabledStates.get(control);
+    }
+  }
+
+  const mutationObserverConstructor = root.defaultView?.MutationObserver || globalThis.MutationObserver;
+  const target = root.documentElement || root;
+  const observer = mutationObserverConstructor && target
+    ? new mutationObserverConstructor(synchronize)
+    : null;
+
+  synchronize();
+  observer?.observe(target, {
+    attributes: true,
+    attributeFilter: ['data-admin-only'],
+    childList: true,
+    subtree: true
+  });
+
+  return {
+    setAdmin(nextIsAdmin) {
+      isAdmin = Boolean(nextIsAdmin);
+      synchronize();
+    },
+    disconnect() {
+      observer?.disconnect();
+      for (const [control, originalDisabled] of originalDisabledStates) {
+        control.disabled = originalDisabled;
+      }
+      originalDisabledStates.clear();
+    }
+  };
+}
+
+export function watchAdminAccessBadgeMessages(root) {
+  const badge = root?.getElementById?.('admin-access-badge');
+  const frame = root?.querySelector?.('iframe[name="main-content"]');
+  const rootWindow = root?.defaultView;
+  if (!badge || !frame || !rootWindow?.addEventListener) return () => {};
+
+  const onMessage = event => {
+    if (event.origin !== rootWindow.location?.origin
+      || event.source !== frame.contentWindow
+      || event.data?.type !== ADMIN_SESSION_MESSAGE_TYPE
+      || typeof event.data.isAdmin !== 'boolean') return;
+    badge.hidden = !event.data.isAdmin;
+  };
+  rootWindow.addEventListener('message', onMessage);
+  return () => rootWindow.removeEventListener?.('message', onMessage);
+}
+
+export function initializeAdminSectionToggles(root = document) {
+  root.querySelectorAll('.admin-toggle[aria-controls]').forEach(toggle => {
+    const controlledId = toggle.getAttribute('aria-controls');
+    const controlledCard = controlledId && root.getElementById(controlledId);
+    if (!controlledCard) return;
+
+    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+    controlledCard.hidden = !expanded;
+
+    toggle.addEventListener('click', () => {
+      const wasExpanded = toggle.getAttribute('aria-expanded') === 'true';
+      toggle.setAttribute('aria-expanded', String(!wasExpanded));
+      controlledCard.hidden = wasExpanded;
+    });
+  });
+}
+
+async function configureDailyQuotesAdminAuth() {
+  if (!authModulePromise) {
+    authModulePromise = Promise.all([
+      import(FIREBASE_AUTH_MODULE_URL),
+      import('./models.js')
+    ]).then(([api, models]) => {
+      firebaseAuthApi = api;
+      auth = api.getAuth(models.app);
+      return api;
+    }).catch(error => {
+      authModulePromise = undefined;
+      throw error;
+    });
+  }
+  return authModulePromise;
+}
+
+async function ensurePersistentAdminSession() {
+  const api = await configureDailyQuotesAdminAuth();
+  if (!persistencePromise) {
+    persistencePromise = api.setPersistence(auth, api.browserLocalPersistence).catch(error => {
+      persistencePromise = undefined;
+      throw error;
+    });
+  }
+  await persistencePromise;
+  return api;
+}
+
+function waitForInitialAuthState(api) {
+  return new Promise((resolve, reject) => {
+    let unsubscribe = () => {};
+    unsubscribe = api.onAuthStateChanged(auth, user => {
+      unsubscribe();
+      resolve(user);
+    }, error => {
+      unsubscribe();
+      reject(error);
+    });
+  });
+}
+
+export async function prepareDailyQuotesAdminSignIn() {
+  const api = await ensurePersistentAdminSession();
+  return waitForInitialAuthState(api);
+}
+
+export function observeDailyQuotesAdminSession(onChange, onError) {
+  if (!firebaseAuthApi || !auth) throw new Error('Prepare the admin session before observing it.');
+  return firebaseAuthApi.onAuthStateChanged(auth, user => {
+    announceAdminSessionToShell(user);
+    onChange?.(user);
+  }, error => {
+    announceAdminSessionToShell(null);
+    onError?.(error);
+  });
+}
+
+export async function signInDailyQuotesAdmin(email, password) {
+  const api = await ensurePersistentAdminSession();
+  const credential = await api.signInWithEmailAndPassword(auth, email, password);
+  announceAdminSessionToShell(credential.user);
+  return credential.user;
+}
+
+export function isDailyQuotesAdmin(user) {
+  return user?.uid === DAILY_QUOTES_OWNER_UID;
+}
+
+export function announceAdminSessionToShell(user, frameWindow = globalThis.window) {
+  if (!frameWindow || frameWindow.parent === frameWindow || typeof frameWindow.parent?.postMessage !== 'function') {
+    return false;
+  }
+  frameWindow.parent.postMessage({
+    type: ADMIN_SESSION_MESSAGE_TYPE,
+    isAdmin: isDailyQuotesAdmin(user)
+  }, frameWindow.location.origin);
+  return true;
+}
+
+export async function signOutDailyQuotesAdmin() {
+  const api = await configureDailyQuotesAdminAuth();
+  await api.signOut(auth);
+  announceAdminSessionToShell(null);
+}
+
+function makeElement(tag, className, text) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = text;
+  return element;
+}
+
+function createQuoteId() {
+  const randomId = globalThis.crypto?.randomUUID?.();
+  return randomId ? `quote-${randomId}` : `quote-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function initializeQuoteManager() {
+  const quoteCard = document.getElementById('quote-card');
+  const quoteList = document.getElementById('quote-list');
+  const quoteStatus = document.getElementById('quote-status');
+  const quoteForm = document.getElementById('daily-quote-form');
+  const quoteDisclosure = document.getElementById('quote-form-disclosure');
+  const quoteFormSummary = document.getElementById('quote-form-summary');
+  const quoteFormError = document.getElementById('quote-form-error');
+  const quoteSaveButton = document.getElementById('quote-save-button');
+  const quoteCancelButton = document.getElementById('quote-cancel-button');
+  const quoteFields = {
+    text: document.getElementById('quote-text'),
+    author: document.getElementById('quote-author'),
+    work: document.getElementById('quote-work'),
+    source: document.getElementById('quote-source')
+  };
+
+  let quotes = [];
+  let editingId = null;
+  let ready = false;
+  let saving = false;
+
+  function clearForm() {
+    quoteForm.reset();
+    editingId = null;
+    quoteFormSummary.textContent = 'Add a daily quote';
+    quoteSaveButton.textContent = 'Add quote';
+    quoteCancelButton.hidden = true;
+    quoteFormError.textContent = '';
+  }
+
+  function setBusy(isBusy) {
+    saving = isBusy;
+    quoteCard.setAttribute('aria-busy', String(isBusy));
+    quoteForm.querySelectorAll('input, textarea, button').forEach(control => {
+      control.disabled = isBusy || !ready;
+    });
+    quoteList.querySelectorAll('button').forEach(button => {
+      button.disabled = isBusy || button.dataset.lastQuote === 'true';
+    });
+  }
+
+  function renderQuotes() {
+    quoteList.replaceChildren();
+    if (!quotes.length) {
+      quoteList.appendChild(makeElement('li', 'quote-empty', 'No daily quotes are available. Add one to get started.'));
+      return;
+    }
+
+    quotes.forEach(quote => {
+      const item = makeElement('li', 'quote-item');
+      const copy = makeElement('div', 'quote-item-copy');
+      copy.append(
+        makeElement('p', 'quote-item-text', `“${quote.text}”`),
+        makeElement('p', 'quote-item-attribution', `${quote.author} · ${quote.work}`)
+      );
+
+      const source = makeElement('a', 'quote-item-source', 'View source');
+      source.href = quote.source;
+      source.target = '_blank';
+      source.rel = 'noopener noreferrer';
+      copy.appendChild(source);
+
+      const actions = makeElement('div', 'quote-item-actions');
+      const editButton = makeElement('button', 'admin-button admin-button-secondary', 'Edit');
+      editButton.type = 'button';
+      editButton.dataset.action = 'edit';
+      editButton.dataset.quoteId = quote.id;
+      editButton.setAttribute('aria-label', `Edit quote by ${quote.author}`);
+
+      const deleteButton = makeElement('button', 'admin-button admin-button-danger', 'Delete');
+      deleteButton.type = 'button';
+      deleteButton.dataset.action = 'delete';
+      deleteButton.dataset.quoteId = quote.id;
+      deleteButton.dataset.lastQuote = String(quotes.length === 1);
+      deleteButton.disabled = saving || quotes.length === 1;
+      deleteButton.title = quotes.length === 1 ? 'At least one daily quote must remain.' : '';
+      deleteButton.setAttribute('aria-label', `Delete quote by ${quote.author}`);
+      actions.append(editButton, deleteButton);
+      item.append(copy, actions);
+      quoteList.appendChild(item);
+    });
+  }
+
+  async function persistQuotes(nextQuotes, successMessage) {
+    if (saving) return false;
+    setBusy(true);
+    quoteStatus.textContent = 'Saving quote changes…';
+    quoteFormError.textContent = '';
+    try {
+      quotes = await saveDailyQuotes(nextQuotes);
+      renderQuotes();
+      quoteStatus.textContent = `${successMessage} ${quotes.length} ${quotes.length === 1 ? 'quote is' : 'quotes are'} available on the home page.`;
+      return true;
+    } catch (error) {
+      console.error('Unable to save daily quote changes.', error);
+      quoteStatus.textContent = 'The quote changes could not be saved. Check the connection and try again.';
+      quoteFormError.textContent = error.message || 'Please check the quote details and try again.';
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function beginEdit(quoteId) {
+    const quote = quotes.find(candidate => candidate.id === quoteId);
+    if (!quote) return;
+    editingId = quote.id;
+    quoteFields.text.value = quote.text;
+    quoteFields.author.value = quote.author;
+    quoteFields.work.value = quote.work;
+    quoteFields.source.value = quote.source;
+    quoteFormSummary.textContent = 'Edit daily quote';
+    quoteSaveButton.textContent = 'Save changes';
+    quoteCancelButton.hidden = false;
+    quoteFormError.textContent = '';
+    quoteDisclosure.open = true;
+    quoteFields.text.focus();
+  }
+
+  quoteCancelButton.addEventListener('click', clearForm);
+  quoteForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (!ready || saving) return;
+    quoteFormError.textContent = '';
+
+    try {
+      const quote = normalizeDailyQuotes([{
+        id: editingId || createQuoteId(),
+        text: quoteFields.text.value,
+        author: quoteFields.author.value,
+        work: quoteFields.work.value,
+        source: quoteFields.source.value
+      }])[0];
+      const nextQuotes = editingId
+        ? quotes.map(candidate => candidate.id === editingId ? quote : candidate)
+        : [...quotes, quote];
+      const saved = await persistQuotes(nextQuotes, editingId ? 'Quote updated.' : 'Quote added.');
+      if (saved) {
+        clearForm();
+        quoteDisclosure.open = false;
+      }
+    } catch (error) {
+      quoteFormError.textContent = error.message || 'Please check the quote details and try again.';
+    }
+  });
+
+  quoteList.addEventListener('click', async event => {
+    const button = event.target.closest('button[data-action]');
+    if (!button || saving || !ready) return;
+    const quoteId = button.dataset.quoteId;
+    if (button.dataset.action === 'edit') {
+      beginEdit(quoteId);
+      return;
+    }
+    if (button.dataset.action !== 'delete') return;
+
+    const quote = quotes.find(candidate => candidate.id === quoteId);
+    if (!quote || quotes.length <= 1) return;
+    if (!window.confirm(`Delete this quote by ${quote.author}?`)) return;
+    const nextQuotes = quotes.filter(candidate => candidate.id !== quoteId);
+    await persistQuotes(nextQuotes, 'Quote deleted.');
+  });
+
+  loadDailyQuotes().then(loadedQuotes => {
+    quotes = loadedQuotes;
+    ready = true;
+    renderQuotes();
+    quoteStatus.textContent = `${quotes.length} ${quotes.length === 1 ? 'quote is' : 'quotes are'} in the shared daily rotation.`;
+  }).catch(error => {
+    console.error('Unable to load daily quotes.', error);
+    quoteList.replaceChildren();
+    quoteStatus.textContent = 'Daily quotes could not be loaded. Refresh the page or check the connection before editing.';
+    quoteFormError.textContent = 'The saved list was not loaded, so editing is disabled to avoid overwriting it.';
+  }).finally(() => setBusy(false));
+}
+
+
+
+function initializePeopleManager() {
+  const employeeBody = document.getElementById('wage-table-body');
+  const customerBody = document.getElementById('customer-table-body');
+  const employeeStatus = document.getElementById('wage-status');
+  const customerStatus = document.getElementById('customer-status');
+  const editDialog = document.getElementById('people-edit-dialog');
+  const editForm = document.getElementById('people-edit-form');
+  const editEyebrow = document.getElementById('people-edit-eyebrow');
+  const editTitle = document.getElementById('people-edit-title');
+  const editHelp = document.getElementById('people-edit-help');
+  const editError = document.getElementById('people-edit-error');
+  const editSave = document.getElementById('people-edit-save');
+  const editCancel = document.getElementById('people-edit-cancel');
+  const employeeFields = document.getElementById('employee-edit-fields');
+  const customerFields = document.getElementById('customer-edit-fields');
+  const editEmpName = document.getElementById('edit-emp-name');
+  const editEmpWage = document.getElementById('edit-emp-wage');
+  const editCustName = document.getElementById('edit-cust-name');
+  const editCustLocation = document.getElementById('edit-cust-location');
+  const editCustBillingRate = document.getElementById('edit-cust-billing-rate');
+  const editCustNote = document.getElementById('edit-cust-note');
+  const dataReady = store.loadFailures.length === 0;
+  let editingType = null;
+  let editingId = null;
+  let editTrigger = null;
+  let saving = false;
+
+  function textCell(value) {
+    return makeElement('td', '', value === null || value === undefined || value === '' ? '—' : String(value));
+  }
+
+  function makeEditButton(type, record) {
+    const button = makeElement('button', 'admin-button admin-button-secondary admin-edit-record-button', 'Edit');
+    button.type = 'button';
+    button.dataset.peopleEditType = type;
+    button.dataset.peopleId = record.id;
+    button.disabled = !dataReady;
+    button.setAttribute('aria-label', `Edit ${type} ${record.name}`);
+    return button;
+  }
+
+  function appendEmptyRow(body, columnCount, message) {
+    const row = makeElement('tr');
+    const cell = makeElement('td', 'admin-table-empty', message);
+    cell.colSpan = columnCount;
+    row.appendChild(cell);
+    body.replaceChildren(row);
+  }
+
+  function renderEmployees() {
+    const employees = [...store.employees.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    if (!employees.length) {
+      appendEmptyRow(employeeBody, 3, 'No employees are available. Add one from People Data.');
+    } else {
+      const rows = employees.map(employee => {
+        const row = makeElement('tr');
+        row.append(textCell(employee.name), textCell(`$${Number(employee.wage).toFixed(2)}/hr`));
+        const actions = makeElement('td', 'admin-table-actions');
+        actions.appendChild(makeEditButton('employee', employee));
+        row.appendChild(actions);
+        return row;
+      });
+      employeeBody.replaceChildren(...rows);
+    }
+    employeeStatus.textContent = dataReady
+      ? `${employees.length} ${employees.length === 1 ? 'employee' : 'employees'} available. Add and delete records from People Data.`
+      : 'Workspace data did not load completely. Refresh after the connection is restored before editing.';
+  }
+
+  function renderCustomers() {
+    const customers = [...store.customers.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    if (!customers.length) {
+      appendEmptyRow(customerBody, 5, 'No customers are available. Add one from People Data.');
+    } else {
+      const rows = customers.map(customer => {
+        const row = makeElement('tr');
+        const billing = customer.billingRate === null || customer.billingRate === undefined
+          ? 'Not set'
+          : `$${Number(customer.billingRate).toFixed(2)}/hr`;
+        row.append(textCell(customer.name), textCell(customer.location), textCell(billing), textCell(customer.note));
+        const actions = makeElement('td', 'admin-table-actions');
+        actions.appendChild(makeEditButton('customer', customer));
+        row.appendChild(actions);
+        return row;
+      });
+      customerBody.replaceChildren(...rows);
+    }
+    customerStatus.textContent = dataReady
+      ? `${customers.length} ${customers.length === 1 ? 'customer' : 'customers'} available. Changing a billing rate can update linked invoice lines.`
+      : 'Workspace data did not load completely. Refresh after the connection is restored before editing.';
+  }
+
+  function openEditDialog(type, id, trigger) {
+    if (!dataReady) return;
+    const isEmployee = type === 'employee';
+    const record = isEmployee ? store.employees.get(id) : store.customers.get(id);
+    if (!record) return;
+    editingType = type;
+    editingId = id;
+    editTrigger = trigger;
+    editError.textContent = '';
+    editForm.reset();
+    employeeFields.hidden = !isEmployee;
+    employeeFields.disabled = !isEmployee;
+    customerFields.hidden = isEmployee;
+    customerFields.disabled = isEmployee;
+    if (isEmployee) {
+      editEyebrow.textContent = 'EMPLOYEE PROFILE';
+      editTitle.textContent = 'Edit employee';
+      editHelp.textContent = 'Update this employee’s name and hourly wage.';
+      editEmpName.value = record.name;
+      editEmpWage.value = String(record.wage);
+    } else {
+      editEyebrow.textContent = 'CUSTOMER PROFILE';
+      editTitle.textContent = 'Edit customer';
+      editHelp.textContent = 'Update this customer’s details and billing information.';
+      editCustName.value = record.name;
+      editCustLocation.value = record.location || '';
+      editCustBillingRate.value = record.billingRate === null || record.billingRate === undefined
+        ? ''
+        : String(record.billingRate);
+      editCustNote.value = record.note || '';
+    }
+    editDialog.showModal();
+    (isEmployee ? editEmpName : editCustName).focus();
+  }
+
+  function restoreEditFocus() {
+    const type = editingType;
+    const id = editingId;
+    const trigger = editTrigger;
+    editingType = null;
+    editingId = null;
+    editTrigger = null;
+    if (trigger?.isConnected) {
+      trigger.focus();
+      return;
+    }
+    const body = type === 'employee' ? employeeBody : customerBody;
+    const replacement = [...body.querySelectorAll('button[data-people-edit-type]')]
+      .find(button => button.dataset.peopleEditType === type && button.dataset.peopleId === id);
+    replacement?.focus();
+  }
+
+  function handleEditClick(event, type) {
+    const button = event.target.closest('button[data-people-edit-type]');
+    if (!button || button.dataset.peopleEditType !== type || !dataReady) return;
+    openEditDialog(type, button.dataset.peopleId, button);
+  }
+
+  employeeBody.addEventListener('click', event => handleEditClick(event, 'employee'));
+  customerBody.addEventListener('click', event => handleEditClick(event, 'customer'));
+  editDialog.addEventListener('close', restoreEditFocus);
+  editDialog.addEventListener('cancel', event => {
+    if (saving) event.preventDefault();
+  });
+  editCancel.addEventListener('click', () => {
+    if (!saving) editDialog.close();
+  });
+  editForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    editError.textContent = '';
+    if (saving || !editForm.reportValidity()) return;
+    saving = true;
+    editSave.disabled = true;
+    editCancel.disabled = true;
+    editSave.textContent = 'Saving…';
+    editDialog.setAttribute('aria-busy', 'true');
+    try {
+      if (editingType === 'employee') {
+        await store.updateEmployee(editingId, editEmpName.value, editEmpWage.value);
+        renderEmployees();
+        employeeStatus.textContent = 'Employee profile saved.';
+      } else if (editingType === 'customer') {
+        const billingRate = editCustBillingRate.value === '' ? null : Number(editCustBillingRate.value);
+        await store.updateCustomer(
+          editingId,
+          editCustName.value,
+          editCustLocation.value,
+          editCustNote.value,
+          billingRate
+        );
+        renderCustomers();
+        customerStatus.textContent = 'Customer profile saved. Linked invoice labor lines were updated if the billing rate changed.';
+      } else {
+        return;
+      }
+      editDialog.close();
+    } catch (error) {
+      editError.textContent = error.message || 'Unable to save changes. Please try again.';
+    } finally {
+      saving = false;
+      editSave.disabled = false;
+      editCancel.disabled = false;
+      editSave.textContent = 'Save changes';
+      editDialog.removeAttribute('aria-busy');
+    }
+  });
+
+  renderEmployees();
+  renderCustomers();
+}
+
+async function initializeAdminPage() {
+  const adminControls = watchAdminOnlyControls(document, false);
+  const badge = document.getElementById('admin-access-badge');
+  if (badge) badge.hidden = true;
+
+  const authDialog = document.getElementById('owner-auth-dialog');
+  if (!authDialog) {
+    if (badge) watchAdminAccessBadgeMessages(document);
+    try {
+      const currentUser = await prepareDailyQuotesAdminSignIn();
+      const isAdmin = isDailyQuotesAdmin(currentUser);
+      adminControls.setAdmin(isAdmin);
+      if (badge) badge.hidden = !isAdmin;
+      observeDailyQuotesAdminSession(user => {
+        const activeAdmin = isDailyQuotesAdmin(user);
+        adminControls.setAdmin(activeAdmin);
+        sendSettingsUpdate('admin');
+        if (badge) badge.hidden = !activeAdmin;
+      }, error => {
+        console.warn('Unable to observe the owner session for admin-only controls.', error);
+        adminControls.setAdmin(false);
+        if (badge) badge.hidden = true;
+      });
+    } catch (error) {
+      console.warn('Admin privileges could not be checked for this page.', error);
+      adminControls.setAdmin(false);
+      if (badge) badge.hidden = true;
+    }
+    return;
+  }
+
+  const [models, quoteRules] = await Promise.all([
+    import('./models.js'),
+    import('./daily-quotes.mjs')
+  ]);
+  store = models.store;
+  loadDailyQuotes = models.loadDailyQuotes;
+  saveDailyQuotes = models.saveDailyQuotes;
+  normalizeDailyQuotes = quoteRules.normalizeDailyQuotes;
+  await store.init();
+
+  const authForm = document.getElementById('owner-auth-form');
+  const authEmail = document.getElementById('owner-auth-email');
+  const authPassword = document.getElementById('owner-auth-password');
+  const authStatus = document.getElementById('owner-auth-status');
+  const authSubmit = document.getElementById('owner-auth-submit');
+  const authCancel = document.getElementById('owner-auth-cancel');
+  const adminContent = document.getElementById('admin-content');
+  const adminSignOutButton = document.getElementById('admin-sign-out');
+  const adminSignOutStatus = document.getElementById('admin-sign-out-status');
+  const authApi = {
+    prepareDailyQuotesAdminSignIn,
+    observeDailyQuotesAdminSession,
+    signInDailyQuotesAdmin,
+    signOutDailyQuotesAdmin,
+    isDailyQuotesAdmin
+  };
+  let authorized = false;
+  let contentInitialized = false;
+  let redirecting = false;
+  let signingIn = false;
+  let signingOut = false;
+
+  function routeHome() {
+    window.location.replace(new URL('home.html', window.location.href).href);
+  }
+
+  async function leaveAdmin() {
+    if (redirecting) return;
+    redirecting = true;
+    authSubmit.disabled = true;
+    authCancel.disabled = true;
+    authStatus.textContent = 'Returning Home…';
+    routeHome();
+  }
+
+  function showAdminContent() {
+    authorized = true;
+    authPassword.value = '';
+    if (authDialog.open) authDialog.close();
+    adminContent.hidden = false;
+    if (contentInitialized) return;
+    contentInitialized = true;
+    initializeAdminSectionToggles(document);
+    initializeQuoteManager();
+    initializePeopleManager();
+  }
+
+  function showAuthDialog(message = '') {
+    adminContent.hidden = true;
+    authStatus.textContent = message;
+    if (!authDialog.open) authDialog.showModal();
+  }
+
+  authDialog.addEventListener('cancel', event => {
+    event.preventDefault();
+    void leaveAdmin();
+  });
+  authDialog.addEventListener('close', () => {
+    if (!authorized) void leaveAdmin();
+  });
+  authCancel.addEventListener('click', () => void leaveAdmin());
+  adminSignOutButton.addEventListener('click', async () => {
+    if (!authorized || signingOut) return;
+    signingOut = true;
+    authorized = false;
+    adminControls.setAdmin(false);
+    adminSignOutButton.disabled = true;
+    adminSignOutStatus.hidden = false;
+    adminSignOutStatus.textContent = 'Signing out…';
+    try {
+      await authApi.signOutDailyQuotesAdmin();
+      adminSignOutStatus.textContent = 'Signed out. Returning Home…';
+      routeHome();
+    } catch (error) {
+      console.warn('Unable to sign out of Admin Settings.', error);
+      authorized = true;
+      adminControls.setAdmin(true);
+      adminSignOutButton.disabled = false;
+      adminSignOutStatus.textContent = 'Unable to sign out. Please try again.';
+      signingOut = false;
+    }
+  });
+
+  authForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (redirecting || signingIn) return;
+    const email = authEmail.value.trim();
+    const password = authPassword.value;
+    if (!email || !password) {
+      void leaveAdmin();
+      return;
+    }
+
+    signingIn = true;
+    authSubmit.disabled = true;
+    authCancel.disabled = true;
+    authStatus.textContent = 'Checking owner account…';
+    try {
+      const user = await authApi.signInDailyQuotesAdmin(email, password);
+      if (redirecting) {
+        await authApi.signOutDailyQuotesAdmin();
+        return;
+      }
+      if (!authApi.isDailyQuotesAdmin(user)) {
+        authStatus.textContent = 'This account is not approved. Returning Home…';
+        await authApi.signOutDailyQuotesAdmin();
+        if (!redirecting) {
+          redirecting = true;
+          routeHome();
+        }
+        return;
+      }
+
+      adminControls.setAdmin(true);
+      showAdminContent();
+    } catch (error) {
+      console.warn('Owner sign-in failed.', error);
+      authStatus.textContent = 'Sign-in was not accepted. Returning Home…';
+      try {
+        await authApi.signOutDailyQuotesAdmin();
+      } catch (signOutError) {
+        console.warn('Unable to clear the failed sign-in state.', signOutError);
+      }
+      if (!redirecting) {
+        redirecting = true;
+        routeHome();
+      }
+    } finally {
+      signingIn = false;
+    }
+  });
+
+  try {
+    const currentUser = await authApi.prepareDailyQuotesAdminSignIn();
+    if (currentUser && !authApi.isDailyQuotesAdmin(currentUser)) {
+      await authApi.signOutDailyQuotesAdmin();
+    }
+    const currentIsAdmin = authApi.isDailyQuotesAdmin(currentUser);
+    adminControls.setAdmin(currentIsAdmin);
+    if (currentIsAdmin) showAdminContent();
+    else showAuthDialog();
+    authApi.observeDailyQuotesAdminSession(user => {
+      const activeAdmin = authApi.isDailyQuotesAdmin(user);
+      adminControls.setAdmin(activeAdmin);
+      if (activeAdmin) {
+        showAdminContent();
+      } else if (authorized) {
+        authorized = false;
+        showAuthDialog('The owner session ended. Sign in again to continue.');
+      }
+    }, error => {
+      console.warn('Unable to observe the owner session.', error);
+      adminControls.setAdmin(false);
+      if (authorized) {
+        authorized = false;
+        showAuthDialog('Owner status could not be verified. Sign in again to continue.');
+      }
+    });
+  } catch (error) {
+    console.error('Owner authentication is unavailable.', error);
+    adminControls.setAdmin(false);
+    await leaveAdmin();
+  }
+}
+
+if (typeof document !== 'undefined') {
+  const start = () => {
+    void initializeAdminPage().catch(error => {
+      console.error('Unable to initialize the admin controller.', error);
+      const badge = document.getElementById('admin-access-badge');
+      if (badge) badge.hidden = true;
+    });
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, { once: true });
+  } else {
+    start();
+  }
+}
