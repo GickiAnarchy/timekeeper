@@ -7,6 +7,7 @@ body { display: flex; flex-direction: column; align-items: stretch; gap: 12px; p
 .ledger-heading-actions { display: flex; align-items: flex-end; gap: 9px; min-width: min(100%, 430px); }
 .ledger-heading h1 { margin: 0 0 4px; color: var(--ink); font-size: 20px; letter-spacing: -.04em; }
 .ledger-owner { margin: 0; color: var(--muted); font-size: 11px; }
+.ledger-csv-help { margin: 7px 0 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
 .ledger-filter { display: grid; min-width: min(260px, 45%); gap: 5px; color: var(--ink-soft); font-size: 10px; font-weight: 650; }
 .ledger-filter select { width: 100%; min-height: 38px; padding: 7px 9px; font-size: 10px; }
 .download-ledger-btn { min-height: 38px; padding: 0 12px; color: #fff; background: var(--green); font-size: 10px; font-weight: 700; white-space: nowrap; }

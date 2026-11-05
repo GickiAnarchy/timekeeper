@@ -8,7 +8,7 @@ assert.ok(labelSection, 'display label helper should stay in ledger.js');
 const ledgerItemLabel = new Function(`${labelSection[1]}\nreturn ledgerItemLabel;`)();
 const csvSection = ledgerSource.match(/\/\/ LEDGER CSV EXPORT HELPER\n([\s\S]*?)\n\/\/ END LEDGER CSV EXPORT HELPER/);
 assert.ok(csvSection, 'CSV export helper should stay in ledger.js');
-const formatLedgerCsv = new Function(`${csvSection[1]}\nreturn formatLedgerCsv;`)();
+const { formatLedgerCsv, createLedgerCsvBlob } = new Function(`${csvSection[1]}\nreturn { formatLedgerCsv, createLedgerCsvBlob };`)();
 
 test('shift-linked ledger items use the customer identity instead of repeating the full note', () => {
   assert.equal(ledgerItemLabel({
@@ -86,7 +86,7 @@ test('CSV export escapes quotes, commas, newlines, and spreadsheet formulas in t
   assert.match(csv, /"'=2\+2","2026-11-04","Repair, ""front""","Other credit","0\.00","12\.00","'=HYPERLINK\(""https:\/\/example\.test""\)\nsecond line"/);
 });
 
-test('CSV repairs common mojibake and invisible controls while preserving genuine Unicode', () => {
+test('CSV repairs common mojibake and invisible controls while preserving genuine Unicode in the actual UTF-8 Blob', async () => {
   const csv = formatLedgerCsv({
     owner: 'JosÃ© ï»¿',
     total: 1,
@@ -110,21 +110,26 @@ test('CSV repairs common mojibake and invisible controls while preserving genuin
   assert.ok(!csv.includes('\u200B'));
   assert.ok(!csv.includes('\u0001'));
 
-  const bytes = new TextEncoder().encode(csv);
+  const blob = createLedgerCsvBlob(csv);
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  assert.equal(blob.type, 'text/csv;charset=utf-8');
   assert.deepEqual(Array.from(bytes.slice(0, 3)), [0xEF, 0xBB, 0xBF]);
-  assert.equal(new TextDecoder('utf-8').decode(bytes), csv.slice(1));
+  assert.deepEqual(bytes, new TextEncoder().encode(csv));
+  assert.equal(new TextDecoder('utf-8', { fatal: true }).decode(bytes), csv.slice(1));
 });
 
 test('selected ledger exposes a Google Sheets-friendly CSV download', () => {
   const markup = readFileSync(new URL('../html/payledger.html', import.meta.url), 'utf8');
 
-  assert.match(markup, /<button id="download-ledger-btn"[^>]*disabled>Download CSV<\/button>/);
+  assert.match(markup, /<button id="download-ledger-btn"[^>]*disabled>Download UTF-8 CSV<\/button>/);
   assert.match(markup, /Google Sheets or Excel/);
-  assert.match(markup, /ledger\.js\?v=ledger-csv-2/);
+  assert.match(markup, /ledger\.js\?v=ledger-csv-3/);
+  assert.match(markup, /ledger\.css\?v=ledger-download-2/);
+  assert.match(markup, /import it into your spreadsheet as UTF-8/);
   assert.match(ledgerSource, /downloadLedgerButton\.addEventListener\('click'/);
   assert.match(ledgerSource, /const entries = filteredEntries\(\)/);
-  assert.match(ledgerSource, /new Blob\(\[new TextEncoder\(\)\.encode\(csv\)\], \{ type: 'text\/csv;charset=utf-8' \}\)/);
+  assert.match(ledgerSource, /const blob = createLedgerCsvBlob\(csv\)/);
   assert.match(ledgerSource, /link\.download = ledgerDownloadFilename\(owner\)/);
-  assert.match(ledgerSource, /\.csv`/);
+  assert.ok(ledgerSource.includes("return `ledger-${safeOwner}-${localDateInputValue(date)}-utf8.csv`;"));
   assert.match(ledgerSource, /downloadLedgerButton\.disabled = false/);
 });

@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <link rel="stylesheet" href="../styles/ledger.css?v=ledger-download-1">
+    <link rel="stylesheet" href="../styles/ledger.css?v=ledger-download-2">
     <script type="module" src="../scripts/keyboard.mjs" defer></script>
     <script type="module" src="../scripts/admin.js?v=admin-modal-reentry-3" defer></script>
-    <script type="module" src="../scripts/ledger.js?v=ledger-csv-2" defer></script>
+    <script type="module" src="../scripts/ledger.js?v=ledger-csv-3" defer></script>
     <title>Employee Ledger · Timekeeper</title>
   </head>
   <body>
@@ -23,9 +23,10 @@
               <option value="">Choose an employee</option>
             </select>
           </label>
-          <button id="download-ledger-btn" class="download-ledger-btn" type="button" aria-label="Download ledger as CSV for Google Sheets or Excel" title="CSV opens in Google Sheets or Excel" disabled>Download CSV</button>
+          <button id="download-ledger-btn" class="download-ledger-btn" type="button" aria-label="Download ledger as UTF-8 CSV for Google Sheets or Excel" title="UTF-8 CSV; import as UTF-8 if characters display incorrectly" disabled>Download UTF-8 CSV</button>
         </div>
       </div>
+      <p class="ledger-csv-help">This file is UTF-8. If a file preview shows garbled characters, import it into your spreadsheet as UTF-8.</p>
     </section>
 
     <section class="ledger-add-actions" aria-label="Add ledger items">

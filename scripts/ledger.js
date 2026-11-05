@@ -116,6 +116,12 @@ function formatLedgerCsv({ owner, entries, total, totalHours }) {
     .join(','));
   return `\uFEFF${csvRows.join('\r\n')}\r\n`;
 }
+
+function createLedgerCsvBlob(csv) {
+  // Keep encoding at the byte boundary so the actual downloadable Blob is testable as UTF-8.
+  const bytes = new TextEncoder().encode(csv);
+  return new Blob([bytes], { type: 'text/csv;charset=utf-8' });
+}
 // END LEDGER CSV EXPORT HELPER
 
 function ledgerDownloadFilename(owner, date = new Date()) {
@@ -124,7 +130,8 @@ function ledgerDownloadFilename(owner, date = new Date()) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 48) || 'ledger';
-  return `ledger-${safeOwner}-${localDateInputValue(date)}.csv`;
+  // The suffix distinguishes a fresh UTF-8 download from an older same-day file.
+  return `ledger-${safeOwner}-${localDateInputValue(date)}-utf8.csv`;
 }
 
 function localDateInputValue(date = new Date()) {
@@ -439,8 +446,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       total,
       totalHours
     });
-    // Encode bytes explicitly so the UTF-8 BOM and any international text survive download unchanged.
-    const blob = new Blob([new TextEncoder().encode(csv)], { type: 'text/csv;charset=utf-8' });
+    // Keep the exported file UTF-8; spreadsheet import guidance explains how to handle viewers that ignore its BOM.
+    const blob = createLedgerCsvBlob(csv);
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
