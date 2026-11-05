@@ -44,7 +44,12 @@ export class Invoice {
   }
 
   totalBill() {
-    return invoiceTotal(this.items);
+    const tot = invoiceTotal(this.items);
+    // $75 minimum
+    if (tot < 75) {
+      return 75;
+    }
+    return tot;
   }
 }
 // INVOICE MODEL END
