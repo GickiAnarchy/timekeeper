@@ -30,46 +30,49 @@ function ledgerItemLabel(entry, shifts = []) {
 }
 // END LEDGER DISPLAY LABEL HELPER
 
-// LEDGER DOWNLOAD REPORT HELPER
-function formatLedgerReport({ owner, entries, total, totalHours, generatedOn }) {
-  const lines = [
-    'Employee Ledger',
-    `Ledger: ${owner}`,
-    `Generated: ${generatedOn}`,
-    '',
-    `Balance: $${total.toFixed(2)}`,
-    `Total hours: ${totalHours.toFixed(2)}`,
-    '',
-    'Entries',
-    '--------'
-  ];
-  if (!entries.length) {
-    lines.push('No entries.');
-  } else {
-    entries.forEach((entry, index) => {
-      const type = String(entry.type || '').toLowerCase();
-      const typeLabel = entry.sourceShiftId && type === 'normal'
-        ? 'Shift pay'
-        : type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Unspecified';
-      const amount = Number(entry.amount || 0);
-      const amountText = type === 'advance'
-        ? `-$${Math.abs(amount).toFixed(2)}`
-        : `$${amount.toFixed(2)}`;
-      lines.push(
-        `${index + 1}. ${entry.itemLabel}`,
-        `   Date: ${entry.date || 'Undated'}`,
-        `   Type: ${typeLabel}`,
-        `   Hours: ${Number(entry.hours || 0).toFixed(2)}`,
-        `   Amount: ${amountText}`,
-        `   Notes: ${entry.notes ? String(entry.notes).trim() : '—'}`,
-        ''
-      );
-    });
-    lines.pop();
-  }
-  return `${lines.join('\n')}\n`;
+// LEDGER CSV EXPORT HELPER
+function csvCell(value, protectFormula = false) {
+  const text = String(value ?? '');
+  // Prevent spreadsheet apps from treating user-entered text as a formula.
+  const safeText = protectFormula && /^[\u0000-\u0020]*[=+\-@]/.test(text) ? `'${text}` : text;
+  return `"${safeText.replaceAll('"', '""')}"`;
 }
-// END LEDGER DOWNLOAD REPORT HELPER
+
+function formatLedgerCsv({ owner, entries, total, totalHours }) {
+  const rows = [['Employee', 'Date', 'Item', 'Type', 'Hours', 'Amount ($)', 'Notes']];
+  for (const entry of entries) {
+    const type = String(entry.type || '').toLowerCase();
+    let typeLabel = 'Unspecified';
+    if (entry.sourceShiftId && type === 'normal') typeLabel = 'Shift pay';
+    else if (type === 'normal') typeLabel = 'Normal pay';
+    else if (type === 'advance') typeLabel = 'Advance';
+    else if (type === 'general') typeLabel = 'Other credit';
+    else if (type) typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
+
+    const amount = Number(entry.amount || 0);
+    const signedAmount = type === 'advance' ? -Math.abs(amount) : amount;
+    rows.push([
+      owner,
+      entry.date || '',
+      entry.itemLabel || 'Ledger item',
+      typeLabel,
+      Number(entry.hours || 0).toFixed(2),
+      signedAmount.toFixed(2),
+      String(entry.notes || '').trim()
+    ]);
+  }
+
+  // Keep a single rectangular table so it opens cleanly in Sheets and Excel.
+  rows.push(['', '', 'Balance', '', '', total.toFixed(2), '']);
+  rows.push(['', '', 'Total hours', '', totalHours.toFixed(2), '', '']);
+
+  // Quote every cell, use spreadsheet-friendly line endings, and add a BOM for Excel.
+  const csvRows = rows.map(row => row
+    .map((cell, index) => csvCell(cell, index !== 4 && index !== 5))
+    .join(','));
+  return `\uFEFF${csvRows.join('\r\n')}\r\n`;
+}
+// END LEDGER CSV EXPORT HELPER
 
 function ledgerDownloadFilename(owner, date = new Date()) {
   const safeOwner = String(owner || 'ledger')
@@ -77,7 +80,7 @@ function ledgerDownloadFilename(owner, date = new Date()) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 48) || 'ledger';
-  return `ledger-${safeOwner}-${localDateInputValue(date)}.txt`;
+  return `ledger-${safeOwner}-${localDateInputValue(date)}.csv`;
 }
 
 function localDateInputValue(date = new Date()) {
@@ -381,24 +384,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       return sum + (String(entry.type || '').toLowerCase() === 'advance' ? -amount : amount);
     }, 0);
     const totalHours = sumLedgerHours(entries);
-    const owner = ledgerOwner.textContent || 'Selected ledger';
-    const report = formatLedgerReport({
+    const owner = store.employees.get(ledgerFilter.value)?.name
+      || (ledgerFilter.value === 'unassigned' ? 'Unassigned legacy entries' : ledgerOwner.textContent || 'Selected ledger');
+    const csv = formatLedgerCsv({
       owner,
       entries: entries.map(entry => ({
         ...entry,
         itemLabel: ledgerItemLabel(entry, store.shifts)
       })),
       total,
-      totalHours,
-      generatedOn: new Date().toLocaleString()
+      totalHours
     });
-    const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = ledgerDownloadFilename(owner);
     link.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
 
   ledgerFilter.addEventListener('change', () => {
