@@ -44,12 +44,7 @@ export class Invoice {
   }
 
   totalBill() {
-    const tot = invoiceTotal(this.items);
-    // $75 minimum
-    if (tot < 75) {
-      return 75;
-    }
-    return tot;
+    return invoiceTotal(this.items);
   }
 }
 // INVOICE MODEL END
@@ -812,12 +807,6 @@ export class AppDataStore {
       date: invoice.date || null,
       shiftIds: Array.isArray(invoice.shiftIds) ? invoice.shiftIds : []
     });
-  }
-
-  // Use a field-level update for paid-state corrections so item lines and
-  // every other saved invoice field remain exactly as they were.
-  async updateInvoicePaidStatus(invoiceId, isPaid) {
-    await updateDoc(doc(db, 'invoices', invoiceId), { isPaid: Boolean(isPaid) });
   }
   
   async deleteInvoice(invoiceId) {

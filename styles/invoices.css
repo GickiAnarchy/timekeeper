@@ -7,13 +7,8 @@ body { padding: clamp(14px, 3vw, 26px); }
 .select-div select { width: 100%; min-height: 38px; padding: 7px 9px; font-size: 11px; }
 .invoice-actions, .item-btns { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
 .invoice-actions { grid-column: 1 / -1; }
-.invoice-actions button, .item-btns button, #mark-paid-btn, #mark-unpaid-btn, #submit-btn { min-height: 34px; padding: 0 11px; color: #fff; background: var(--green); font-size: 10px; font-weight: 700; }
-.invoice-actions button:hover, .item-btns button:hover, #mark-paid-btn:hover, #mark-unpaid-btn:hover, #submit-btn:hover { background: var(--green-deep); }
-#mark-unpaid-btn { color: var(--red); background: var(--red-soft); border: 1px solid var(--red); }
-#mark-unpaid-btn:hover { color: #fff; background: #b84e4e; }
-.paid-status-cell { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-.invoice-paid-label { color: var(--red); }
-.paid-status-error { flex: 1 0 100%; color: var(--red); font-size: 10px; }
+.invoice-actions button, .item-btns button, #mark-paid-btn, #submit-btn { min-height: 34px; padding: 0 11px; color: #fff; background: var(--green); font-size: 10px; font-weight: 700; }
+.invoice-actions button:hover, .item-btns button:hover, #mark-paid-btn:hover, #submit-btn:hover { background: var(--green-deep); }
 #delete-inv-btn, #remove-item-btn { color: var(--red); background: var(--red-soft); }
 #delete-inv-btn:hover, #remove-item-btn:hover { color: #fff; background: #b84e4e; }
 #edit-item-btn:disabled, #remove-item-btn:disabled { opacity: .58; cursor: not-allowed; }
@@ -107,5 +102,5 @@ body > main { width: min(100%, 1000px); margin: 0 auto; }
   .invoice-line-warning { font-size: 12px; }
   #inv-table tfoot tr, #inv-table tfoot td { display: block; width: 100%; }
   #inv-table tfoot td { padding: 11px 12px; font-size: 13px; }
-  #mark-paid-btn, #mark-unpaid-btn { min-height: 44px; font-size: 12px; }
+  #mark-paid-btn { min-height: 44px; font-size: 12px; }
 }

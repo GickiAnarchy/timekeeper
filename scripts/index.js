@@ -132,8 +132,7 @@ function applyTextScaleToDocument(doc, scale) {
   state.overrides.clear();
 
   if (scale > 1) {
-    // Scale body itself too, since direct body text inherits from this element.
-    const elements = [doc.documentElement, doc.body, ...doc.body.querySelectorAll('*')];
+    const elements = [doc.documentElement, ...doc.body.querySelectorAll('*')];
     const baseStyles = elements.map(element => {
       const computed = doc.defaultView.getComputedStyle(element);
       return { element, fontSize: Number.parseFloat(computed.fontSize), lineHeight: computed.lineHeight };

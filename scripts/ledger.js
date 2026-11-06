@@ -30,173 +30,6 @@ function ledgerItemLabel(entry, shifts = []) {
 }
 // END LEDGER DISPLAY LABEL HELPER
 
-// LEDGER CSV EXPORT HELPER
-const WINDOWS_1252_TO_BYTE = new Map([
-  ['€', 0x80], ['‚', 0x82], ['ƒ', 0x83], ['„', 0x84], ['…', 0x85], ['†', 0x86], ['‡', 0x87],
-  ['ˆ', 0x88], ['‰', 0x89], ['Š', 0x8A], ['‹', 0x8B], ['Œ', 0x8C], ['Ž', 0x8E], ['‘', 0x91],
-  ['’', 0x92], ['“', 0x93], ['”', 0x94], ['•', 0x95], ['–', 0x96], ['—', 0x97], ['˜', 0x98],
-  ['™', 0x99], ['š', 0x9A], ['›', 0x9B], ['œ', 0x9C], ['ž', 0x9E], ['Ÿ', 0x9F]
-]);
-
-function hasMojibakeMarker(text) {
-  return /(?:[ÃÂÐÑ][\u0080-\u00BF]|â(?:[\u0080-\u00BF]|[€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ])|ï»¿|ð[\u0080-\u00BF])/.test(text);
-}
-
-const MOJIBAKE_SEQUENCE = /(?:[ÃÂÐÑ][\u0080-\u00BF]|â[\u0080-\u00BF€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ]{1,2}|ï»¿|ð[\u0080-\u00BF])/g;
-
-function repairMojibake(text) {
-  if (!hasMojibakeMarker(text)) return text;
-  // Decode matching byte-like runs separately so real Unicode elsewhere stays untouched.
-  return text.replace(MOJIBAKE_SEQUENCE, sequence => {
-    try {
-      const bytes = [];
-      for (const character of sequence) {
-        const codePoint = character.codePointAt(0);
-        const byte = codePoint <= 0xFF ? codePoint : WINDOWS_1252_TO_BYTE.get(character);
-        if (byte === undefined) return sequence;
-        bytes.push(byte);
-      }
-      const repaired = new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes));
-      return hasMojibakeMarker(repaired) ? sequence : repaired;
-    } catch {
-      // Keep an incomplete or otherwise non-reversible sequence unchanged.
-      return sequence;
-    }
-  });
-}
-
-function normalizeCsvText(value) {
-  return repairMojibake(String(value ?? ''))
-    // Remove stray embedded BOMs and invisible spacing/format controls from saved text.
-    .replace(/[\uFEFF\u200B-\u200F\u202A-\u202E\u2060-\u2069]/g, '')
-    .replace(/\u00A0/g, ' ')
-    // Spreadsheet cells should not contain C0/C1 control bytes (newlines and tabs remain valid).
-    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '');
-}
-
-function csvCell(value, protectFormula = false) {
-  const text = normalizeCsvText(value);
-  // Prevent spreadsheet apps from treating user-entered text as a formula.
-  const safeText = protectFormula && /^[\u0000-\u0020]*[=+\-@]/.test(text) ? `'${text}` : text;
-  return `"${safeText.replaceAll('"', '""')}"`;
-}
-
-// One rectangular, typed representation keeps CSV and XLSX exports in lockstep.
-function buildLedgerRows({ owner, entries, total, totalHours }) {
-  const rows = [{ values: ['Employee', 'Date', 'Item', 'Type', 'Hours', 'Amount ($)', 'Notes'], types: ['text', 'text', 'text', 'text', 'text', 'text', 'text'] }];
-  for (const entry of entries) {
-    const type = String(entry.type || '').toLowerCase();
-    let typeLabel = 'Unspecified';
-    if (entry.sourceShiftId && type === 'normal') typeLabel = 'Shift pay';
-    else if (type === 'normal') typeLabel = 'Normal pay';
-    else if (type === 'advance') typeLabel = 'Advance';
-    else if (type === 'general') typeLabel = 'Other credit';
-    else if (type) typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
-    const amount = Number(entry.amount || 0);
-    const signedAmount = type === 'advance' ? -Math.abs(amount) : amount;
-    rows.push({
-      values: [owner, entry.date || '', entry.itemLabel || 'Ledger item', typeLabel, Number(entry.hours || 0), signedAmount, String(entry.notes || '').trim()],
-      types: ['text', 'text', 'text', 'text', 'number', 'number', 'text']
-    });
-  }
-  rows.push({ values: ['', '', 'Balance', '', '', total, ''], types: ['text', 'text', 'text', 'text', 'text', 'number', 'text'] });
-  rows.push({ values: ['', '', 'Total hours', '', totalHours, '', ''], types: ['text', 'text', 'text', 'text', 'number', 'text', 'text'] });
-  return rows;
-}
-
-function formatLedgerCsv(data) {
-  const rows = buildLedgerRows(data);
-  // Keep a single rectangular table so it opens cleanly in Sheets and Excel.
-  const csvRows = rows.map(row => row.values.map((cell, index) => {
-    const value = row.types[index] === 'number' ? Number(cell).toFixed(2) : cell;
-    return csvCell(value, index !== 4 && index !== 5);
-  }).join(','));
-  return `\uFEFF${csvRows.join('\r\n')}\r\n`;
-}
-
-function createLedgerCsvBlob(csv) {
-  // Keep encoding at the byte boundary so the actual downloadable Blob is testable as UTF-8.
-  const bytes = new TextEncoder().encode(csv);
-  return new Blob([bytes], { type: 'text/csv;charset=utf-8' });
-}
-
-function xmlText(value) {
-  // XML 1.0 excludes only these C0 controls plus noncharacters FFFE/FFFF; retain C1, bidi, NBSP, ZWJ, and genuine Unicode.
-  return String(value ?? '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
-}
-
-function crc32(bytes) {
-  let crc = 0xFFFFFFFF;
-  for (const byte of bytes) {
-    crc ^= byte;
-    for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ (crc & 1 ? 0xEDB88320 : 0);
-  }
-  return (crc ^ 0xFFFFFFFF) >>> 0;
-}
-
-function zipStored(files) {
-  const encoder = new TextEncoder();
-  const chunks = [];
-  const central = [];
-  let offset = 0;
-  for (const [name, content] of files) {
-    const nameBytes = encoder.encode(name);
-    const data = typeof content === 'string' ? encoder.encode(content) : content;
-    const crc = crc32(data);
-    const local = new Uint8Array(30 + nameBytes.length);
-    const view = new DataView(local.buffer);
-    // Store entries without compression so the browser and spreadsheet apps can consume this dependency-free OOXML ZIP.
-    view.setUint32(0, 0x04034B50, true); view.setUint16(4, 20, true); view.setUint16(6, 0x0800, true);
-    // Use a deterministic DOS timestamp (1980-01-01) and the full 32-bit CRC in both ZIP headers.
-    view.setUint16(10, 0x21, true); view.setUint16(12, 0x21, true); view.setUint32(14, crc, true); view.setUint32(18, data.length, true); view.setUint32(22, data.length, true);
-    view.setUint16(26, nameBytes.length, true); local.set(nameBytes, 30);
-    chunks.push(local, data);
-    const entry = new Uint8Array(46 + nameBytes.length); const entryView = new DataView(entry.buffer);
-    entryView.setUint32(0, 0x02014B50, true); entryView.setUint16(4, 20, true); entryView.setUint16(6, 20, true); entryView.setUint16(8, 0x0800, true);
-    entryView.setUint16(10, 0, true); entryView.setUint16(12, 0x21, true); entryView.setUint16(14, 0x21, true); entryView.setUint32(16, crc, true); entryView.setUint32(20, data.length, true); entryView.setUint32(24, data.length, true);
-    entryView.setUint16(28, nameBytes.length, true); entryView.setUint32(42, offset, true); entry.set(nameBytes, 46); central.push(entry);
-    offset += local.length + data.length;
-  }
-  const centralSize = central.reduce((sum, chunk) => sum + chunk.length, 0);
-  const end = new Uint8Array(22); const endView = new DataView(end.buffer);
-  endView.setUint32(0, 0x06054B50, true); endView.setUint16(8, files.length, true); endView.setUint16(10, files.length, true);
-  endView.setUint32(12, centralSize, true); endView.setUint32(16, offset, true);
-  return new Blob([...chunks, ...central, end], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-}
-
-function createLedgerWorkbookBlob(data) {
-  const rows = buildLedgerRows(data);
-  const sheetRows = rows.map((row, rowIndex) => `<row r="${rowIndex + 1}">${row.values.map((value, colIndex) => {
-    const ref = `${String.fromCharCode(65 + colIndex)}${rowIndex + 1}`;
-    if (row.types[colIndex] === 'number') return `<c r="${ref}" s="1"><v>${Number(value).toFixed(2)}</v></c>`;
-    const style = rowIndex === 0 ? ' s="2"' : '';
-    return `<c r="${ref}"${style} t="inlineStr"><is><t xml:space="preserve">${xmlText(value)}</t></is></c>`;
-  }).join('')}</row>`).join('');
-  const files = [
-    ['[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
-    ['_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
-    ['xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Employee Ledger" sheetId="1" r:id="rId1"/></sheets></workbook>'],
-    ['xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'],
-    // OOXML needs a Normal base style plus explicit cell XFs; alignment here makes headers and long notes readable in Sheets/Excel.
-    ['xl/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="0.00"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf><xf numFmtId="164" fontId="0" fillId="0" borderId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'],
-    ['xl/worksheets/sheet1.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0" tabSelected="1"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="24" customWidth="1"/><col min="2" max="2" width="13" customWidth="1"/><col min="3" max="4" width="18" customWidth="1"/><col min="5" max="6" width="14" customWidth="1"/><col min="7" max="7" width="48" customWidth="1"/></cols><sheetData>${sheetRows}</sheetData></worksheet>`]
-  ];
-  return zipStored(files);
-}
-// END LEDGER CSV EXPORT HELPER
-
-function ledgerDownloadFilename(owner, format = 'xlsx', date = new Date()) {
-  const safeOwner = String(owner || 'ledger')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 48) || 'ledger';
-  const suffix = format === 'csv' ? '-utf8.csv' : '.xlsx';
-  return `ledger-${safeOwner}-${localDateInputValue(date)}${suffix}`;
-}
-
 function localDateInputValue(date = new Date()) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -247,8 +80,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const mobileHours = document.getElementById('ledger-mobile-hours');
   const totalRow = document.getElementById('ledger-total');
   const hoursTotal = document.getElementById('ledger-hours-total');
-  const downloadLedgerButton = document.getElementById('download-ledger-btn');
-  const downloadFormat = document.getElementById('ledger-download-format');
   const ledgerTable = document.getElementById('ledger-table');
   const editDialog = document.getElementById('ledger-edit-modal');
   const editForm = document.getElementById('ledger-edit-form');
@@ -373,7 +204,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     mobileList.replaceChildren();
     const filterValue = ledgerFilter.value;
     if (!filterValue) {
-      downloadLedgerButton.disabled = true;
       mobileSummary.hidden = true;
       const row = document.createElement('tr');
       const message = makeCell('Choose an employee to view their ledger.');
@@ -394,7 +224,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       : `Ledger for ${employee?.name || 'this employee'}`;
 
     const entries = filteredEntries();
-    downloadLedgerButton.disabled = false;
     if (entries.length === 0) {
       const row = document.createElement('tr');
       const message = makeCell('No entries for this employee yet.');
@@ -490,41 +319,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     hoursTotal.innerHTML = `<strong>${totalHours.toFixed(2)}</strong>`;
     mobileHours.textContent = `${totalHours.toFixed(2)} h`;
   }
-
-  function updateDownloadButton() {
-    if (downloadLedgerButton) downloadLedgerButton.textContent = downloadFormat?.value === 'csv' ? 'Download CSV' : 'Download spreadsheet';
-  }
-
-  downloadFormat?.addEventListener('change', updateDownloadButton);
-  updateDownloadButton();
-
-  downloadLedgerButton.addEventListener('click', () => {
-    if (!ledgerFilter.value) return;
-    const entries = filteredEntries();
-    const total = entries.reduce((sum, entry) => {
-      const amount = Number(entry.amount || 0);
-      return sum + (String(entry.type || '').toLowerCase() === 'advance' ? -amount : amount);
-    }, 0);
-    const totalHours = sumLedgerHours(entries);
-    const owner = store.employees.get(ledgerFilter.value)?.name
-      || (ledgerFilter.value === 'unassigned' ? 'Unassigned legacy entries' : ledgerOwner.textContent || 'Selected ledger');
-    const exportData = {
-      owner,
-      entries: entries.map(entry => ({ ...entry, itemLabel: ledgerItemLabel(entry, store.shifts) })),
-      total,
-      totalHours
-    };
-    const format = downloadFormat?.value === 'csv' ? 'csv' : 'xlsx';
-    const blob = format === 'csv'
-      ? createLedgerCsvBlob(formatLedgerCsv(exportData))
-      : createLedgerWorkbookBlob(exportData);
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = ledgerDownloadFilename(owner, format);
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  });
 
   ledgerFilter.addEventListener('change', () => {
     if (store.employees.has(ledgerFilter.value)) employeeSelect.value = ledgerFilter.value;

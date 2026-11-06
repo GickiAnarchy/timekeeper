@@ -1,0 +1,47 @@
+/* Shared by the full schedule and Home; text labels carry meaning without color. */
+.urgency-week { --urgency-line: var(--green-line); --urgency-width: 2px; }
+.urgency-soon { --urgency-line: var(--amber); --urgency-width: 3px; }
+.urgency-tomorrow { --urgency-line: var(--amber); --urgency-width: 4px; --urgency-background: var(--amber-soft); }
+.urgency-today { --urgency-line: var(--red); --urgency-width: 5px; --urgency-background: var(--red-soft); }
+.urgency-overdue { --urgency-line: var(--red); --urgency-width: 6px; --urgency-background: var(--red-soft); }
+
+:is(.job-card, .planned-job-item)[class*="urgency-"] {
+  border-inline-start: var(--urgency-width, 0px) solid var(--urgency-line, transparent);
+  background: var(--urgency-background, var(--surface));
+}
+:is(.job-card, .planned-job-item)[class*="urgency-"]:hover {
+  background: var(--urgency-background, var(--surface-hover));
+}
+:is(.urgency-tbd, .urgency-complete) .urgency-label {
+  color: var(--muted);
+  background: var(--surface-muted);
+}
+.urgency-tbd .date-tile { color: var(--muted); background: var(--surface-muted); }
+.urgency-week .urgency-label { color: var(--green-deep); background: var(--green-soft); }
+:is(.urgency-soon, .urgency-tomorrow) .urgency-label { color: var(--ink); background: var(--amber-soft); }
+.urgency-tomorrow .urgency-label { border: 1px solid var(--amber); }
+:is(.urgency-today, .urgency-overdue) .urgency-label { color: var(--red); background: var(--surface); border: 1px solid var(--red); font-size: 10px; }
+.urgency-overdue .urgency-label { border-width: 2px; font-weight: 800; }
+:is(.urgency-today, .urgency-overdue) .date-tile { color: var(--red); background: var(--red-soft); border-color: var(--red); }
+.urgency-label { max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
+
+.planned-overdue-alert {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  color: var(--red);
+  background: var(--red-soft);
+  border: 1px solid var(--red);
+  border-inline-start-width: 6px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+.planned-overdue-alert[hidden] { display: none; }
+.urgency-guide { margin: 0 0 14px; color: var(--ink-soft); font-size: 11px; }
+
+@media (max-width: 520px) {
+  .planned-job-item[class*="urgency-"] { flex-wrap: wrap; }
+  .planned-job-item .job-copy { flex-basis: calc(100% - 80px); }
+  .planned-job-item .urgency-label { margin-inline-start: 68px; }
+}
