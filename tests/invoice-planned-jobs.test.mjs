@@ -152,3 +152,13 @@ test('shift completion prompts are explicit, deduplicated, and persist across no
   execFileSync(process.execPath, ['--check', join(projectRoot, 'scripts', 'planned.js')]);
   execFileSync(process.execPath, ['--check', join(projectRoot, 'scripts', 'pay-period-review.js')]);
 });
+
+// Imported modules are cached independently from their controller's HTML URL.
+test('restored invoice APIs and their controller have matching cache revisions', () => {
+  const source = readProjectFile('scripts', 'invoice.js');
+  const modelRevision = source.match(/from '\.\/models\.js\?v=([\w-]+)'/)?.[1];
+  const domainRevision = source.match(/from '\.\/domain\.mjs\?v=([\w-]+)'/)?.[1];
+  assert.ok(modelRevision, 'restored model API needs a fresh import URL');
+  assert.equal(domainRevision, modelRevision);
+  assert.ok(readProjectFile('html', 'invoice.html').includes(`invoice.js?v=${modelRevision}`));
+});

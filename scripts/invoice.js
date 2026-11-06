@@ -1,8 +1,10 @@
+// A version on this controller's HTML URL does not version its imports. Keep
+// restored invoice APIs cache-safe too, so old and new modules cannot be mixed.
 import {
   store,
   populateCustomerDropdowns,
   Invoice
-} from './models.js';
+} from './models.js?v=runtime-repair-5';
 import {
   invoiceShiftIds as getInvoiceShiftIds,
   makeShiftInvoiceLine,
@@ -11,7 +13,7 @@ import {
   groupInvoiceItemsByType,
   invoiceItemSignedValue,
   persistInvoicePaidStatus
-} from './domain.mjs';
+} from './domain.mjs?v=runtime-repair-5';
 import { initializeTableSorting, sortTableRows } from './table-sort.mjs';
 
 
