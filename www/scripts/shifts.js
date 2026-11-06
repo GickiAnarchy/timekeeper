@@ -386,7 +386,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     completeShifts.forEach(shift => {
       const item = makeElement('li', `shift-card${shift.isPaid ? ' is-paid' : ''}`);
       if (shift.isPaid) {
-        item.classList.append('paid-border');
+        // DOMTokenList exposes add(), not append(); append crashes before paid history can render.
+        item.classList.add('paid-border');
       }
       const date = makeElement('div', 'date-div');
       date.appendChild(makeElement('p', '', shift.clockInTime?.toLocaleDateString() || 'Unknown date'));

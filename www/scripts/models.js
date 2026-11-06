@@ -808,6 +808,12 @@ export class AppDataStore {
       shiftIds: Array.isArray(invoice.shiftIds) ? invoice.shiftIds : []
     });
   }
+
+  // Keep paid-state corrections field-scoped so reverting an invoice does not
+  // overwrite its item lines, customer, date, or linked-shift metadata.
+  async updateInvoicePaidStatus(invoiceId, isPaid) {
+    await updateDoc(doc(db, 'invoices', invoiceId), { isPaid: Boolean(isPaid) });
+  }
   
   async deleteInvoice(invoiceId) {
     await deleteDoc(doc(db, "invoices", invoiceId));

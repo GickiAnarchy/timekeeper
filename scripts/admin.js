@@ -1,6 +1,5 @@
-import { sendSettingsUpdate } from './settings.js';
-
-
+// Admin auth is shared by every page. Do not import the Settings page controller:
+// its DOM setup belongs only on Settings, and appearance must not control access.
 const FIREBASE_AUTH_MODULE_URL = 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 const ADMIN_ONLY_SELECTOR = '[data-admin-only]';
 export const DAILY_QUOTES_OWNER_UID = 'N9fh9kr98neSYBSNdyDHBZn9IGv1';
@@ -598,7 +597,6 @@ async function initializeAdminPage() {
       observeDailyQuotesAdminSession(user => {
         const activeAdmin = isDailyQuotesAdmin(user);
         adminControls.setAdmin(activeAdmin);
-        sendSettingsUpdate('admin');
         if (badge) badge.hidden = !activeAdmin;
       }, error => {
         console.warn('Unable to observe the owner session for admin-only controls.', error);

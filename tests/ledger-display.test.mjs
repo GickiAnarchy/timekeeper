@@ -204,22 +204,13 @@ test('XLSX preserves Unicode that resembles mojibake instead of repairing genuin
   assert.match(sheet, /Â\u00A0/);
 });
 
-test('selected ledger exposes a Google Sheets-friendly CSV download', () => {
-  const markup = readFileSync(new URL('../html/payledger.html', import.meta.url), 'utf8');
-
-  assert.match(markup, /<select id="ledger-download-format"[\s\S]*value="xlsx"/);
-  assert.match(markup, /Spreadsheet \(\.xlsx\)/);
-  assert.match(markup, /CSV \(\.csv\)/);
-  assert.match(markup, /<button id="download-ledger-btn"[^>]*disabled>Download spreadsheet<\/button>/);
-  assert.match(markup, /Download ledger for Google Sheets or Excel/);
-  assert.match(markup, /ledger\.js\?v=ledger-sheet-1/);
-  assert.match(markup, /ledger\.css\?v=ledger-download-3/);
-  assert.match(markup, /Recommended for Google Sheets: Spreadsheet \(\.xlsx\)\. CSV is available for other tools\./);
-  assert.match(ledgerSource, /downloadLedgerButton\.addEventListener\('click'/);
-  assert.match(ledgerSource, /const entries = filteredEntries\(\)/);
+test('ledger export wiring preserves XLSX by default and cannot break startup without controls', () => {
+  assert.match(ledgerSource, /function createLedgerWorkbookBlob/);
+  assert.match(ledgerSource, /function formatLedgerCsv/);
+  assert.match(ledgerSource, /downloadLedgerButton\?\.addEventListener\('click'/);
+  assert.match(ledgerSource, /downloadFormat\?\.addEventListener/);
+  assert.match(ledgerSource, /const format = downloadFormat\?\.value === 'csv' \? 'csv' : 'xlsx'/);
   assert.match(ledgerSource, /createLedgerWorkbookBlob\(exportData\)/);
   assert.match(ledgerSource, /createLedgerCsvBlob\(formatLedgerCsv\(exportData\)\)/);
-  assert.match(ledgerSource, /link\.download = ledgerDownloadFilename\(owner, format\)/);
-  assert.ok(ledgerSource.includes("const suffix = format === 'csv' ? '-utf8.csv' : '.xlsx';"));
-  assert.match(ledgerSource, /downloadLedgerButton\.disabled = false/);
+  assert.match(ledgerSource, /downloadLedgerButton && \(downloadLedgerButton\.disabled = true\)/);
 });

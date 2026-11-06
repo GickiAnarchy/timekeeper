@@ -9,7 +9,8 @@ import {
   shiftInvoiceLineStatus,
   shiftIsAttachedElsewhere,
   groupInvoiceItemsByType,
-  invoiceItemSignedValue
+  invoiceItemSignedValue,
+  persistInvoicePaidStatus
 } from './domain.mjs';
 import { initializeTableSorting, sortTableRows } from './table-sort.mjs';
 
@@ -416,6 +417,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     removeItemBtn.disabled = !hasSelectedItem;
   }
 
+  async function changePaidStatus(invoice, isPaid, button) {
+    const errorMessage = button.closest('td')?.querySelector('[data-paid-status-error]');
+    const originalLabel = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Saving…';
+    if (errorMessage) errorMessage.textContent = '';
+
+    try {
+      // Paid-state changes must not re-save invoice lines: those lines may contain
+      // an intentional snapshot/rate repricing that a full save could overwrite.
+      await persistInvoicePaidStatus(invoice, isPaid,
+        current => store.updateInvoicePaidStatus(current.id, current.isPaid));
+    } catch (error) {
+      console.error('Unable to update invoice paid status:', error);
+      button.disabled = false;
+      button.textContent = originalLabel;
+      if (errorMessage) errorMessage.textContent = 'Unable to update the paid status. Please try again.';
+      return;
+    }
+
+    renderInvoiceList(invoice.id);
+  }
+
+  function renderPaidStatus(invoice, invTable) {
+    if (!paidLabel) return;
+    paidLabel.replaceChildren();
+    if (invTable) invTable.classList.toggle('is-paid', Boolean(invoice.isPaid));
+
+    const cell = document.createElement('td');
+    cell.colSpan = 3;
+    cell.className = 'paid-status-cell';
+    if (invoice.isPaid) cell.appendChild(makeElement('strong', 'invoice-paid-label', 'PAID'));
+
+    const button = makeElement('button', 'invoice-paid-action', invoice.isPaid ? 'Mark Unpaid' : 'Mark Paid');
+    button.type = 'button';
+    button.id = invoice.isPaid ? 'mark-unpaid-btn' : 'mark-paid-btn';
+    button.addEventListener('click', () => changePaidStatus(invoice, !invoice.isPaid, button));
+
+    const errorMessage = makeElement('span', 'paid-status-error');
+    errorMessage.dataset.paidStatusError = '';
+    errorMessage.setAttribute('role', 'alert');
+    errorMessage.setAttribute('aria-live', 'polite');
+    cell.append(button, errorMessage);
+    paidLabel.appendChild(cell);
+  }
+
   function populateInvoiceDetails(invoice) {
       renderShiftLinks(invoice);
       try {
@@ -438,31 +485,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           totalCell.textContent = `Total: ${formatCurrency(invoice.totalBill())}`;
         }
     
-        if (paidLabel) {
-          if (invoice.isPaid) {
-            paidLabel.innerHTML = `<td colspan="3">PAID</td>`;
-            if (invTable) {
-              document.getElementById('inv-table').classList.add('is-paid');
-            }
-          } else {
-            paidLabel.innerHTML = `
-              <td colspan="3">
-                <button id="mark-paid-btn" type="button">Mark Paid</button>
-              </td>
-            `;
-            const markPaidBtn = paidLabel.querySelector('#mark-paid-btn');
-            if (markPaidBtn) {
-              markPaidBtn.addEventListener('click', async () => {
-                invoice.isPaid = true;
-                await store.saveInvoice(invoice);
-                renderInvoiceList(invoice.id);
-              }, { once: true });
-            }
-            if (invTable) {
-              invTable.classList.remove('is-paid');
-            }
-          }
-        }
+        renderPaidStatus(invoice, invTable);
       } catch (e) {
         console.log(`${e}`);
       }

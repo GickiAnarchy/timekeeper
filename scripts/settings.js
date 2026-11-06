@@ -36,14 +36,15 @@ function requestSettingsState() {
   window.parent.postMessage({ type: 'timekeeper-settings-request' }, window.location.origin);
 }
 
-function sendSettingsUpdate(themeArg = null) {
+function sendSettingsUpdate() {
+  // Native change listeners receive an Event, not a theme string. Always read
+  // the selected control, and keep appearance independent of the owner session.
   const theme = themeSelect?.value;
-  if (themeArg !== null) theme = themeArg;
-  if (themes.has(theme) || (themeArg === theme)) document.documentElement.dataset.theme = theme;
+  if (themes.has(theme)) document.documentElement.dataset.theme = theme;
   const selectedFontScale = fontScaleInputs.find(input => input.checked)?.value;
   if (window.parent === window) {
     try {
-      if (themes.has(theme) || (themeArg === theme)) window.localStorage.setItem(THEME_KEY, theme);
+      if (themes.has(theme)) window.localStorage.setItem(THEME_KEY, theme);
       if (selectedFontScale && fontScales.has(Number(selectedFontScale))) {
         window.localStorage.setItem(FONT_SCALE_KEY, String(Number(selectedFontScale)));
       }

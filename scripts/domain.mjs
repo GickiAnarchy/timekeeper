@@ -215,6 +215,27 @@ export function makeShiftLedgerEntryData(shift) {
   };
 }
 
+// Keep paid-status persistence isolated from invoice item data; restore the
+// exact prior flag when the focused Firestore write fails so the UI can retry.
+export async function persistInvoicePaidStatus(invoice, isPaid, persist) {
+  if (!invoice || typeof invoice !== 'object') throw new TypeError('An invoice is required.');
+  if (typeof persist !== 'function') throw new TypeError('A persistence function is required.');
+
+  const previousStatus = invoice.isPaid;
+  const nextStatus = Boolean(isPaid);
+  if (Boolean(previousStatus) === nextStatus) return invoice;
+
+  invoice.isPaid = nextStatus;
+  try {
+    await persist(invoice);
+    return invoice;
+  } catch (error) {
+    if (previousStatus === undefined) delete invoice.isPaid;
+    else invoice.isPaid = previousStatus;
+    throw error;
+  }
+}
+
 export function shiftInvoiceLineStatus(line, currentShift) {
   if (!currentShift) return 'missing';
   const recorded = line?.shiftSnapshot;

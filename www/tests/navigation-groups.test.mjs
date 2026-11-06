@@ -170,10 +170,10 @@ test('missing navigation roots are graceful', () => {
 
 test('index keeps nine main routes, omits People Data, and defines the three named navigation groups', () => {
   const html = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8');
-  const routes = [...html.matchAll(/data-page=["']([^"']+)["']/g)].map(match => match[1]);
+  const routes = [...html.matchAll(/data-page=["']([^"']+)["']/g)].map(match => match[1].split('?')[0]);
   assert.deepEqual(routes, ['html/home.html', 'html/clock.html', 'html/viewshifts.html', 'html/planned.html', 'html/pay-period-review.html', 'html/payledger.html', 'html/ledger-archive.html', 'html/invoice.html', 'html/settings.html']);
   assert.doesNotMatch(html, /data-page=["']html\/basic-data\.html["']/);
-  const classAttributes = [...html.matchAll(/class=["']([^"']+)["']/g)].map(match => match[1]);
+  const classAttributes = [...html.matchAll(/class=["']([^"']+)["']/g)].map(match => match[1].split('?')[0]);
   assert.equal(classAttributes.filter(value => value.split(/\s+/).includes('nav-group')).length, 3);
   assert.match(html, /Workspace/i); assert.match(html, /Manage/i); assert.match(html, /Preferences/i);
 });

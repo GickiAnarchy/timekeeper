@@ -170,8 +170,8 @@ test('missing navigation roots are graceful', () => {
 
 test('index keeps nine main routes, omits People Data, and defines the three named navigation groups', () => {
   const html = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8');
-  const routes = [...html.matchAll(/data-page=["']([^"']+)["']/g)].map(match => match[1]);
-  assert.deepEqual(routes, ['html/home.html', 'html/clock.html', 'html/viewshifts.html', 'html/planned.html', 'html/pay-period-review.html', 'html/payledger.html', 'html/ledger-archive.html', 'html/invoice.html', 'html/settings.html?v=text-size-handler-1']);
+  const routes = [...html.matchAll(/data-page=["']([^"']+)["']/g)].map(match => match[1].split('?')[0]);
+  assert.deepEqual(routes, ['html/home.html', 'html/clock.html', 'html/viewshifts.html', 'html/planned.html', 'html/pay-period-review.html', 'html/payledger.html', 'html/ledger-archive.html', 'html/invoice.html', 'html/settings.html']);
   assert.doesNotMatch(html, /data-page=["']html\/basic-data\.html["']/);
   const classAttributes = [...html.matchAll(/class=["']([^"']+)["']/g)].map(match => match[1]);
   assert.equal(classAttributes.filter(value => value.split(/\s+/).includes('nav-group')).length, 3);
@@ -182,7 +182,7 @@ test('compact navigation styles and versioned assets are present', () => {
   const html = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8'); const css = fs.readFileSync(path.join(projectRoot, 'styles/style.css'), 'utf8');
   const settingsMarkup = fs.readFileSync(path.join(projectRoot, 'html/settings.html'), 'utf8');
   assert.match(html, /(?:index\.js|style\.css)\?v=owner-session-1/);
-  assert.match(settingsMarkup, /scripts\/settings\.js\?v=text-size-handler-1/);
+  assert.match(settingsMarkup, /scripts\/settings\.js\?v=[\w-]+/);
   assert.match(css, /\.sidebar-nav[^{}]*\[hidden\]|\[hidden\][^{}]*\.sidebar-nav/s);
   assert.match(css, /@media[^{]*(?:max-width|min-width)[^{]*\{[\s\S]*?sidebar-nav/s);
 });

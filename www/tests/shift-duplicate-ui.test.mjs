@@ -160,6 +160,8 @@ test('duplicate UI requires a target, cancel does not write, and saves one unpai
   await boot(fixture);
   const list = fixture.document.getElementById('shiftList');
   assert.equal(list.children.length, 1);
+  const paidCard = list.children[0];
+  assert.equal(paidCard.className, 'shift-card is-paid paid-border', 'paid history should render with both paid-state classes');
   assert.equal(list.querySelector('.duplicate-btn').className, 'duplicate-btn');
   assert.equal(list.querySelector('.duplicate-btn').dataset.id, 'source-shift');
   assert.equal(list.listeners.get('click').length, 1);
