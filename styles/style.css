@@ -398,6 +398,17 @@ body.app-body.keyboard-open {
   min-width: 0;
 }
 
+
+.welcome-dialog::backdrop {
+  background-color: hsl(0 0% 0% / .5);
+  backdrop-filter: blur(4px);
+}
+
+.welcome-dialog {
+  justify-content: center;
+  align-items: center;
+}
+
 /* Home screen inside the workspace frame */
 .home-body {
   display: grid;
