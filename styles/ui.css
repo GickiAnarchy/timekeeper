@@ -1,0 +1,20 @@
+:root {
+    --ml-green: #56bd49;
+    --ml-green-soft: #98c492;
+    --canvas: #0e0e0f;
+    --surface: #989797;
+    --border: #c8d207;
+    --border-soft: #9fa623;
+    --shadow: 0 12px 32px rgba(93, 255, 71, 0.433);
+}
+
+
+/*
+@font-face {
+  font-family: 'Sapoe';
+  src: url('../fonts/Sapoe-Regular.otf') format('otf');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+*/

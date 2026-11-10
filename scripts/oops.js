@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const noticeModal = document.getElementById('notice-popover');
   const okButton = document.getElementById('ok-btn');
   
-  
+  noticeModal.showPopover();
   
   okButton.addEventListener('click', () => {
     noticeModal.hidePopover();

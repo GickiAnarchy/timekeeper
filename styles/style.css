@@ -1,17 +1,22 @@
+@import url('./ui.css');
 
+.notice-popover:hidden {
+  display: none;
+}
 
 .notice-popover {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  padding: 10px;
   max-width: 60%;
   height: 30%;
   text-align: center;
 }
 
 .notice-popover::backdrop {
-  background-color: hsl(0 0% 0% / .5);
+  background-color: hsl(0 0% 0% / .3);
   backdrop-filter: blur(4px);
 }
 
