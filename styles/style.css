@@ -1,13 +1,11 @@
 @import url('./ui.css');
 
-html {
-  
-}
+html {}
 
-body-div {
+body {
   background-color: black;
   background-image: url('../brb.png');
-  background-size: 50%;
+  background-size: 100%;
   background-repeat: no-repeat;
   background-position: center center;
   background-size: contain;
@@ -26,6 +24,7 @@ body-div {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  /*border: solid 5px var(--border);*/
   padding: 10px;
   max-width: 60%;
   height: 30%;
@@ -36,3 +35,15 @@ body-div {
   background-color: hsl(0 0% 0% / .3);
   backdrop-filter: blur(4px);
 }
+
+footer {
+  color: var(--ml-green);
+  display: fixed;
+}
+/*.small-print {
+  color: var(--ml-green-soft);
+  display: fixed;
+  
+  bottom: 15px;
+  text-align: center;
+}*/
