@@ -3,9 +3,9 @@
     --ml-green-soft: #98c492;
     --canvas: #0e0e0f;
     --surface: #989797;
-    --border: #c8d207;
+    --border: radial-gradient(90deg, #D23D07. #86CB5C, #0ACFBB) solid 5px;
     --border-soft: #9fa623;
-    --shadow: 0 12px 32px rgba(93, 255, 71, 0.433);
+    --shadow: 3px 4px 20px rgba(80, 231, 60, 0.8);
 }
 
 

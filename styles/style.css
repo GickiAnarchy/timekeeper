@@ -1,5 +1,10 @@
 @import url('./ui.css');
 
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
 .notice-popover:hidden {
   display: none;
 }
@@ -21,19 +26,21 @@
 }
 
 .img-div {
+  display: flex;
   justify-content: center;
   align-items: center;
-  place-items: center;
   overflow: hidden;
-  width: 50%;
-  height: 50%;
+  width: 100%;
+  height: 100vh; /* Gives the container full viewport height so vertical centering works */
 }
 
 .big-img {
-  border: solid 2px red;
-  height: 100%;
-  width: 100%;
+  display: block; /* Removes inline spacing gaps */
+  border: var(--border);
+  border-radius: 60%;
+  box-shadow: var(--shadow);
+  max-width: 75%;  /* Ensures responsiveness without breaking layout */
+  max-height: 50vh;
   object-fit: cover;
+  object-position: 50% 50%;
 }
-
-
