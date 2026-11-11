@@ -12,13 +12,13 @@ body {
   height: 50vh;
   margin: 0;
   
-  animation: drunkenBgPan 14s ease-in-out infinite alternate;
+  animation: drunkenBgPan 11s ease-in-out infinite alternate;
 }
 
 /* Freeze the background movement when hovering anywhere on the page */
-body:hover {
+/*body:hover {
   animation-play-state: paused;
-}
+}*/
 
 @keyframes drunkenBgPan {
   0% {
