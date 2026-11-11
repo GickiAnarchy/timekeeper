@@ -1,7 +1,19 @@
 @import url('./ui.css');
 
-html, body {
-  height: 100%;
+html {
+  
+}
+
+body-div {
+  background-color: black;
+  background-image: url('../brb.png');
+  background-size: 50%;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: contain;
+  background-attachment: fixed;
+  background-color: #000000;
+  height: 100vh;
   margin: 0;
 }
 
@@ -23,24 +35,4 @@ html, body {
 .notice-popover::backdrop {
   background-color: hsl(0 0% 0% / .3);
   backdrop-filter: blur(4px);
-}
-
-.img-div {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-  width: 100%;
-  height: 100vh; /* Gives the container full viewport height so vertical centering works */
-}
-
-.big-img {
-  display: block; /* Removes inline spacing gaps */
-  border: var(--border);
-  border-radius: 60%;
-  box-shadow: var(--shadow);
-  max-width: 75%;  /* Ensures responsiveness without breaking layout */
-  max-height: 50vh;
-  object-fit: cover;
-  object-position: 50% 50%;
 }
