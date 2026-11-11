@@ -1,0 +1,63 @@
+@import url('./ui.css');
+
+html {}
+
+body {
+  background-color: #000000;
+  background-image: url('../brb.png');
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: 50% 50%;
+  background-size: 75% auto; /* Gives your contained logo/graphic room to drift without distortion */
+  height: 50vh;
+  margin: 0;
+  
+  animation: drunkenBgPan 14s ease-in-out infinite alternate;
+}
+
+/* Freeze the background movement when hovering anywhere on the page */
+body:hover {
+  animation-play-state: paused;
+}
+
+@keyframes drunkenBgPan {
+  0% {
+    background-position: 50% 50%;
+    background-size: 65% auto;
+  }
+  18% {
+    background-position: 30% 48%;
+    background-size: 71% auto;
+  }
+  37% {
+    background-position: 60% 40%;
+    background-size: 72% auto;
+  }
+  58% {
+    background-position: 40% 35%;
+    background-size: 68% auto;
+  }
+  79% {
+    background-position: 60% 27%;
+    background-size: 74% auto;
+  }
+  100% {
+    background-position: 40% 55%;
+    background-size: 70% auto;
+  }
+}
+
+.spacer-div {
+  display: block;
+  width: 100%;
+  height: 95%;
+}
+
+.small-print {
+  color: var(--ml-green-soft);
+  display: flex;
+  position: absolute;
+  justify-self: center;
+  bottom: 15px;
+  text-align: center;
+}
