@@ -101,6 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const paidHours = document.getElementById('paid-hours');
   const noteView = document.getElementById('note-view');
   const paidBox = document.getElementById('paid-checkbox-view');
+  const notWorkBox = document.getElementById('not-work-checkbox');
   const breaksList = document.getElementById('breaks-list');
   const formError = document.getElementById('shift-form-error');
   const okBtn = document.getElementById('ok-btn');
@@ -240,6 +241,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     timeOut.value = formatForDateTimeLocal(shift.clockOutTime);
     noteView.value = shift.note || '';
     paidBox.checked = Boolean(shift.isPaid);
+    notWorkBox.checked = Boolean(shift.isNotWork);
     paidHours.value = Number.isFinite(shift.paidHours) ? String(shift.paidHours) : '';
     breaksList.replaceChildren();
     shift.breaks.forEach(breakItem => addBreakRow(breakItem));
@@ -309,6 +311,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         activeShift.clockOutTime = end;
         activeShift.note = noteView.value.trim() || null;
         activeShift.isPaid = paidBox.checked;
+        activeShift.isNotWork = notWorkBox.checked;
         activeShift.breaks = breaks;
         activeShift.paidHours = paidHoursValue;
         await store.saveShift(activeShift);
@@ -325,7 +328,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           noteView.value,
           paidBox.checked,
           breaks,
-          paidHoursValue
+          paidHoursValue,
+          notWorkBox.checked
         );
         completedNow = !wasComplete && activeShift.isComplete;
       }

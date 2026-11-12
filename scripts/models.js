@@ -232,7 +232,7 @@ export class Customer {
 }
 
 export class WorkShift {
-  constructor(employee, customer, id = null, note = null, isPaid = false, breaks = [], paidHours = null) {
+  constructor(employee, customer, id = null, note = null, isPaid = false, breaks = [], paidHours = null, isNotWork = false) {
     this.id = id || crypto.randomUUID();
     this.employee = employee;
     this.customer = customer;
@@ -241,6 +241,7 @@ export class WorkShift {
     this.breaks = breaks;
     this.note = note;
     this.isPaid = isPaid;
+    this.isNotWork = isNotWork;
     this.paidHours = paidHours === null || paidHours === undefined || paidHours === '' ?
       null :
       Number(paidHours);
@@ -302,6 +303,13 @@ export class WorkShift {
     return Boolean(this.clockInTime && this.clockOutTime);
   }
   
+  markIsNotWork() {
+    if (!this.isNotWork) {
+      this.isPaid = false;
+      this.isNotWork = true;
+    }
+  }
+  
   duplicateFor(employee) {
     if (!employee?.id || employee.id === this.employee?.id) {
       throw new Error('Choose a different employee for the duplicate shift.');
@@ -322,16 +330,17 @@ export class WorkShift {
   }
 
   getHoursWorked() {
-    if (!this.isComplete) return 0;
+    if (!this.isComplete || this.isNotWork) return 0;
     return actualShiftHours(this.clockInTime, this.clockOutTime, this.breaks);
   }
   
   getPaidHours() {
+    if (this.isNotWork) return 0;
     return Number.isFinite(this.paidHours) ? this.paidHours : this.getHoursWorked();
   }
   
   getShiftPay() {
-    if (this.isPaid) return 0;
+    if (this.isPaid || this.isNotWork) return 0;
     return this.employee ? this.employee.getPay(this.getPaidHours()) : 0;
   }
 }
@@ -1018,7 +1027,7 @@ export class AppDataStore {
         const site = (this.customers && this.customers.get(data.custId)) || new Customer(data.custId, 'Unknown Site');
         const parsedBreaks = (data.breaks || []).map(b => ({ start: b.start ? new Date(b.start) : null, end: b.end ? new Date(b.end) : null }));
         
-        const shift = new WorkShift(emp, site, docSnap.id, data.note || null, data.isPaid, parsedBreaks, data.paidHours);
+        const shift = new WorkShift(emp, site, docSnap.id, data.note || null, data.isPaid, parsedBreaks, data.paidHours, data.isNotWork);
         
         shift.clockInTime = data.clockInTime ? new Date(data.clockInTime) : null;
         shift.clockOutTime = data.clockOutTime ? new Date(data.clockOutTime) : null;
@@ -1047,7 +1056,8 @@ export class AppDataStore {
       isPaid: shift.isPaid || false,
       breaks: formattedBreaks,
       paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null,
-      plannedJobsPrompted: Boolean(shift.plannedJobsPrompted)
+      plannedJobsPrompted: Boolean(shift.plannedJobsPrompted),
+      isNotWork: shift.isNotWork || false
     });
   }
   
@@ -1071,6 +1081,7 @@ export class AppDataStore {
         isPaid: Boolean(shift.isPaid),
         breaks: formattedBreaks,
         paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null,
+        isNotWork: shift.isNotWork || false,
         plannedJobsPrompted: Boolean(shift.plannedJobsPrompted)
       });
     });
@@ -1128,6 +1139,7 @@ export class AppDataStore {
       clockOutTime: end.toISOString(),
       note: note ? String(note).trim() : null,
       isPaid: Boolean(isPaid),
+      isNotWork: Boolean(isNotWork) || false,
       breaks: normalizedBreaks.map(b => ({ start: b.start.toISOString(), end: b.end.toISOString() })),
       paidHours: nextPaidHours,
       plannedJobsPrompted: Boolean(shift.plannedJobsPrompted)
