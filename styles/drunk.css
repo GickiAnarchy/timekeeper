@@ -12,7 +12,7 @@ body {
   height: 50vh;
   margin: 0;
   
-  animation: drunkenBgPan 11s ease-in-out infinite alternate;
+  animation: drunkenBgPan 15s ease-in-out infinite alternate;
 }
 
 /* Freeze the background movement when hovering anywhere on the page */
@@ -21,29 +21,35 @@ body {
 }*/
 
 @keyframes drunkenBgPan {
-  0% {
+  0%, 12% {
     background-position: 50% 50%;
     background-size: 65% auto;
+    filter: blur(0px);
   }
-  18% {
+  24% {
     background-position: 30% 48%;
     background-size: 71% auto;
+    filter: blur(2px);
   }
   37% {
     background-position: 60% 40%;
     background-size: 72% auto;
+    filter: blur(1px);
   }
   58% {
     background-position: 40% 35%;
     background-size: 68% auto;
+    filter: blur(0px);
   }
   79% {
     background-position: 60% 27%;
     background-size: 74% auto;
+    filter: blur(5px) sepia(0.5);
   }
   100% {
     background-position: 40% 55%;
     background-size: 70% auto;
+    filter: blur(2px) sepia(1);
   }
 }
 
@@ -54,7 +60,7 @@ body {
 }
 
 .small-print {
-  color: var(--ml-green-soft);
+  color: var(--green);
   display: flex;
   position: absolute;
   justify-self: center;
