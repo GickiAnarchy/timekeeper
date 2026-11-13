@@ -127,6 +127,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   empFilter.addEventListener('change', renderList);
   custFilter.addEventListener('change', renderList);
   paidCheckbox.addEventListener('change', renderList);
+  notWorkBox.addEventListener('change', () => {
+    if (activeShift) {
+      activeShift.isNotWork = notWorkBox.checked;
+    }
+    paidBox.checked = !notWorkBox.checked;
+    paidBox.disabled = notWorkBox.checked;
+    addBreakButton.disabled = notWorkBox.checked;
+  });
 
   addButton.addEventListener('click', () => {
     const employeeId = empFilter.value;
@@ -264,13 +272,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       formError.textContent = 'Choose a different employee for the duplicate shift.';
       return;
     }
-    if (!timeIn.value || !timeOut.value) {
-      formError.textContent = 'Enter both the actual shift start and end times.';
+
+    let start = undefined;
+    let end = undefined;
+
+    if (!notWorkBox.checked && (timeIn.value && timeOut.value)) {
+      start = new Date(timeIn.value);
+      end = new Date(timeOut.value);
+    } else if (notWorkBox.checked && (timeIn.value)) {
+      start = new Date(timeIn.value);
+      end = new Date(timeIn.value);
+    } else if (!timeIn.value && !timeOut.value) {
+      formError.textContent = 'Need at least Time In. Time Out is optional for a non-work shift, but both are required for a work shift.';
       return;
     }
-    const start = new Date(timeIn.value);
-    const end = new Date(timeOut.value);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+
+    if ((Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) && !notWorkBox.checked) {
       formError.textContent = 'The shift end must be after its start.';
       return;
     }
@@ -392,6 +409,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (shift.isPaid) {
         // DOMTokenList exposes add(), not append(); append crashes before paid history can render.
         item.classList.add('paid-border');
+      }
+      if (shift.isNotWork) {
+        item.classList.add('not-work-border');
       }
       const date = makeElement('div', 'date-div');
       date.appendChild(makeElement('p', '', shift.clockInTime?.toLocaleDateString() || 'Unknown date'));

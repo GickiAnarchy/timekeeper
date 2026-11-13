@@ -1093,7 +1093,7 @@ export class AppDataStore {
     this.shifts = this.shifts.filter(s => s.id !== shiftId);
   }
   
-  async updateShift(shiftId, employee, customer, clockInTime, clockOutTime, note = null, isPaid = false, breaks = null, paidHours = undefined) {
+  async updateShift(shiftId, employee, customer, clockInTime, clockOutTime, note = null, isPaid = false, breaks = null, paidHours = undefined, isNotWork = false) {
     const shift = this.shifts.find(s => s.id === shiftId);
     if (!shift) throw new Error("Shift could not be found.");
     if (!employee || !customer) throw new Error("Please select an employee and customer.");
@@ -1151,6 +1151,7 @@ export class AppDataStore {
     shift.clockOutTime = end;
     shift.note = note ? String(note).trim() : null;
     shift.isPaid = Boolean(isPaid);
+    shift.isNotWork = Boolean(isNotWork) || false;
     shift.breaks = normalizedBreaks;
     shift.paidHours = nextPaidHours;
     return shift;
