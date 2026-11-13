@@ -377,6 +377,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     activeShift = null;
     modal.close();
   });
+  
   modal.addEventListener('close', () => {
     resetShiftDialogViewport(modal);
     activeShift = null;
