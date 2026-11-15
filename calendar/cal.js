@@ -1,3 +1,11 @@
+function getYearAndMonth(date) {
+  const year = date.getFullYear();
+  const month = date.getMonth(); // Current month (0-11)
+  return {
+    "year":year,
+    "month":month
+    };
+}
 
 function getDaysInMonth(year, month) {
   return new Date(year, month + 1, 0).getDate();
