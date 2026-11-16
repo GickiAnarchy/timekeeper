@@ -9,9 +9,11 @@ import {
   roundDown15Minutes,
   roundTo15Minutes,
   roundUp15Minutes,
+  planLedgerEntryDeletion,
   sortLedgerEntriesByDate,
   sortTableRows,
   sumLedgerHours,
+  validateShiftTimeRange,
   shiftInvoiceLineStatus,
   shiftIsAttachedElsewhere,
   repriceInvoiceShiftItems,
@@ -73,6 +75,33 @@ test('ledger balances are calculated in integer cents using existing credit and 
     { type: 'normal', amount: 0.1 },
     { type: 'advance', amount: 0.09 }
   ]), 1);
+});
+
+test('saved non-work shifts may use equal times while work shifts still need positive duration', () => {
+  const sameTime = date('2026-10-09T09:00:00Z');
+  const validated = validateShiftTimeRange(sameTime, sameTime, true);
+  assert.equal(validated.start.getTime(), sameTime.getTime());
+  assert.equal(validated.end.getTime(), sameTime.getTime());
+  assert.throws(() => validateShiftTimeRange(sameTime, sameTime, false), /End time must be after start time/);
+  assert.throws(() => validateShiftTimeRange('2026-10-09T10:00:00Z', sameTime, true), /End time must be after start time/);
+  assert.throws(() => validateShiftTimeRange(null, sameTime, true), /valid start and end times/);
+});
+
+test('ledger deletion planning renumbers only the affected employee without mutating saved rows', () => {
+  const entries = [
+    { id: 'first', employeeId: 'employee-1', index: 1 },
+    { id: 'other-employee', employeeId: 'employee-2', index: 1 },
+    { id: 'removed', employeeId: 'employee-1', index: 2 },
+    { id: 'last', employeeId: 'employee-1', index: 3 }
+  ];
+  const plan = planLedgerEntryDeletion(entries, 'removed');
+
+  assert.equal(plan.entry.id, 'removed');
+  assert.deepEqual(plan.affectedEntries.map(({ entry, index }) => [entry.id, index]), [
+    ['first', 1], ['last', 2]
+  ]);
+  assert.deepEqual(entries.map(entry => entry.index), [1, 1, 2, 3]);
+  assert.equal(planLedgerEntryDeletion(entries, 'missing'), null);
 });
 
 test('completed shifts can be converted to payroll ledger entries without changing the source shift', () => {

@@ -106,6 +106,33 @@ test('employee ledger can add completed shifts and offer adjustments to the new 
   assert.match(domain, /sourceShiftId: String\(shiftId\)/);
 });
 
+test('shift edits allow equal times only for non-work records and retain strict work validation', () => {
+  const model = readProjectFile('scripts', 'models.js');
+  const domain = readProjectFile('scripts', 'domain.mjs');
+  const shiftScript = readProjectFile('scripts', 'shifts.js');
+  const updateShift = model.slice(model.indexOf('async updateShift('), model.indexOf('async markShiftPlannedJobsPrompted'));
+
+  assert.match(updateShift, /validateShiftTimeRange\(clockInTime, clockOutTime, isNotWork\)/);
+  assert.match(updateShift, /isNotWork: Boolean\(isNotWork\)/);
+  assert.match(domain, /if \(end\.getTime\(\) < start\.getTime\(\) \|\| \(!isNotWork && end\.getTime\(\) === start\.getTime\(\)\)\)/);
+  assert.match(shiftScript, /end <= start\) && !notWorkBox\.checked/);
+});
+
+test('ledger deletion and reindexing share one guarded Firestore batch before local mutation', () => {
+  const model = readProjectFile('scripts', 'models.js');
+  const deletion = model.slice(model.indexOf('async deleteLedgerEntry('), model.indexOf('// INVOICE --'));
+  const commitPosition = deletion.indexOf('await commitBatch(batch');
+  const localMutationPosition = deletion.indexOf('this.ledger.deleteEntry(entryId)');
+
+  assert.match(deletion, /planLedgerEntryDeletion\(this\.ledger\.entries, entryId\)/);
+  assert.match(deletion, /affectedEntries\.length \+ 1 > 500/);
+  assert.match(deletion, /batch\.delete\(doc\(db, "ledgerRows", entryId\)\)/);
+  assert.match(deletion, /batch\.update\(ref, \{ index \}\)/);
+  assert.equal((deletion.match(/await commitBatch\(batch/g) || []).length, 1);
+  assert.ok(commitPosition >= 0 && localMutationPosition > commitPosition, 'local state should change only after the atomic Firestore commit');
+  assert.doesNotMatch(deletion, /await deleteDoc/);
+});
+
 test('settled employee ledgers are archived and browsable without losing backup coverage', () => {
   const shell = readProjectFile('index.html');
   const archiveMarkup = readProjectFile('html', 'ledger-archive.html');

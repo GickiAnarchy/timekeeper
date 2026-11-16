@@ -34,6 +34,28 @@ export function ledgerBalanceCents(entries = []) {
   }, 0);
 }
 
+export function validateShiftTimeRange(clockInTime, clockOutTime, isNotWork = false) {
+  const start = asValidDate(clockInTime);
+  const end = asValidDate(clockOutTime);
+  if (!start || !end) throw new Error('Please provide valid start and end times.');
+  // Non-work records may use one timestamp for both fields, but never reversed times.
+  if (end.getTime() < start.getTime() || (!isNotWork && end.getTime() === start.getTime())) {
+    throw new Error('End time must be after start time.');
+  }
+  return { start, end };
+}
+
+export function planLedgerEntryDeletion(entries = [], entryId) {
+  const source = Array.isArray(entries) ? entries : [];
+  const entry = source.find(candidate => candidate.id === entryId);
+  if (!entry) return null;
+  const employeeId = entry.employeeId || null;
+  const affectedEntries = source
+    .filter(candidate => candidate.id !== entryId && (candidate.employeeId || null) === employeeId)
+    .map((candidate, index) => ({ entry: candidate, index: index + 1 }));
+  return { entry, employeeId, affectedEntries };
+}
+
 export function sortTableRows(rows = [], { key, direction = 'ascending', type = 'text', getValue = row => row?.[key] } = {}) {
   const source = Array.isArray(rows) ? rows : [];
   if (!key || !['ascending', 'descending'].includes(direction)) return [...source];

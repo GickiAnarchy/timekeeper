@@ -7,7 +7,9 @@ import {
   shiftIsAttachedElsewhere,
   makeShiftLedgerEntryData,
   ledgerBalanceCents,
+  planLedgerEntryDeletion,
   repriceInvoiceShiftItems,
+  validateShiftTimeRange,
   createInvoiceItem,
   invoiceTotal
 } from './domain.mjs';
@@ -749,23 +751,24 @@ export class AppDataStore {
   
   async deleteLedgerEntry(entryId) {
     await this.resumePendingLedgerArchives();
-    const entry = this.ledger.getEntry(entryId);
-    if (!entry) return;
-    const employeeId = entry.employeeId;
+    const plan = planLedgerEntryDeletion(this.ledger.entries, entryId);
+    if (!plan) return;
+    const { employeeId, affectedEntries } = plan;
     const previousBalanceCents = ledgerBalanceCents(this.ledger.entries.filter(candidate => candidate.employeeId === employeeId));
-    const isDeleted = this.ledger.deleteEntry(entryId);
-    if (!isDeleted) return;
-    
-    await deleteDoc(doc(db, "ledgerRows", entryId));
-    
-    // Batch update updated index numbers in Firestore efficiently
+
+    // Firestore batches are limited to 500 writes; fail before changing anything if atomic reindexing will not fit.
+    if (affectedEntries.length + 1 > 500) {
+      throw new Error('This ledger has too many entries to safely reindex in one atomic delete. No changes were saved.');
+    }
     const batch = writeBatch(db);
-    const affectedEntries = this.ledger.entries.filter(candidate => candidate.employeeId === (entry.employeeId || null));
-    affectedEntries.forEach((candidate) => {
+    batch.delete(doc(db, "ledgerRows", entryId));
+    affectedEntries.forEach(({ entry: candidate, index }) => {
       const ref = doc(db, "ledgerRows", candidate.id);
-      batch.update(ref, { index: candidate.index });
+      batch.update(ref, { index });
     });
-    if (affectedEntries.length) await commitBatch(batch);
+    // Delete and reindex together, then update memory only after the atomic commit succeeds.
+    await commitBatch(batch, 'Deleting a ledger entry and updating its indexes failed.');
+    this.ledger.deleteEntry(entryId);
     try {
       await this.archiveLedgerIfSettled(employeeId, previousBalanceCents);
     } catch (error) {
@@ -1098,14 +1101,8 @@ export class AppDataStore {
     if (!shift) throw new Error("Shift could not be found.");
     if (!employee || !customer) throw new Error("Please select an employee and customer.");
     
-    const start = clockInTime instanceof Date ? clockInTime : new Date(clockInTime);
-    const end = clockOutTime instanceof Date ? clockOutTime : new Date(clockOutTime);
+    const { start, end } = validateShiftTimeRange(clockInTime, clockOutTime, isNotWork);
     const sourceBreaks = Array.isArray(breaks) ? breaks : shift.breaks;
-    
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      throw new Error("Please provide valid start and end times.");
-    }
-    if (end <= start) throw new Error("End time must be after start time.");
     
     const normalizedBreaks = sourceBreaks.map((breakItem, index) => {
       const breakStart = breakItem.start instanceof Date ? breakItem.start : new Date(breakItem.start);
