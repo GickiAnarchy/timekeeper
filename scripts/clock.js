@@ -3,10 +3,10 @@ import {
   store, 
   WorkShift, 
   roundTo15Minutes,
-  populateEmployeeDropdowns, 
   populateCustomerDropdowns 
 } from './models.js';
 import { promptForCompletedPlannedJobs } from './planned.js';
+import { employeeSelectionLabel, selectedEmployeeIds } from './employee-picker.mjs';
 
 function formatBreakDuration(milliseconds) {
   const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
@@ -30,7 +30,8 @@ function makeElement(tag, className = '', text = undefined) {
 document.addEventListener('DOMContentLoaded', async () => {
   await store.init();
   
-  const eDd = document.getElementById('emp-select');
+  const employeeOptions = document.getElementById('employee-options');
+  const employeeSelectionCount = document.getElementById('employee-selection-count');
   const cDd = document.getElementById('cust-select');
   const clockInButton = document.getElementById('clock-in-button');
   const activeShiftsList = document.getElementById('activeShiftsList');
@@ -108,16 +109,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
   
-  if (eDd || cDd) {
-    populateEmployeeDropdowns(eDd);
+  if (employeeOptions) {
+    const employees = [...store.employees.values()].sort((first, second) =>
+      (first.name || '').localeCompare(second.name || '', undefined, { sensitivity: 'base' })
+    );
+    if (employees.length === 0) {
+      employeeOptions.appendChild(makeElement('p', 'employee-picker-empty', 'No employees are available.'));
+    } else {
+      employees.forEach(employee => {
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.name = 'employeeIds';
+        checkbox.value = employee.id;
+        checkbox.id = `clock-employee-${employee.id}`;
+
+        const label = makeElement('label', 'employee-option');
+        label.htmlFor = checkbox.id;
+        label.append(
+          checkbox,
+          makeElement('span', 'employee-option-name', `${employee.name || 'Unnamed employee'} — ($${employee.wage}/hr)`)
+        );
+        employeeOptions.appendChild(label);
+      });
+    }
+    employeeOptions.addEventListener('change', () => {
+      const checked = employeeOptions.querySelectorAll('input[name="employeeIds"]:checked');
+      employeeSelectionCount.textContent = employeeSelectionLabel(checked.length);
+    });
+  }
+
+  if (cDd) {
     populateCustomerDropdowns(cDd);
   }
   
   if (clockInButton) {
     clockInButton.addEventListener('click', async () => {
-      const empIds = Array.from(eDd.selectedOptions)
-        .map(option => option.value)
-        .filter(Boolean);
+      const employeeInputs = employeeOptions.querySelectorAll('input[name="employeeIds"]');
+      const empIds = selectedEmployeeIds(employeeInputs);
       const custId = cDd.value;
       
       if (empIds.length === 0 || !custId) {

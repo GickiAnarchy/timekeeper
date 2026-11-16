@@ -272,7 +272,17 @@ async function initializePlannedPage() {
     modalEyebrow.textContent = job ? 'UPDATE SCHEDULE ITEM' : 'NEW SCHEDULE ITEM';
     submitButton.textContent = job ? 'Save changes' : 'Save job';
     const hasCustomers = store.customers.size > 0;
-    customerHelp.textContent = hasCustomers ? '' : 'Add a customer in People Data before planning a job.';
+    customerHelp.replaceChildren();
+    if (!hasCustomers) {
+      const customerLink = makeElement('a', 'customer-management-link', 'People Data');
+      customerLink.href = 'basic-data.html';
+      customerLink.target = 'main-content';
+      customerHelp.append(
+        document.createTextNode('No customers are available yet. Add one in '),
+        customerLink,
+        document.createTextNode('. Profile details remain editable in Admin Settings.')
+      );
+    }
     submitButton.disabled = !hasCustomers;
     modal.showModal();
   }

@@ -71,6 +71,7 @@
 .tbd-choice { display: flex; align-items: center; gap: 8px; width: fit-content; cursor: pointer; }
 .tbd-choice input { width: 16px; min-height: 16px; margin: 0; padding: 0; accent-color: var(--green); }
 .field-hint { color: var(--muted); font-size: 10px; }
+.customer-management-link { color: var(--green-deep); font-weight: 750; text-underline-offset: 2px; }
 .form-error { min-height: 0; margin: -6px 0 0; color: var(--red); font-size: 11px; }
 .form-error:empty { display: none; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 2px; }

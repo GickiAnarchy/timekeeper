@@ -211,15 +211,43 @@ test('the app writes directly to its canonical Firestore collections without req
   assert.doesNotMatch(model, /publicEmployees|publicCustomers|publicShifts|changeRequests|getCurrentOwner|requireRecentOwnerReauthentication/);
 });
 
-test('the no-login clock screen retains multi-employee selection and clock actions', () => {
+test('the no-login clock screen offers an accessible touch-friendly multi-employee checklist', () => {
   const clockMarkup = readProjectFile('html', 'clock.html');
   const clockScript = readProjectFile('scripts', 'clock.js');
+  const clockStyles = readProjectFile('styles', 'clock.css');
   const model = readProjectFile('scripts', 'models.js');
-  assert.match(clockMarkup, /<select id="emp-select" multiple/);
+  const picker = readProjectFile('scripts', 'employee-picker.mjs');
+  assert.match(clockMarkup, /<details class="employee-picker" id="employee-picker">[\s\S]*?<summary[^>]*aria-describedby="employee-picker-help"[^>]*>[\s\S]*?id="employee-selection-count"[^>]*aria-live="polite"[\s\S]*?<fieldset id="employee-options"/);
+  assert.match(clockMarkup, /Choose one or more employees\. Everyone selected will clock in together\./);
+  assert.doesNotMatch(clockMarkup, /<select id="emp-select"/);
+  assert.match(clockScript, /checkbox\.name = 'employeeIds'/);
+  assert.match(clockScript, /employeeSelectionCount\.textContent = employeeSelectionLabel\(checked\.length\)/);
+  assert.match(clockScript, /selectedEmployeeIds\(employeeInputs\)/);
+  assert.match(picker, /input => input\?\.checked \? input\.value : ''/);
+  assert.match(clockStyles, /\.employee-option \{[^}]*min-height: 48px/);
+  assert.match(clockStyles, /\.employee-picker > summary:focus-visible/);
   assert.match(clockMarkup, /id="clock-in-button"/);
   assert.match(clockScript, /saveShifts\(shifts\)/);
   assert.match(model, /async saveShifts\(shifts\)/);
   assert.match(model, /async saveShift\(shift\)/);
+});
+
+test('Planned Jobs sends missing-customer setup to People Data and keeps profile editing in Admin Settings', () => {
+  const plannedMarkup = readProjectFile('html', 'planned.html');
+  const plannedScript = readProjectFile('scripts', 'planned.js');
+  const plannedStyles = readProjectFile('styles', 'planned.css');
+  const peopleMarkup = readProjectFile('html', 'basic-data.html');
+  const adminMarkup = readProjectFile('html', 'admin-settings.html');
+
+  assert.match(plannedMarkup, /id="customer-help"/);
+  assert.match(plannedScript, /customerLink\.href = 'basic-data\.html'/);
+  assert.match(plannedScript, /customerLink\.target = 'main-content'/);
+  assert.match(plannedScript, /Profile details remain editable in Admin Settings\./);
+  assert.match(plannedScript, /submitButton\.disabled = !hasCustomers/);
+  assert.match(plannedStyles, /\.customer-management-link/);
+  assert.match(peopleMarkup, /Adding and deleting records stays here/);
+  assert.match(adminMarkup, /Edit employee and customer profiles here/);
+  assert.doesNotMatch(readProjectFile('index.html'), /data-page="html\/basic-data\.html"/);
 });
 
 test('Firestore rules keep reads public, restrict ledger writes to the owner, and preserve other public writes', () => {
