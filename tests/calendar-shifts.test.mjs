@@ -4,7 +4,17 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 const calendarSource = readFileSync(new URL('../calendar/cal.js', import.meta.url), 'utf8');
-const calendarHtml = readFileSync(new URL('../calendar/calender.html', import.meta.url), 'utf8');
+const calendarHtml = readFileSync(new URL('../calendar/calendar.html', import.meta.url), 'utf8');
+const indexHtml = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+
+test('calendar navigation and footer use the correctly named page route', () => {
+  assert.match(indexHtml, /data-page="calendar\/calendar\.html" data-title="Calendar"/);
+  assert.match(indexHtml, /href="calendar\/calendar\.html" target="main-content"/);
+  assert.match(indexHtml, /<span>Calendar<\/span>/);
+  assert.match(calendarHtml, /<title>Calendar<\/title>/i);
+  assert.doesNotMatch(indexHtml, /calender/i);
+  assert.doesNotMatch(calendarHtml, /calender/i);
+});
 
 class FakeElement {
   constructor(tagName = 'div') {

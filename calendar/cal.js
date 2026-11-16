@@ -8,10 +8,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   makeBtn.addEventListener('click', () => {
     const date = new Date();
     makeBtn.textContent = date.getMonth() + 1;
-    renderCalender(date);
+    renderCalendar(date);
   });
 
-  function renderCalender(date) {
+  function renderCalendar(date) {
     const year = date.getFullYear();
     const month = date.getMonth(); // Current month (0-11)
     createCalendar(year, month);
