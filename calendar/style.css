@@ -59,3 +59,23 @@
 .empty-slot {
   visibility: hidden;
 }
+
+/* Count badges make saved-shift dates easy to spot without opening a day. */
+.days-grid button.has-shifts {
+  position: relative;
+  background: #e8f7f1;
+  font-weight: 700;
+}
+.days-grid button.has-shifts::after {
+  content: attr(data-shift-count);
+  position: absolute;
+  right: 3px;
+  bottom: 2px;
+  min-width: 0.9rem;
+  color: #007b5e;
+  font-size: 0.65rem;
+  line-height: 1;
+}
+.days-grid button.has-shifts:hover::after {
+  color: #fff;
+}
