@@ -106,6 +106,7 @@ test('calendar uses the read-only shift loader and marks days with saved shifts'
   assert.equal(store.initCalls, 0, 'calendar must not call store.init()');
 
   makeButton.click();
+  assert.equal(Number(monthText.innerHTML), today.getMonth() + 1, 'heading should display the one-based month');
   const dayButton = daysContainer.children.find(element => element.tagName === 'button' && Number(element.textContent) === today.getDate());
   assert.ok(dayButton, 'current day should be rendered as a button');
   assert.equal(dayButton.dataset.shiftCount, '2');

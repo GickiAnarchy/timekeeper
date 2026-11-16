@@ -41,7 +41,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const container = document.getElementById('days-container');
     container.innerHTML = ''; // Clear previous days
     const monthText = document.getElementById('month-text');
-    monthText.innerHTML = month;
+    // Date uses zero-based months, but the calendar heading uses human numbering.
+    monthText.innerHTML = month + 1;
 
     // Add empty slots for days before the first of the month.
     for (let i = 0; i < firstDayIndex; i++) {
