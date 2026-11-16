@@ -182,12 +182,13 @@ test('compact navigation styles and versioned assets are present', () => {
   const html = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8'); const css = fs.readFileSync(path.join(projectRoot, 'styles/style.css'), 'utf8');
   const settingsMarkup = fs.readFileSync(path.join(projectRoot, 'html/settings.html'), 'utf8');
   assert.match(html, /(?:index\.js|style\.css)\?v=owner-session-1/);
+  assert.match(html, /scripts\/index\.js\?v=url-navigation-1/);
   assert.match(settingsMarkup, /scripts\/settings\.js\?v=[\w-]+/);
   assert.match(css, /\.sidebar-nav[^{}]*\[hidden\]|\[hidden\][^{}]*\.sidebar-nav/s);
   assert.match(css, /@media[^{]*(?:max-width|min-width)[^{]*\{[\s\S]*?sidebar-nav/s);
 });
 
-function shellFixture(readyState = 'loading') {
+function shellFixture(readyState = 'loading', initialHash = '') {
   const html = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8'); const shell = fs.readFileSync(path.join(projectRoot, 'scripts/index.js'), 'utf8');
   const { root: nav, groups, toggles, panels } = fixture(); panels.forEach(panel => { panel.children = []; });
   const pickerToggle = new StubElement({ classes: ['nav-picker-toggle'] }); const pickerLabel = new StubElement({ classes: ['nav-picker-label'] });
@@ -195,20 +196,80 @@ function shellFixture(readyState = 'loading') {
   const document = new StubElement(); document.ownerDocument = document; document.readyState = readyState; document.activeElement = null; setOwnerDocument(sidebar, document); document.append(sidebar);
   const routes = [...html.matchAll(/data-page="([^"]+)" data-title="([^"]+)"/g)];
   const navigation = routes.map(([, page, title], index) => { const button = new StubElement({ classes: ['nav-link'] }); button.dataset = { page, title }; if (!index) button.setAttribute('aria-current', 'page'); panels[index < 4 ? 0 : index < 8 ? 1 : 2].append(button); return button; });
-  const title = { textContent: 'Home' }; const date = { textContent: '' }; const frame = new StubElement(); frame.src = 'html/home.html'; frame.contentWindow = { location: { href: 'https://local.test/timekeeper/html/home.html' }, postMessage() {} };
+  const title = { textContent: 'Home' }; const date = { textContent: '' }; const frame = new StubElement(); frame.src = 'html/home.html'; frame.contentWindow = { location: { href: 'https://local.test/timekeeper/html/home.html', replace(url) { this.href = url; } }, postMessage() {} };
   document.documentElement = { style: { setProperty() {} }, dataset: {}, clientHeight: 800 }; document.body = { classList: new ClassList() }; document.querySelectorAll = selector => selector === '.nav-link[data-page]' ? navigation : [];
   document.querySelector = selector => selector === '.sidebar' ? sidebar : selector === '.sidebar-nav' ? nav : frame; document.getElementById = id => id === 'active-page-title' ? title : id === 'topbar-date' ? date : null;
-  const window = { innerHeight: 800, location: { href: 'https://local.test/timekeeper/', origin: 'https://local.test' }, localStorage: { getItem() { return null; } }, addEventListener() {} };
+  const listeners = new Map();
+  const location = { href: `https://local.test/timekeeper/${initialHash}`, origin: 'https://local.test', pathname: '/timekeeper/', search: '', hash: initialHash };
+  const historyEntries = [{ state: null, url: `${location.pathname}${location.search}${location.hash}` }]; let historyIndex = 0;
+  const updateLocation = url => { const parsed = new URL(url, location.href); location.href = parsed.href; location.pathname = parsed.pathname; location.search = parsed.search; location.hash = parsed.hash; };
+  const window = {
+    innerHeight: 800, location, localStorage: { getItem() { return null; } },
+    addEventListener(type, listener) { const entries = listeners.get(type) ?? []; entries.push(listener); listeners.set(type, entries); },
+    dispatchEvent(value) { for (const listener of listeners.get(value.type) ?? []) listener.call(window, value); },
+    history: {
+      pushState(state, _title, url) { historyEntries.splice(historyIndex + 1); historyEntries.push({ state, url }); historyIndex++; updateLocation(url); },
+      replaceState(state, _title, url) { historyEntries[historyIndex] = { state, url }; updateLocation(url); },
+      back() { if (historyIndex > 0) { historyIndex--; updateLocation(historyEntries[historyIndex].url); window.dispatchEvent(event('popstate')); window.dispatchEvent(event('hashchange')); } },
+      forward() { if (historyIndex < historyEntries.length - 1) { historyIndex++; updateLocation(historyEntries[historyIndex].url); window.dispatchEvent(event('popstate')); window.dispatchEvent(event('hashchange')); } },
+      get length() { return historyEntries.length; }
+    }
+  };
   vm.runInNewContext(shell.replace(/^export /gm, ''), { document, window, Intl, URL, console });
-  return { document, frame, navigation, title, date, groups, toggles, panels, pickerToggle, pickerLabel };
+  return { document, frame, navigation, title, date, groups, toggles, panels, pickerToggle, pickerLabel, window };
 }
 
 test('self-contained shell boots and every route updates the frame, title, active group, and picker label', () => {
   const { document, frame, navigation, title, date, toggles, panels, pickerLabel } = shellFixture(); document.dispatchEvent(event('DOMContentLoaded')); assert.notEqual(date.textContent, '');
   assert.equal(navigation.length, 9);
-  for (const [index, button] of navigation.entries()) { const groupIndex = index < 4 ? 0 : index < 8 ? 1 : 2; if (panels[groupIndex].hidden) toggles[groupIndex].click(); button.click(); assert.equal(frame.src, button.dataset.page); assert.equal(title.textContent, button.dataset.title); assert.equal(button.getAttribute('aria-current'), 'page'); assert.equal(navigation.filter(item => item.getAttribute('aria-current') === 'page').length, 1); assert.equal(panels[groupIndex].hidden, false); assert.equal(toggles[groupIndex].getAttribute('data-current'), 'true'); assert.equal(pickerLabel.textContent, button.dataset.title); }
+  for (const [index, button] of navigation.entries()) { const groupIndex = index < 4 ? 0 : index < 8 ? 1 : 2; if (panels[groupIndex].hidden) toggles[groupIndex].click(); button.click(); assert.equal(new URL(frame.contentWindow.location.href).pathname, new URL(button.dataset.page, 'https://local.test/timekeeper/').pathname); assert.equal(title.textContent, button.dataset.title); assert.equal(button.getAttribute('aria-current'), 'page'); assert.equal(navigation.filter(item => item.getAttribute('aria-current') === 'page').length, 1); assert.equal(panels[groupIndex].hidden, false); assert.equal(toggles[groupIndex].getAttribute('data-current'), 'true'); assert.equal(pickerLabel.textContent, button.dataset.title); }
 });
 
 test('shell initializes when loaded after DOMContentLoaded and follows in-frame navigation', () => {
-  const { frame, navigation, title, date, panels } = shellFixture('complete'); assert.notEqual(date.textContent, ''); frame.contentWindow.location.href = 'https://local.test/timekeeper/html/settings.html'; frame.dispatchEvent(event('load')); assert.equal(title.textContent, 'Settings'); assert.equal(navigation[8].getAttribute('aria-current'), 'page'); assert.equal(panels[2].hidden, false); assert.equal(panels[0].hidden, true);
+  const { frame, navigation, title, date, panels, window } = shellFixture('complete'); assert.notEqual(date.textContent, ''); frame.contentWindow.location.href = 'https://local.test/timekeeper/html/settings.html'; frame.dispatchEvent(event('load')); assert.equal(title.textContent, 'Settings'); assert.equal(navigation[8].getAttribute('aria-current'), 'page'); assert.equal(panels[2].hidden, false); assert.equal(panels[0].hidden, true); assert.equal(window.location.hash, '#html/settings.html');
+});
+
+test('a bookmarked workspace route is restored into the iframe after shell reload', () => {
+  const { frame, navigation, title, window } = shellFixture('complete', '#html/invoice.html');
+  assert.equal(new URL(frame.contentWindow.location.href).pathname, '/timekeeper/html/invoice.html');
+  assert.equal(title.textContent, 'Invoices');
+  assert.equal(navigation[7].getAttribute('aria-current'), 'page');
+  assert.equal(window.location.hash, '#html/invoice.html');
+});
+
+test('main navigation writes linkable routes and browser Back/Forward restores the matching iframe page', () => {
+  const { frame, navigation, title, window } = shellFixture('complete');
+  navigation[1].click();
+  assert.equal(window.location.hash, '#html/clock.html');
+  assert.equal(new URL(frame.contentWindow.location.href).pathname, '/timekeeper/html/clock.html');
+  navigation[8].click();
+  assert.equal(window.location.hash, '#html/settings.html');
+  assert.equal(new URL(frame.contentWindow.location.href).pathname, '/timekeeper/html/settings.html');
+
+  window.history.back();
+  assert.equal(window.location.hash, '#html/clock.html');
+  assert.equal(new URL(frame.contentWindow.location.href).pathname, '/timekeeper/html/clock.html');
+  assert.equal(title.textContent, 'Clock in / out');
+  assert.equal(navigation[1].getAttribute('aria-current'), 'page');
+
+  window.history.forward();
+  assert.equal(window.location.hash, '#html/settings.html');
+  assert.equal(new URL(frame.contentWindow.location.href).pathname, '/timekeeper/html/settings.html');
+  assert.equal(title.textContent, 'Settings');
+  assert.equal(navigation[8].getAttribute('aria-current'), 'page');
+});
+
+test('Settings-linked Admin Settings and People Data remain restorable but outside main navigation', () => {
+  const { frame, navigation, title, window } = shellFixture('complete', '#html/settings.html');
+  frame.contentWindow.location.href = 'https://local.test/timekeeper/html/admin-settings.html';
+  frame.dispatchEvent(event('load'));
+  assert.equal(window.location.hash, '#html/admin-settings.html');
+  assert.equal(title.textContent, 'Admin Settings');
+  assert.equal(navigation.length, 9);
+  assert.equal(navigation.some(button => button.dataset.page === 'html/basic-data.html'), false);
+
+  frame.contentWindow.location.href = 'https://local.test/timekeeper/html/basic-data.html';
+  frame.dispatchEvent(event('load'));
+  assert.equal(window.location.hash, '#html/basic-data.html');
+  assert.equal(title.textContent, 'People Data');
 });

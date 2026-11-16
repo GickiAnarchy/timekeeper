@@ -179,7 +179,14 @@ export function initializeShell() {
   const mainIframe = document.querySelector('iframe[name="main-content"]');
   const title = document.getElementById('active-page-title');
   const dateLabel = document.getElementById('topbar-date');
+  // Keep the less-prominent Settings links addressable without adding them to main navigation.
+  const auxiliaryPages = new Map([
+    ['html/admin-settings.html', 'Admin Settings'],
+    ['html/basic-data.html', 'People Data']
+  ]);
+  const pages = new Set([...navigation.map(button => button.dataset.page), ...auxiliaryPages.keys()]);
   let baselineViewportHeight = 0;
+  let currentShellPage = null;
 
   function isKeyboardInput(target) {
     if (!target || target.disabled || target.readOnly) return false;
@@ -239,6 +246,70 @@ export function initializeShell() {
     selectNavigationPage(button);
   }
 
+  function pageForUrl(urlValue) {
+    try {
+      const url = new URL(urlValue, window.location.href);
+      return [...pages].find(page => new URL(page, window.location.href).pathname === url.pathname) || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function pageFromAddressBar() {
+    try {
+      const page = decodeURIComponent(window.location.hash.slice(1));
+      return pages.has(page) ? page : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function setAddressBar(page, replace = false) {
+    const hash = `#${page}`;
+    if (window.location.hash === hash) return;
+    const url = `${window.location.pathname}${window.location.search}${hash}`;
+    const method = replace ? 'replaceState' : 'pushState';
+    if (typeof window.history?.[method] === 'function') {
+      window.history[method]({ timekeeperPage: page }, '', url);
+    } else {
+      window.location.hash = hash;
+    }
+  }
+
+  function showPage(page, { updateFrame = true } = {}) {
+    if (!pages.has(page)) return;
+    const button = navigation.find(item => item.dataset.page === page);
+    // Admin Settings and People Data remain out of the main menu but belong to Settings.
+    const activeButton = button || navigation.find(item => item.dataset.page === 'html/settings.html');
+    if (activeButton) activate(activeButton);
+    if (!button && title) title.textContent = auxiliaryPages.get(page) || 'Timekeeper';
+    if (currentShellPage !== page) currentShellPage = page;
+    if (updateFrame && mainIframe && pageForUrl(mainIframe.contentWindow?.location?.href) !== page) {
+      const targetUrl = new URL(page, window.location.href).href;
+      const frameLocation = mainIframe.contentWindow?.location;
+      // The shell owns route history; replace the iframe document to avoid duplicate Back steps.
+      if (typeof frameLocation?.replace === 'function') frameLocation.replace(targetUrl);
+      else mainIframe.src = page;
+    }
+  }
+
+  function restorePageFromAddressBar() {
+    const page = pageFromAddressBar() || 'html/home.html';
+    if (pageFromAddressBar()) showPage(page);
+    else {
+      setAddressBar(page, true);
+      showPage(page);
+    }
+  }
+
+  function recordLoadedFramePage() {
+    const loadedPage = pageForUrl(mainIframe?.contentWindow?.location?.href || mainIframe?.src);
+    if (!loadedPage) return;
+    showPage(loadedPage, { updateFrame: false });
+    // The iframe already created a history entry; replace its shell URL instead of adding a duplicate.
+    setAddressBar(loadedPage, true);
+  }
+
   function applyTheme(theme) {
     const safeTheme = THEMES.has(theme) ? theme : 'forest';
     document.documentElement.dataset.theme = safeTheme;
@@ -279,23 +350,29 @@ export function initializeShell() {
 
   navigation.forEach(button => {
     button.addEventListener('click', () => {
-      activate(button);
-      if (mainIframe) mainIframe.src = button.dataset.page;
+      const page = button.dataset.page;
+      if (!pages.has(page)) return;
+      setAddressBar(page);
+      showPage(page);
     });
   });
 
-  activate(navigation.find(button => button.getAttribute('aria-current') === 'page'));
+  window.addEventListener('popstate', restorePageFromAddressBar);
+  window.addEventListener('hashchange', restorePageFromAddressBar);
+  const initialPage = pageFromAddressBar() || pageForUrl(mainIframe?.contentWindow?.location?.href || mainIframe?.src)
+    || navigation.find(button => button.getAttribute('aria-current') === 'page')?.dataset.page
+    || 'html/home.html';
+  if (pageFromAddressBar()) showPage(initialPage);
+  else {
+    setAddressBar(initialPage, true);
+    showPage(initialPage);
+  }
 
   if (mainIframe) {
     mainIframe.addEventListener('load', () => {
       watchFrameFocus();
       try {
-        // In-frame links and the brand target do not update the iframe's src attribute.
-        const currentPath = new URL(mainIframe.contentWindow.location.href, window.location.href).pathname;
-        const activeButton = navigation.find(button =>
-          new URL(button.dataset.page, window.location.href).pathname === currentPath
-        );
-        if (activeButton) activate(activeButton);
+        recordLoadedFramePage();
       } catch (error) {
         console.warn('Unable to identify the active workspace page.', error);
       }
