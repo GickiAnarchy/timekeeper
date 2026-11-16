@@ -7,10 +7,10 @@ const calendarSource = readFileSync(new URL('../calendar/cal.js', import.meta.ur
 const calendarHtml = readFileSync(new URL('../calendar/calendar.html', import.meta.url), 'utf8');
 const indexHtml = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 
-test('calendar navigation and footer use the correctly named page route', () => {
-  assert.match(indexHtml, /data-page="calendar\/calendar\.html" data-title="Calendar"/);
-  assert.match(indexHtml, /href="calendar\/calendar\.html" target="main-content"/);
-  assert.match(indexHtml, /<span>Calendar<\/span>/);
+test('Calendar remains a correctly named standalone page outside main navigation', () => {
+  const mainRoutes = [...indexHtml.matchAll(/data-page=["']([^"']+)["']/g)].map(([, route]) => route);
+  assert.ok(!mainRoutes.includes('calendar/calendar.html'), 'Calendar should not be a main-shell route');
+  assert.doesNotMatch(indexHtml, /href=["'][^"']*calendar\/calendar\.html/i, 'the shell should not embed Calendar as a navigation link');
   assert.match(calendarHtml, /<title>Calendar<\/title>/i);
   assert.doesNotMatch(indexHtml, /calender/i);
   assert.doesNotMatch(calendarHtml, /calender/i);

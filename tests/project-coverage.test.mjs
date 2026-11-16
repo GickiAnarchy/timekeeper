@@ -310,16 +310,18 @@ test('ledger mutation controls are admin-only while read-only ledger tools stay 
 test('Shift History keeps filters and its Add action together near the top', () => {
   const markup = readProjectFile('html', 'viewshifts.html');
   const styles = readProjectFile('styles', 'shifts.css');
-  const toolbarStart = markup.indexOf('<div class="shift-toolbar">');
-  const toolbarEnd = markup.indexOf('</div>\n      <hr>', toolbarStart);
-  assert.ok(toolbarStart >= 0 && toolbarEnd > toolbarStart);
-  const toolbar = markup.slice(toolbarStart, toolbarEnd);
+  const toolbarMatch = markup.match(/<div\b(?=[^>]*\bclass=["'][^"']*\bshift-toolbar\b[^"']*["'])[^>]*>[\s\S]*?<\/div\s*>\s*<hr\b/i);
+  assert.ok(toolbarMatch, 'the toolbar should remain grouped before the shift list');
+  const toolbar = toolbarMatch[0];
   assert.match(toolbar, /id="emp-filter"/);
   assert.match(toolbar, /id="cust-filter"/);
   assert.match(toolbar, /id="paid-filter"/);
   assert.match(toolbar, /id="add-button"/);
-  assert.match(styles, /\.shift-toolbar \{ display: grid/);
-  assert.match(styles, /@media \(max-width: 680px\)[\s\S]*?\.button-div button \{ width: 100%; min-height: 44px/);
+  const toolbarRules = styles.match(/\.shift-toolbar\s*\{([^}]*)\}/)?.[1] || '';
+  assert.match(toolbarRules, /(?:^|;)\s*display\s*:\s*grid\s*(?:;|$)/);
+  const mobileButtonRules = styles.match(/@media\s*\(\s*max-width\s*:\s*680px\s*\)[\s\S]*?\.button-div button\s*\{([^}]*)\}/)?.[1] || '';
+  assert.match(mobileButtonRules, /(?:^|;)\s*width\s*:\s*100%\s*(?:;|$)/);
+  assert.match(mobileButtonRules, /(?:^|;)\s*min-height\s*:\s*44px\s*(?:;|$)/);
 });
 
 test('dense mobile records use expandable cards instead of horizontal scrolling', () => {
