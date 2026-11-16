@@ -14,6 +14,8 @@ import {
   sortTableRows,
   sumLedgerHours,
   validateShiftTimeRange,
+  normalizeShiftRecord,
+  normalizeShiftRecords,
   shiftInvoiceLineStatus,
   shiftIsAttachedElsewhere,
   repriceInvoiceShiftItems,
@@ -85,6 +87,70 @@ test('saved non-work shifts may use equal times while work shifts still need pos
   assert.throws(() => validateShiftTimeRange(sameTime, sameTime, false), /End time must be after start time/);
   assert.throws(() => validateShiftTimeRange('2026-10-09T10:00:00Z', sameTime, true), /End time must be after start time/);
   assert.throws(() => validateShiftTimeRange(null, sameTime, true), /valid start and end times/);
+});
+
+test('shift timestamp validation requires a real date and clock time rather than loose date parsing', () => {
+  assert.throws(() => validateShiftTimeRange('2026-10-09', '2026-10-09T12:00:00Z'), /valid start and end times/);
+  assert.throws(() => validateShiftTimeRange('next Friday at noon', '2026-10-09T12:00:00Z'), /valid start and end times/);
+  assert.throws(() => validateShiftTimeRange('2026-02-30T09:00:00Z', '2026-02-30T10:00:00Z'), /valid start and end times/);
+});
+
+test('shift normalization preserves valid open clock-in records and equal-time non-work records', () => {
+  const openShift = normalizeShiftRecord({
+    id: 'open-1', employeeId: 'employee-1', custId: 'customer-1',
+    clockInTime: '2026-10-09T09:00:00Z', clockOutTime: null, breaks: []
+  }, { allowOpen: true });
+  assert.equal(openShift.clockOutTime, null);
+  assert.equal(openShift.isNotWork, false);
+
+  const openBreak = normalizeShiftRecord({
+    id: 'open-break-1', employeeId: 'employee-1', custId: 'customer-1',
+    clockInTime: '2026-10-09T09:00:00Z', clockOutTime: null,
+    breaks: [{ start: '2026-10-09T10:00:00Z', end: null }]
+  }, { allowOpen: true });
+  assert.equal(openBreak.breaks[0].end, null);
+
+  const equalTime = normalizeShiftRecord({
+    id: 'note-1', employeeId: 'employee-1', custId: 'customer-1',
+    clockInTime: '2026-10-09T09:00:00Z', clockOutTime: '2026-10-09T09:00:00Z',
+    isNotWork: true, breaks: []
+  });
+  assert.equal(equalTime.isNotWork, true);
+  assert.equal(equalTime.clockInTime, equalTime.clockOutTime);
+});
+
+test('shift normalization rejects missing references, bad dates, invalid break ranges, and invalid paid hours', () => {
+  const shift = {
+    id: 'shift-1', employeeId: 'employee-1', custId: 'customer-1',
+    clockInTime: '2026-10-09T09:00:00Z', clockOutTime: '2026-10-09T12:00:00Z',
+    breaks: [], paidHours: 2.5
+  };
+  assert.throws(() => normalizeShiftRecord({ ...shift, employeeId: '' }), /employee reference/);
+  assert.throws(() => normalizeShiftRecord({ ...shift, custId: undefined }), /customer reference/);
+  assert.throws(() => normalizeShiftRecord({ ...shift, clockInTime: '2026-10-09' }), /valid clock-in/);
+  assert.throws(() => normalizeShiftRecord({ ...shift, clockOutTime: 'bad time' }), /valid clock-out/);
+  assert.throws(() => normalizeShiftRecord({ ...shift, paidHours: -0.5 }), /non-negative paid hours/);
+  assert.throws(() => normalizeShiftRecord({ ...shift, paidHours: 'NaN' }), /non-negative paid hours/);
+  assert.throws(() => normalizeShiftRecord({ ...shift, paidHours: '2.5' }), /non-negative paid hours/);
+  assert.throws(() => normalizeShiftRecord({ ...shift, breaks: 'not a list' }), /invalid break data/);
+  assert.throws(() => normalizeShiftRecord({ ...shift, breaks: [{ start: 'bad', end: '2026-10-09T10:30:00Z' }] }), /valid start and end/);
+  assert.throws(() => normalizeShiftRecord({ ...shift, breaks: [{ start: '2026-10-09T08:30:00Z', end: '2026-10-09T09:30:00Z' }] }), /fall within the shift/);
+  assert.throws(() => normalizeShiftRecord({ ...shift, breaks: [{ start: '2026-10-09T10:00:00Z', end: null }] }), /needs a valid end/);
+  assert.throws(() => normalizeShiftRecord({ ...shift, breaks: [
+    { start: '2026-10-09T10:00:00Z', end: '2026-10-09T10:45:00Z' },
+    { start: '2026-10-09T10:30:00Z', end: '2026-10-09T11:00:00Z' }
+  ] }), /cannot overlap/);
+});
+
+test('shift import normalization rejects duplicate IDs and missing directory references before writes', () => {
+  const row = {
+    id: 'shift-1', employeeId: 'employee-1', custId: 'customer-1',
+    clockInTime: '2026-10-09T09:00:00Z', clockOutTime: '2026-10-09T12:00:00Z', breaks: []
+  };
+  const options = { employeeIds: new Set(['employee-1']), customerIds: new Set(['customer-1']) };
+  assert.equal(normalizeShiftRecords([row], options).length, 1);
+  assert.throws(() => normalizeShiftRecords([row, { ...row, id: 'shift-2', employeeId: 'missing' }], options), /missing employee/);
+  assert.throws(() => normalizeShiftRecords([row, row], options), /duplicate ID/);
 });
 
 test('ledger deletion planning renumbers only the affected employee without mutating saved rows', () => {

@@ -132,6 +132,7 @@ test('shift completion prompts are explicit, deduplicated, and persist across no
   const clock = readProjectFile('scripts', 'clock.js');
   const planned = readProjectFile('scripts', 'planned.js');
   const models = modelsSource;
+  const domain = readProjectFile('scripts', 'domain.mjs');
 
   assert.match(shifts, /completedNow = !wasComplete && activeShift\.isComplete/);
   assert.match(shifts, /promptForCompletedPlannedJobs\(savedShift, store, window\)/);
@@ -140,7 +141,8 @@ test('shift completion prompts are explicit, deduplicated, and persist across no
   assert.match(planned, /markShiftPlannedJobsPrompted\(shift\.id\)/);
   assert.match(models, /shift\.plannedJobsPrompted = data\.plannedJobsPrompted === true/);
   assert.match(models, /plannedJobsPrompted: Boolean\(shift\.plannedJobsPrompted\)/);
-  assert.match(models, /plannedJobsPrompted: Boolean\(shiftData\.plannedJobsPrompted\)/);
+  assert.match(models, /normalizeShiftRecords\(parsed,/);
+  assert.match(domain, /plannedJobsPrompted: shift\.plannedJobsPrompted === true/);
   assert.match(models, /async markShiftPlannedJobsPrompted\(shiftId\)/);
   assert.match(models, /export class Invoice/);
   assert.match(models, /addItem\(name, type = 'general', value = undefined\)/);

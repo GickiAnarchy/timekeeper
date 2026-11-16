@@ -287,8 +287,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    if ((Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) && !notWorkBox.checked) {
-      formError.textContent = 'The shift end must be after its start.';
+    if (!start || !end || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) ||
+        (notWorkBox.checked ? end < start : end <= start)) {
+      formError.textContent = 'Enter a valid start time and an end time after it.';
       return;
     }
 

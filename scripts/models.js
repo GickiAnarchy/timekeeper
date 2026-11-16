@@ -9,9 +9,10 @@ import {
   ledgerBalanceCents,
   planLedgerEntryDeletion,
   repriceInvoiceShiftItems,
-  validateShiftTimeRange,
   createInvoiceItem,
-  invoiceTotal
+  invoiceTotal,
+  normalizeShiftRecord,
+  normalizeShiftRecords
 } from './domain.mjs';
 import { DAILY_QUOTES, normalizeDailyQuotes } from './daily-quotes.mjs';
 
@@ -1045,48 +1046,18 @@ export class AppDataStore {
   }
   
   async saveShift(shift) {
-    const formattedBreaks = shift.breaks.map(b => ({
-      start: b.start instanceof Date ? b.start.toISOString() : b.start,
-      end: b.end instanceof Date ? b.end.toISOString() : b.end
-    }));
-
-    await setDoc(doc(db, "shifts", shift.id), {
-      employeeId: shift.employee ? shift.employee.id : null,
-      custId: shift.customer ? shift.customer.id : null,
-      clockInTime: shift.clockInTime ? shift.clockInTime.toISOString() : null,
-      clockOutTime: shift.clockOutTime ? shift.clockOutTime.toISOString() : null,
-      note: shift.note || null,
-      isPaid: shift.isPaid || false,
-      breaks: formattedBreaks,
-      paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null,
-      plannedJobsPrompted: Boolean(shift.plannedJobsPrompted),
-      isNotWork: shift.isNotWork || false
-    });
+    // Open work shifts (and an in-progress break) are required by clock-in/out.
+    const { id, ...data } = normalizeShiftRecord(shift, { allowOpen: true });
+    await setDoc(doc(db, "shifts", id), data);
   }
   
   async saveShifts(shifts) {
     if (!Array.isArray(shifts) || shifts.length === 0) return;
     if (shifts.length > 500) throw new Error("A single clock-in batch cannot contain more than 500 shifts.");
-    const ids = shifts.map(shift => String(shift.id));
-    if (new Set(ids).size !== ids.length) throw new Error("A shift appears more than once in this clock-in batch.");
+    const normalizedShifts = normalizeShiftRecords(shifts, { allowOpen: true });
     const batch = writeBatch(db);
-    shifts.forEach(shift => {
-      const formattedBreaks = (shift.breaks || []).map(b => ({
-        start: b.start instanceof Date ? b.start.toISOString() : b.start,
-        end: b.end instanceof Date ? b.end.toISOString() : b.end
-      }));
-      batch.set(doc(db, "shifts", shift.id), {
-        employeeId: shift.employee ? shift.employee.id : null,
-        custId: shift.customer ? shift.customer.id : null,
-        clockInTime: shift.clockInTime ? shift.clockInTime.toISOString() : null,
-        clockOutTime: shift.clockOutTime ? shift.clockOutTime.toISOString() : null,
-        note: shift.note || null,
-        isPaid: Boolean(shift.isPaid),
-        breaks: formattedBreaks,
-        paidHours: Number.isFinite(shift.paidHours) ? shift.paidHours : null,
-        isNotWork: shift.isNotWork || false,
-        plannedJobsPrompted: Boolean(shift.plannedJobsPrompted)
-      });
+    normalizedShifts.forEach(({ id, ...data }) => {
+      batch.set(doc(db, "shifts", id), data);
     });
     await commitBatch(batch, 'Clocking in the selected employees failed.');
   }
@@ -1099,47 +1070,35 @@ export class AppDataStore {
   async updateShift(shiftId, employee, customer, clockInTime, clockOutTime, note = null, isPaid = false, breaks = null, paidHours = undefined, isNotWork = false) {
     const shift = this.shifts.find(s => s.id === shiftId);
     if (!shift) throw new Error("Shift could not be found.");
-    if (!employee || !customer) throw new Error("Please select an employee and customer.");
-    
-    const { start, end } = validateShiftTimeRange(clockInTime, clockOutTime, isNotWork);
-    const sourceBreaks = Array.isArray(breaks) ? breaks : shift.breaks;
-    
-    const normalizedBreaks = sourceBreaks.map((breakItem, index) => {
-      const breakStart = breakItem.start instanceof Date ? breakItem.start : new Date(breakItem.start);
-      const breakEnd = breakItem.end instanceof Date ? breakItem.end : new Date(breakItem.end);
-      if (Number.isNaN(breakStart.getTime()) || Number.isNaN(breakEnd.getTime())) {
-        throw new Error(`Break ${index + 1} needs both a valid start and end time.`);
-      }
-      if (breakEnd <= breakStart) throw new Error(`Break ${index + 1} must end after it starts.`);
-      if (breakStart < start || breakEnd > end) {
-        throw new Error(`Break ${index + 1} must fall within the shift.`);
-      }
-      return { start: breakStart, end: breakEnd };
-    }).sort((a, b) => a.start - b.start);
-    
-    for (let index = 1; index < normalizedBreaks.length; index += 1) {
-      if (normalizedBreaks[index].start < normalizedBreaks[index - 1].end) {
-        throw new Error("Break times cannot overlap.");
-      }
-    }
-    
-    const nextPaidHours = paidHours === undefined ? shift.paidHours :
-      (paidHours === null || paidHours === '' ? null : Number(paidHours));
-    if (nextPaidHours !== null && (!Number.isFinite(nextPaidHours) || nextPaidHours < 0)) {
-      throw new Error("Paid hours must be a valid non-negative number, or left blank to use worked hours.");
-    }
-    
+    const sourceBreaks = breaks === null || breaks === undefined ? shift.breaks : breaks;
+    const data = normalizeShiftRecord({
+      id: shift.id,
+      employee,
+      customer,
+      clockInTime,
+      clockOutTime,
+      note,
+      isPaid,
+      isNotWork,
+      breaks: sourceBreaks,
+      paidHours: paidHours === undefined ? shift.paidHours : paidHours,
+      plannedJobsPrompted: shift.plannedJobsPrompted
+    });
+    const start = new Date(data.clockInTime);
+    const end = new Date(data.clockOutTime);
+    const normalizedBreaks = data.breaks.map(item => ({ start: new Date(item.start), end: new Date(item.end) }));
+
     await updateDoc(doc(db, "shifts", shiftId), {
-      employeeId: employee.id,
-      custId: customer.id,
-      clockInTime: start.toISOString(),
-      clockOutTime: end.toISOString(),
-      note: note ? String(note).trim() : null,
-      isPaid: Boolean(isPaid),
-      isNotWork: Boolean(isNotWork) || false,
-      breaks: normalizedBreaks.map(b => ({ start: b.start.toISOString(), end: b.end.toISOString() })),
-      paidHours: nextPaidHours,
-      plannedJobsPrompted: Boolean(shift.plannedJobsPrompted)
+      employeeId: data.employeeId,
+      custId: data.custId,
+      clockInTime: data.clockInTime,
+      clockOutTime: data.clockOutTime,
+      note: data.note,
+      isPaid: data.isPaid,
+      isNotWork: data.isNotWork,
+      breaks: data.breaks,
+      paidHours: data.paidHours,
+      plannedJobsPrompted: data.plannedJobsPrompted
     });
     
     shift.employee = employee;
@@ -1150,7 +1109,7 @@ export class AppDataStore {
     shift.isPaid = Boolean(isPaid);
     shift.isNotWork = Boolean(isNotWork) || false;
     shift.breaks = normalizedBreaks;
-    shift.paidHours = nextPaidHours;
+    shift.paidHours = data.paidHours;
     return shift;
   }
 
@@ -1273,6 +1232,7 @@ export class AppDataStore {
       clockOutTime: s.clockOutTime ? s.clockOutTime.toISOString() : null,
       note: s.note || null,
       isPaid: s.isPaid || null,
+      isNotWork: Boolean(s.isNotWork),
       breaks: s.breaks.map(b => ({
         start: b.start ? new Date(b.start).toISOString() : null,
         end: b.end ? new Date(b.end).toISOString() : null
@@ -1287,19 +1247,15 @@ export class AppDataStore {
     if (!Array.isArray(parsed)) {
       throw new Error("Invalid format. File must be a JSON list of shifts.");
     }
-    
-    for (const shiftData of parsed) {
-      await setDoc(doc(db, "shifts", shiftData.id), {
-        employeeId: shiftData.employeeId,
-        custId: shiftData.custId,
-        clockInTime: shiftData.clockInTime,
-        clockOutTime: shiftData.clockOutTime,
-        note: shiftData.note || null,
-        isPaid: shiftData.isPaid,
-        breaks: shiftData.breaks || [],
-        plannedJobsPrompted: Boolean(shiftData.plannedJobsPrompted),
-        paidHours: shiftData.paidHours ?? null
-      });
+
+    // Validate the complete file first so a later bad row cannot leave a partial import.
+    const normalizedShifts = normalizeShiftRecords(parsed, {
+      allowOpen: true,
+      employeeIds: new Set(this.employees.keys()),
+      customerIds: new Set(this.customers.keys())
+    });
+    for (const { id, ...data } of normalizedShifts) {
+      await setDoc(doc(db, "shifts", id), data);
     }
     await this.loadShifts();
   }
@@ -1331,6 +1287,7 @@ export class AppDataStore {
           clockOutTime: shift.clockOutTime?.toISOString?.() || null,
           note: shift.note || null,
           isPaid: Boolean(shift.isPaid),
+          isNotWork: Boolean(shift.isNotWork),
           breaks: (shift.breaks || []).map(item => ({
             start: item.start?.toISOString?.() || item.start || null,
             end: item.end?.toISOString?.() || item.end || null
@@ -1410,14 +1367,21 @@ export class AppDataStore {
       }
     }
     for (const shift of backup.data.shifts) {
-      if (!validDateOrNull(shift.clockInTime) || !validDateOrNull(shift.clockOutTime) ||
-        !Array.isArray(shift.breaks || []) || !finiteOrNull(shift.paidHours) || typeof shift.isPaid !== 'boolean' ||
+      if (!finiteOrNull(shift.paidHours) || typeof shift.isPaid !== 'boolean' ||
         (shift.plannedJobsPrompted !== undefined && typeof shift.plannedJobsPrompted !== 'boolean') ||
         (shift.paidHours !== null && shift.paidHours !== undefined && typeof shift.paidHours !== 'number') ||
-        (shift.breaks || []).some(item => !item || typeof item !== 'object' ||
-          !validDateOrNull(item.start) || !validDateOrNull(item.end))) {
+        (shift.isNotWork !== undefined && typeof shift.isNotWork !== 'boolean')) {
         throw new Error(`Shift ${shift.id} has invalid date, break, or paid-hours data.`);
       }
+    }
+    try {
+      normalizeShiftRecords(backup.data.shifts, {
+        allowOpen: true,
+        employeeIds: new Set(backup.data.employees.map(employee => employee.id)),
+        customerIds: new Set(backup.data.customers.map(customer => customer.id))
+      });
+    } catch (error) {
+      throw new Error(`Shift data is invalid: ${error.message}`);
     }
     for (const invoice of backup.data.invoices) {
       if (!Array.isArray(invoice.items) || !validDateOrNull(invoice.date) || typeof invoice.isPaid !== 'boolean' ||
@@ -1496,6 +1460,11 @@ export class AppDataStore {
   
   async restoreFullBackup(backup) {
     const preview = this.previewFullBackup(backup);
+    const normalizedShiftRecords = normalizeShiftRecords(backup.data.shifts, {
+      allowOpen: true,
+      employeeIds: new Set(backup.data.employees.map(employee => employee.id)),
+      customerIds: new Set(backup.data.customers.map(customer => customer.id))
+    });
     const collectionByKey = {
       employees: 'employees',
       customers: 'customers',
@@ -1514,7 +1483,7 @@ export class AppDataStore {
     let operationCount = 0;
     
     Object.entries(collectionByKey).forEach(([key, collectionName], index) => {
-      const savedRecords = backup.data[key];
+      const savedRecords = key === 'shifts' ? normalizedShiftRecords : backup.data[key];
       const savedIds = new Set(savedRecords.map(record => record.id));
       snapshots[index].forEach(docSnap => {
         if (!savedIds.has(docSnap.id)) {

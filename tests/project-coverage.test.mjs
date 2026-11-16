@@ -112,10 +112,30 @@ test('shift edits allow equal times only for non-work records and retain strict 
   const shiftScript = readProjectFile('scripts', 'shifts.js');
   const updateShift = model.slice(model.indexOf('async updateShift('), model.indexOf('async markShiftPlannedJobsPrompted'));
 
-  assert.match(updateShift, /validateShiftTimeRange\(clockInTime, clockOutTime, isNotWork\)/);
-  assert.match(updateShift, /isNotWork: Boolean\(isNotWork\)/);
+  assert.match(updateShift, /normalizeShiftRecord\(/);
+  assert.match(updateShift, /isNotWork/);
   assert.match(domain, /if \(end\.getTime\(\) < start\.getTime\(\) \|\| \(!isNotWork && end\.getTime\(\) === start\.getTime\(\)\)\)/);
-  assert.match(shiftScript, /end <= start\) && !notWorkBox\.checked/);
+  assert.match(shiftScript, /!start \|\| !end \|\| Number\.isNaN\(start\.getTime\(\)\)/);
+});
+
+test('shift persistence, imports, and backups share strict validation and retain non-work flags', () => {
+  const model = readProjectFile('scripts', 'models.js');
+  const saveShift = model.slice(model.indexOf('async saveShift('), model.indexOf('async saveShifts('));
+  const saveShifts = model.slice(model.indexOf('async saveShifts('), model.indexOf('async deleteShift('));
+  const shiftExport = model.slice(model.indexOf('exportShiftData('), model.indexOf('async importShiftData('));
+  const shiftImport = model.slice(model.indexOf('async importShiftData('), model.indexOf('exportFullBackup('));
+  const backupExport = model.slice(model.indexOf('exportFullBackup('), model.indexOf('previewFullBackup('));
+  const backupPreview = model.slice(model.indexOf('previewFullBackup('), model.indexOf('async restoreFullBackup('));
+  const backupRestore = model.slice(model.indexOf('async restoreFullBackup('), model.indexOf('// PLANNED JOBS'));
+
+  assert.match(saveShift, /normalizeShiftRecord\(shift, \{ allowOpen: true \}\)/);
+  assert.match(saveShifts, /normalizeShiftRecords\(shifts, \{ allowOpen: true \}\)/);
+  assert.match(shiftImport, /normalizeShiftRecords\(parsed,[\s\S]*?employeeIds:[\s\S]*?for \(const \{ id, \.\.\.data \} of normalizedShifts\)/);
+  assert.match(shiftExport, /isNotWork: Boolean\(s\.isNotWork\)/);
+  assert.match(backupExport, /isNotWork: Boolean\(shift\.isNotWork\)/);
+  assert.match(backupPreview, /normalizeShiftRecords\(backup\.data\.shifts,[\s\S]*?employeeIds:[\s\S]*?customerIds:/);
+  assert.match(backupRestore, /const normalizedShiftRecords = normalizeShiftRecords/);
+  assert.match(backupRestore, /key === 'shifts' \? normalizedShiftRecords : backup\.data\[key\]/);
 });
 
 test('ledger deletion and reindexing share one guarded Firestore batch before local mutation', () => {
@@ -187,7 +207,7 @@ test('the app writes directly to its canonical Firestore collections without req
   assert.match(model, /collection\(db, "payments"\)/);
   assert.match(model, /collection\(db, "ledgerRows"\)/);
   assert.match(model, /collection\(db, "planned"\)/);
-  assert.match(model, /setDoc\(doc\(db, "shifts", shift\.id\)/);
+  assert.match(model, /setDoc\(doc\(db, "shifts", id\), data\)/);
   assert.doesNotMatch(model, /publicEmployees|publicCustomers|publicShifts|changeRequests|getCurrentOwner|requireRecentOwnerReauthentication/);
 });
 

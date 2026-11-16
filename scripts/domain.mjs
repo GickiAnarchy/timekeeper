@@ -34,15 +34,130 @@ export function ledgerBalanceCents(entries = []) {
   }, 0);
 }
 
+function validShiftDate(value) {
+  const source = typeof value?.toDate === 'function' ? value.toDate() : value;
+  if (source instanceof Date) return Number.isFinite(source.getTime()) ? new Date(source) : null;
+  // Shift records need a date and a clock time; reject loose Date.parse inputs.
+  const parts = typeof source === 'string' && source.match(/^(\d{4})-(\d{2})-(\d{2})[Tt ](\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:?\d{2})?$/i);
+  if (!parts) return null;
+  const [, yearText, monthText, dayText, hourText, minuteText, secondText = '0'] = parts;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  const second = Number(secondText);
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+  if (!year || !daysInMonth || day < 1 || day > daysInMonth || hour > 23 || minute > 59 || second > 59) return null;
+  const date = new Date(source);
+  return Number.isFinite(date.getTime()) ? date : null;
+}
+
+function shiftId(value, label) {
+  const id = typeof value === 'string' ? value.trim() : '';
+  if (!id || id.includes('/')) throw new TypeError(`A shift needs a valid ${label} reference.`);
+  return id;
+}
+
 export function validateShiftTimeRange(clockInTime, clockOutTime, isNotWork = false) {
-  const start = asValidDate(clockInTime);
-  const end = asValidDate(clockOutTime);
+  const start = validShiftDate(clockInTime);
+  const end = validShiftDate(clockOutTime);
   if (!start || !end) throw new Error('Please provide valid start and end times.');
   // Non-work records may use one timestamp for both fields, but never reversed times.
   if (end.getTime() < start.getTime() || (!isNotWork && end.getTime() === start.getTime())) {
     throw new Error('End time must be after start time.');
   }
   return { start, end };
+}
+
+export function normalizeShiftRecord(shift, { allowOpen = false } = {}) {
+  if (!shift || typeof shift !== 'object' || Array.isArray(shift)) {
+    throw new TypeError('A shift record is required.');
+  }
+  const id = shiftId(shift.id, 'shift ID');
+  const employeeId = shiftId(shift.employee?.id ?? shift.employeeId, 'employee');
+  const customerId = shiftId(shift.customer?.id ?? shift.custId ?? shift.customerId, 'customer');
+  const isNotWork = shift.isNotWork === true;
+  if (shift.isNotWork !== undefined && typeof shift.isNotWork !== 'boolean') {
+    throw new TypeError(`Shift ${id} has an invalid non-work flag.`);
+  }
+  const start = validShiftDate(shift.clockInTime);
+  if (!start) throw new TypeError(`Shift ${id} needs a valid clock-in date and time.`);
+  const end = shift.clockOutTime === null || shift.clockOutTime === undefined || shift.clockOutTime === ''
+    ? null
+    : validShiftDate(shift.clockOutTime);
+  if (shift.clockOutTime !== null && shift.clockOutTime !== undefined && shift.clockOutTime !== '' && !end) {
+    throw new TypeError(`Shift ${id} needs a valid clock-out date and time.`);
+  }
+  if (end) validateShiftTimeRange(start, end, isNotWork);
+  else if (!allowOpen || isNotWork) throw new TypeError(`Shift ${id} needs a valid clock-out time.`);
+
+  const paidHoursValue = shift.paidHours;
+  const paidHours = paidHoursValue === null || paidHoursValue === undefined || paidHoursValue === ''
+    ? null
+    : typeof paidHoursValue === 'number' ? paidHoursValue : Number.NaN;
+  if (paidHours !== null && (!Number.isFinite(paidHours) || paidHours < 0)) {
+    throw new TypeError(`Shift ${id} needs valid non-negative paid hours.`);
+  }
+
+  const sourceBreaks = shift.breaks ?? [];
+  if (!Array.isArray(sourceBreaks)) throw new TypeError(`Shift ${id} has invalid break data.`);
+  const normalizedBreaks = sourceBreaks.map((item, index) => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      throw new TypeError(`Shift ${id} break ${index + 1} is invalid.`);
+    }
+    const breakStart = validShiftDate(item.start);
+    const breakEnd = item.end === null || item.end === undefined || item.end === '' ? null : validShiftDate(item.end);
+    if (!breakStart || (item.end !== null && item.end !== undefined && item.end !== '' && !breakEnd)) {
+      throw new TypeError(`Shift ${id} break ${index + 1} needs valid start and end times.`);
+    }
+    if (breakStart < start || (end && breakStart > end) ||
+        (breakEnd && (breakEnd <= breakStart || (end && breakEnd > end)))) {
+      throw new TypeError(`Shift ${id} break ${index + 1} must fall within the shift and end after it starts.`);
+    }
+    if (!breakEnd && (!allowOpen || end || isNotWork)) {
+      throw new TypeError(`Shift ${id} break ${index + 1} needs a valid end time.`);
+    }
+    return { start: breakStart, end: breakEnd };
+  }).sort((a, b) => a.start - b.start);
+  for (let index = 1; index < normalizedBreaks.length; index += 1) {
+    const previous = normalizedBreaks[index - 1];
+    if (!previous.end || normalizedBreaks[index].start < previous.end) {
+      throw new TypeError(`Shift ${id} break times cannot overlap.`);
+    }
+  }
+
+  return {
+    id,
+    employeeId,
+    custId: customerId,
+    clockInTime: start.toISOString(),
+    clockOutTime: end?.toISOString() || null,
+    note: shift.note ? String(shift.note).trim() : null,
+    isPaid: Boolean(shift.isPaid),
+    isNotWork,
+    breaks: normalizedBreaks.map(item => ({ start: item.start.toISOString(), end: item.end?.toISOString() || null })),
+    paidHours,
+    plannedJobsPrompted: shift.plannedJobsPrompted === true
+  };
+}
+
+export function normalizeShiftRecords(records, { allowOpen = false, employeeIds, customerIds } = {}) {
+  if (!Array.isArray(records)) throw new TypeError('Shift data must be a JSON list.');
+  const seen = new Set();
+  return records.map(record => {
+    const normalized = normalizeShiftRecord(record, { allowOpen });
+    if (seen.has(normalized.id)) throw new TypeError(`Shift data contains duplicate ID ${normalized.id}.`);
+    seen.add(normalized.id);
+    if (employeeIds && !employeeIds.has(normalized.employeeId)) {
+      throw new TypeError(`Shift ${normalized.id} refers to a missing employee ${normalized.employeeId}.`);
+    }
+    if (customerIds && !customerIds.has(normalized.custId)) {
+      throw new TypeError(`Shift ${normalized.id} refers to a missing customer ${normalized.custId}.`);
+    }
+    return normalized;
+  });
 }
 
 export function planLedgerEntryDeletion(entries = [], entryId) {
