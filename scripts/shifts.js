@@ -85,7 +85,7 @@ function makeElement(tag, className, text) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await store.init();
+  await store.loadPageData({ employees: true, customers: true, shifts: true, planned: true });
 
   const shiftList = document.getElementById('shiftList');
   const empFilter = document.getElementById('emp-filter');

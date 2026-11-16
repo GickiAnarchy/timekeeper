@@ -1,7 +1,7 @@
 import { store } from './models.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await store.init();
+  await store.loadPageData({ employees: true, customers: true });
 
   const empList = document.getElementById('emp-list');
   const empForm = document.getElementById('add-emp-form');

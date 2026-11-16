@@ -18,7 +18,7 @@ import { initializeTableSorting, sortTableRows } from './table-sort.mjs';
 
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await store.init();
+  await store.loadPageData({ employees: true, customers: true, shifts: true, invoices: true });
 
   const custSelect = document.getElementById('cust-select');
   const invList = document.getElementById('inv-select');

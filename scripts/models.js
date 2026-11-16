@@ -479,18 +479,49 @@ export class AppDataStore {
     this.isAdmin = null;
   }
   
-  async init() {
+  async loadPageData({
+    employees = false,
+    customers = false,
+    shifts = false,
+    payments = false,
+    invoices = false,
+    ledger = false,
+    ledgerArchives = false,
+    planned = false,
+    settleLedgerArchives = false
+  } = {}) {
     this.loadFailures = [];
     this.pendingLedgerSettlements.clear();
     this.recentlyArchivedLedgerIds = [];
-    await this.loadEmployees();
-    await this.loadCustomers();
-    await this.loadShifts();
-    await this.loadPayments();
-    await this.loadInvoices();
-    await this.loadLedger();
-    await this.loadLedgerArchives();
-    if (!this.loadFailures.length) {
+
+    // Hydrated records refer to employees and customers, so load their maps first.
+    const shouldLoad = {
+      employees: employees || shifts || settleLedgerArchives,
+      customers: customers || shifts || invoices || planned,
+      shifts,
+      payments,
+      invoices,
+      ledger: ledger || settleLedgerArchives,
+      ledgerArchives: ledgerArchives || settleLedgerArchives,
+      planned
+    };
+    const independentLoads = [];
+    if (shouldLoad.employees) independentLoads.push(this.loadEmployees());
+    if (shouldLoad.customers) independentLoads.push(this.loadCustomers());
+    if (shouldLoad.payments) independentLoads.push(this.loadPayments());
+    if (shouldLoad.ledger) independentLoads.push(this.loadLedger());
+    if (shouldLoad.ledgerArchives) independentLoads.push(this.loadLedgerArchives());
+    await Promise.all(independentLoads);
+
+    // These loaders hydrate against the employee/customer maps populated above.
+    const relatedLoads = [];
+    if (shouldLoad.shifts) relatedLoads.push(this.loadShifts());
+    if (shouldLoad.invoices) relatedLoads.push(this.loadInvoices());
+    if (shouldLoad.planned) relatedLoads.push(this.loadPlanned());
+    await Promise.all(relatedLoads);
+
+    // Only callers that need ledger maintenance opt into the existing side effects.
+    if (settleLedgerArchives && !this.loadFailures.length) {
       try {
         await this.resumePendingLedgerArchives();
         await this.archiveAlreadySettledLedgers();
@@ -499,7 +530,21 @@ export class AppDataStore {
         this.loadFailures.push(error);
       }
     }
-    await this.loadPlanned();
+  }
+
+  async init() {
+    // Keep the full-workspace path for backups and other callers that need its archive recovery.
+    return this.loadPageData({
+      employees: true,
+      customers: true,
+      shifts: true,
+      payments: true,
+      invoices: true,
+      ledger: true,
+      ledgerArchives: true,
+      planned: true,
+      settleLedgerArchives: true
+    });
   }
   
   // LEDGER --

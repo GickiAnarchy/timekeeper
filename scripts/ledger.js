@@ -226,7 +226,13 @@ function makeAdminControlGroup(className, label) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await store.init();
+  await store.loadPageData({
+    employees: true,
+    customers: true,
+    shifts: true,
+    ledger: true,
+    settleLedgerArchives: true
+  });
 
   const form = document.getElementById('ledger-form');
   const dateInput = document.getElementById('date');

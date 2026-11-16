@@ -619,7 +619,7 @@ async function initializeAdminPage() {
   loadDailyQuotes = models.loadDailyQuotes;
   saveDailyQuotes = models.saveDailyQuotes;
   normalizeDailyQuotes = quoteRules.normalizeDailyQuotes;
-  await store.init();
+  await store.loadPageData({ employees: true, customers: true, shifts: true, invoices: true });
 
   const authForm = document.getElementById('owner-auth-form');
   const authEmail = document.getElementById('owner-auth-email');

@@ -28,7 +28,7 @@ function makeElement(tag, className = '', text = undefined) {
 */
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await store.init();
+  await store.loadPageData({ employees: true, customers: true, shifts: true, planned: true });
   
   const employeeOptions = document.getElementById('employee-options');
   const employeeSelectionCount = document.getElementById('employee-selection-count');

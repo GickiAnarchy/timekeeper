@@ -214,11 +214,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
-    await store.loadEmployees();
-    await store.loadCustomers();
-    await store.loadShifts();
-    await store.loadLedger();
-    await store.loadPlanned();
+    await store.loadPageData({ employees: true, customers: true, shifts: true, ledger: true, planned: true });
     renderOverview();
     renderPlannedJobs();
     renderLedgerWork();

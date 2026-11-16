@@ -5,9 +5,7 @@ import {
   ledgerBalanceCents
 } from './domain.mjs';
 
-// Keep the calculation and data-loading rules with this page's entrypoint. The
-// loader below intentionally uses only the six read methods; it must not call
-// store.init(), which can resume or create ledger archives.
+// Keep this review read-only: its selected data load does not resume or create ledger archives.
 // PAY-PERIOD REVIEW CALCULATIONS
 function dateOnly(value) {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
@@ -186,13 +184,14 @@ export function buildPayPeriodReview({
 
 // PAY-PERIOD READ-ONLY DATA LOADER
 export async function loadPayPeriodReviewData(store) {
-  store.loadFailures = [];
-  await store.loadEmployees();
-  await store.loadCustomers();
-  await store.loadShifts();
-  await store.loadInvoices();
-  await store.loadLedger();
-  await store.loadLedgerArchives();
+  await store.loadPageData({
+    employees: true,
+    customers: true,
+    shifts: true,
+    invoices: true,
+    ledger: true,
+    ledgerArchives: true
+  });
   // Existing loaders report failures instead of throwing. Never show a partial
   // snapshot as a complete review (especially an apparently zero ledger balance).
   if (store.loadFailures.length) {

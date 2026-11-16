@@ -309,7 +309,7 @@ test('Home is a task-oriented launchpad for shifts, jobs due soon, and ledger wo
   assert.match(home, /href="planned\.html" target="main-content"/);
   assert.match(home, /id="ledger-work-list"/);
   assert.match(home, /href="payledger\.html" target="main-content"/);
-  assert.match(script, /await store\.loadLedger\(\)/);
+  assert.match(script, /await store\.loadPageData\(\{[^}]*ledger: true[^}]*planned: true/);
   assert.match(script, /plannedJobUrgency\(job\)\.daysAway/);
   assert.match(script, /daysAway <= 7/);
   assert.match(script, /ledgerBalanceCents\(entries\)/);

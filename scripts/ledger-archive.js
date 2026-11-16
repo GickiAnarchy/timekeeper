@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const retryButton = document.getElementById('retry-archive-button');
 
   try {
-    await store.init();
+    await store.loadPageData({ employees: true, ledgerArchives: true, settleLedgerArchives: true });
   } catch (error) {
     console.error('Unable to load ledger archives:', error);
     archiveStatus.textContent = error.message || 'Unable to load archived ledgers.';
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     retryButton.disabled = true;
     retryButton.textContent = 'Retrying…';
     try {
-      await store.init();
+      await store.loadPageData({ employees: true, ledgerArchives: true, settleLedgerArchives: true });
       populateEmployeeFilter();
       archiveStatus.textContent = 'Pending archives completed.';
     } catch (error) {

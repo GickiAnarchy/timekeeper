@@ -133,7 +133,7 @@ async function initializePlannedPage() {
   let activeFilter = 'open';
   let editingJobId = null;
 
-  await store.init();
+  await store.loadPageData({ customers: true, planned: true });
   populateCustomerDropdowns(customerSelect);
 
   function sortedJobs() {
