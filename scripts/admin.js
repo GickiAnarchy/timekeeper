@@ -376,8 +376,6 @@ function initializeQuoteManager() {
   }).finally(() => setBusy(false));
 }
 
-
-
 function initializePeopleManager() {
   const employeeBody = document.getElementById('wage-table-body');
   const customerBody = document.getElementById('customer-table-body');
@@ -622,7 +620,8 @@ async function initializeAdminPage() {
   await store.loadPageData({ employees: true, customers: true, shifts: true, invoices: true });
 
   const authForm = document.getElementById('owner-auth-form');
-  const authEmail = document.getElementById('owner-auth-email');
+  /* const authEmail = document.getElementById('owner-auth-email'); */
+  const authEmail = "mindofmagick85@gmail.com";
   const authPassword = document.getElementById('owner-auth-password');
   const authStatus = document.getElementById('owner-auth-status');
   const authSubmit = document.getElementById('owner-auth-submit');
@@ -707,7 +706,7 @@ async function initializeAdminPage() {
   authForm.addEventListener('submit', async event => {
     event.preventDefault();
     if (redirecting || signingIn) return;
-    const email = authEmail.value.trim();
+    const email = "mindofmagick85@gmail.com";
     const password = authPassword.value;
     if (!email || !password) {
       void leaveAdmin();
