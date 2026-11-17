@@ -8,6 +8,11 @@ body { display: flex; flex-direction: column; align-items: stretch; gap: 12px; p
 .ledger-heading h1 { margin: 0 0 4px; color: var(--ink); font-size: 20px; letter-spacing: -.04em; }
 .ledger-owner { margin: 0; color: var(--muted); font-size: 11px; }
 .ledger-csv-help { margin: 7px 0 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
+.ledger-display-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 9px; width: min(100%, 1060px); margin: 0 auto; }
+.ledger-display-toolbar > p { margin: 0; color: var(--muted); font-size: 11px; }
+.ledger-list-view { display: grid; gap: 12px; width: min(100%, 1060px); margin: 0 auto; }
+.ledger-list-view .table-div { margin: 0 auto; }
+.ledger-list-view .ledger-mobile-summary, .ledger-list-view .ledger-mobile-list { margin-left: auto; margin-right: auto; }
 .ledger-filter { display: grid; min-width: min(260px, 45%); gap: 5px; color: var(--ink-soft); font-size: 10px; font-weight: 650; }
 .ledger-export-format { min-width: 150px; }
 .ledger-filter select { width: 100%; min-height: 38px; padding: 7px 9px; font-size: 10px; }
@@ -46,6 +51,22 @@ tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight
 .ledger-mobile-summary-item { display: grid; min-width: 0; gap: 3px; }
 .ledger-mobile-summary-item span { color: var(--muted); font-size: 10px; font-weight: 650; }
 .ledger-mobile-summary-item strong { color: var(--ink); font-size: 15px; font-variant-numeric: tabular-nums; }
+.ledger-calendar-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; padding: 11px 13px; background: var(--surface-muted); border: 1px solid var(--border-soft); border-radius: 12px; }
+.ledger-calendar-summary > div { display: grid; gap: 3px; }
+.ledger-calendar-summary span { color: var(--muted); font-size: 10px; font-weight: 650; }
+.ledger-calendar-summary strong { color: var(--ink); font-size: 15px; font-variant-numeric: tabular-nums; }
+.ledger-calendar-entry { display: grid; gap: 7px; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.ledger-calendar-entry-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.ledger-calendar-entry-heading h4 { margin: 0; font-size: 13px; }
+.ledger-calendar-entry-heading strong { white-space: nowrap; font-size: 13px; font-variant-numeric: tabular-nums; }
+.ledger-calendar-entry-type { margin: 0; color: var(--muted); font-size: 10px; }
+.ledger-calendar-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; margin: 0; }
+.ledger-calendar-fields > div { min-width: 0; }
+.ledger-calendar-fields > div:last-child { grid-column: 1 / -1; }
+.ledger-calendar-fields dt { color: var(--muted); font-size: 10px; font-weight: 650; }
+.ledger-calendar-fields dd { margin: 2px 0 0; color: var(--ink-soft); font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; white-space: pre-wrap; }
+.ledger-calendar-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ledger-calendar-actions button { min-height: 38px; padding: 0 12px; font-size: 11px; font-weight: 650; }
 .edit-ledger-btn { color: var(--green-deep); background: var(--green-soft); }
 .edit-ledger-btn:hover { background: var(--surface-hover); }
 .delete-btn { color: var(--red); background: var(--red-soft); }
@@ -121,6 +142,10 @@ tfoot td { color: var(--ink-soft); background: var(--surface-muted); font-weight
   .ledger-heading-actions { flex-direction: column; }
   .ledger-add-actions { grid-template-columns: 1fr; }
   .ledger-add-control-group { grid-template-columns: 1fr; }
+  .ledger-display-toolbar { align-items: flex-start; }
+  .ledger-display-toolbar .view-switch { width: 100%; }
+  .ledger-display-toolbar .view-switch button { flex: 1; }
+  .ledger-calendar-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 700px) {
   .table-div { display: none; }

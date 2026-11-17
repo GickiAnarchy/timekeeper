@@ -5,6 +5,7 @@ import {
 } from './models.js';
 import { sortLedgerEntriesByDate, sumLedgerHours } from './domain.mjs';
 import { initializeTableSorting, sortTableRows } from './table-sort.mjs';
+import { calendarDateKey, setupCalendarDisplay } from './calendar-view.mjs';
 
 // This display rule has only one consumer, so keep it with the ledger renderer.
 // LEDGER DISPLAY LABEL HELPER
@@ -269,10 +270,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const editHours = document.getElementById('edit-ledger-hours');
   const editAmount = document.getElementById('edit-ledger-amount');
   const editNotes = document.getElementById('edit-ledger-notes');
+  const ledgerCalendarDayList = document.getElementById('ledger-calendar-day-list');
+  const ledgerCalendarUndatedList = document.getElementById('ledger-calendar-undated-list');
+  const ledgerCalendarSelectedDate = document.getElementById('ledger-calendar-selected-date');
+  const ledgerCalendarBalance = document.getElementById('ledger-calendar-balance');
+  const ledgerCalendarHours = document.getElementById('ledger-calendar-hours');
   let editingEntryId = null;
   let editingEntryEmployeeId = null;
   let editTrigger = null;
   let ledgerSort = { key: 'date', direction: 'descending', type: 'date' };
+  let calendarDisplay;
 
   initializeTableSorting(ledgerTable, {
     initialSort: ledgerSort,
@@ -375,6 +382,99 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  function signedLedgerAmount(entry) {
+    const amount = Number(entry.amount || 0);
+    return String(entry.type || '').toLowerCase() === 'advance' ? -amount : amount;
+  }
+
+  function formatSignedLedgerAmount(amount) {
+    if (!amount) return '$0.00';
+    return `${amount < 0 ? '−' : '+'}$${Math.abs(amount).toFixed(2)}`;
+  }
+
+  function createLedgerCalendarCard(entry) {
+    const type = String(entry.type || '').toLowerCase();
+    const typeLabel = entry.sourceShiftId && type === 'normal'
+      ? 'Shift pay' : type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Unspecified';
+    const itemLabel = ledgerItemLabel(entry, store.shifts);
+    const signedAmount = signedLedgerAmount(entry);
+    const itemActionLabel = `${itemLabel}${entry.date ? `, ${entry.date}` : ''}`;
+    const card = makeElement('article', 'ledger-calendar-entry');
+    const heading = makeElement('div', 'ledger-calendar-entry-heading');
+    heading.append(
+      makeElement('h4', '', itemLabel),
+      makeElement('strong', type === 'advance' ? 'advance-amount' : '', `${signedAmount < 0 ? '−' : ''}$${Math.abs(signedAmount).toFixed(2)}`)
+    );
+    card.append(heading, makeElement('p', 'ledger-calendar-entry-type', `${entry.date || 'Undated'} · ${typeLabel}`));
+    const fields = makeElement('dl', 'ledger-calendar-fields');
+    const addField = (label, value) => {
+      const field = document.createElement('div');
+      field.append(makeElement('dt', '', label), makeElement('dd', '', value || '—'));
+      fields.appendChild(field);
+    };
+    addField('Hours', Number(entry.hours || 0).toFixed(2));
+    addField('Amount', `${signedAmount < 0 ? '−' : ''}$${Math.abs(signedAmount).toFixed(2)}`);
+    addField('Notes', entry.notes || '—');
+    const actions = makeAdminControlGroup('ledger-calendar-actions ledger-admin-control-group', 'Ledger entry actions');
+    const edit = makeElement('button', 'edit-ledger-btn', 'Edit');
+    edit.type = 'button';
+    edit.dataset.id = entry.id;
+    edit.setAttribute('aria-label', `Edit ${itemActionLabel}`);
+    const remove = makeElement('button', 'delete-btn', 'Delete');
+    remove.type = 'button';
+    remove.dataset.id = entry.id;
+    remove.setAttribute('aria-label', `Delete ${itemActionLabel}`);
+    actions.append(edit, remove);
+    card.append(fields, actions);
+    return card;
+  }
+
+  function renderLedgerCalendarDay(date, dayEntries, allEntries) {
+    ledgerCalendarSelectedDate.textContent = date.toLocaleDateString(undefined, {
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    });
+    const currentEntries = allEntries || [];
+    const balance = currentEntries.reduce((sum, entry) => sum + signedLedgerAmount(entry), 0);
+    ledgerCalendarBalance.textContent = `$${balance.toFixed(2)}`;
+    ledgerCalendarHours.textContent = `${sumLedgerHours(currentEntries).toFixed(2)} h`;
+
+    ledgerCalendarDayList.replaceChildren();
+    if (!ledgerFilter.value) {
+      ledgerCalendarDayList.appendChild(makeElement('p', 'ledger-mobile-empty', 'Choose an employee above to browse ledger entries by date.'));
+    } else if (!dayEntries.length) {
+      ledgerCalendarDayList.appendChild(makeElement('p', 'ledger-mobile-empty', 'No entries for this employee on this date.'));
+    } else {
+      dayEntries.forEach(entry => ledgerCalendarDayList.appendChild(createLedgerCalendarCard(entry)));
+    }
+
+    ledgerCalendarUndatedList.replaceChildren();
+    const undatedEntries = currentEntries.filter(entry => !calendarDateKey(entry.date));
+    if (!undatedEntries.length) {
+      ledgerCalendarUndatedList.appendChild(makeElement('p', 'ledger-mobile-empty', 'No undated entries.'));
+    } else {
+      undatedEntries.forEach(entry => ledgerCalendarUndatedList.appendChild(createLedgerCalendarCard(entry)));
+    }
+  }
+
+  calendarDisplay = setupCalendarDisplay({
+    listButton: document.getElementById('ledger-list-view-button'),
+    calendarButton: document.getElementById('ledger-calendar-view-button'),
+    listView: document.getElementById('ledger-list-view'),
+    calendarView: document.getElementById('ledger-calendar-view'),
+    previousButton: document.getElementById('ledger-calendar-previous'),
+    nextButton: document.getElementById('ledger-calendar-next'),
+    todayButton: document.getElementById('ledger-calendar-today'),
+    monthLabel: document.getElementById('ledger-calendar-month'),
+    grid: document.getElementById('ledger-calendar-grid'),
+    getRecords: () => ledgerFilter.value ? filteredEntries() : [],
+    getDate: entry => entry.date,
+    getSummary: entries => {
+      const net = entries.reduce((sum, entry) => sum + signedLedgerAmount(entry), 0);
+      return `${entries.length} entr${entries.length === 1 ? 'y' : 'ies'} · ${formatSignedLedgerAmount(net)}`;
+    },
+    renderSelectedDay: renderLedgerCalendarDay
+  });
+
   function renderLedger() {
     renderShiftOptions();
     tableBody.replaceChildren();
@@ -392,6 +492,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       totalRow.innerHTML = '<strong>Total: $0.00</strong>';
       hoursTotal.innerHTML = '<strong>0.00</strong>';
       mobileList.appendChild(makeElement('p', 'ledger-mobile-empty', 'Choose an employee to view their ledger.'));
+      calendarDisplay.refresh();
       return;
     }
 
@@ -497,6 +598,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const totalHours = sumLedgerHours(entries);
     hoursTotal.innerHTML = `<strong>${totalHours.toFixed(2)}</strong>`;
     mobileHours.textContent = `${totalHours.toFixed(2)} h`;
+    calendarDisplay.refresh();
   }
 
   function updateDownloadButton() {
@@ -803,4 +905,5 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   tableBody.addEventListener('click', handleLedgerAction);
   mobileList.addEventListener('click', handleLedgerAction);
+  document.getElementById('ledger-calendar-view').addEventListener('click', handleLedgerAction);
 });

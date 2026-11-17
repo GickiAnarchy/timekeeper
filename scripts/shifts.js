@@ -6,6 +6,7 @@ import {
 } from './models.js';
 import { isFocusableElement } from './keyboard.mjs';
 import { promptForCompletedPlannedJobs } from './planned.js';
+import { calendarDateKey, setupCalendarDisplay } from './calendar-view.mjs';
 
 // Keep the shift dialog's visual-viewport behavior beside its controller; the
 // focusability predicate remains shared with the app-wide keyboard module.
@@ -92,6 +93,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const custFilter = document.getElementById('cust-filter');
   const paidCheckbox = document.getElementById('paid-filter');
   const addButton = document.getElementById('add-button');
+  const shiftCalendarList = document.getElementById('shift-calendar-day-list');
+  const shiftCalendarDate = document.getElementById('shift-calendar-selected-date');
   const modal = document.getElementById('viewShiftModal');
   const empSelect = document.getElementById('shift-emp');
   const custSelect = document.getElementById('shift-cust');
@@ -111,6 +114,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   let isNewShift = false;
   let duplicateSource = null;
   const syncModalViewport = () => syncShiftDialogViewport(modal, window);
+  const calendarDisplay = setupCalendarDisplay({
+    listButton: document.getElementById('shift-list-view-button'),
+    calendarButton: document.getElementById('shift-calendar-view-button'),
+    listView: document.getElementById('shift-list-view'),
+    calendarView: document.getElementById('shift-calendar-view'),
+    previousButton: document.getElementById('shift-calendar-previous'),
+    nextButton: document.getElementById('shift-calendar-next'),
+    todayButton: document.getElementById('shift-calendar-today'),
+    monthLabel: document.getElementById('shift-calendar-month'),
+    grid: document.getElementById('shift-calendar-grid'),
+    getRecords: getFilteredCompleteShifts,
+    getDate: shift => shift.clockInTime,
+    getSummary: dayShifts => {
+      const hours = dayShifts.reduce((total, shift) => total + shift.getHoursWorked(), 0);
+      return `${dayShifts.length} shift${dayShifts.length === 1 ? '' : 's'} · ${hours.toFixed(2)} h`;
+    },
+    renderSelectedDay: renderCalendarDay
+  });
 
   modal.addEventListener('focusin', syncModalViewport);
   window.addEventListener('resize', syncModalViewport);
@@ -385,8 +406,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     duplicateSource = null;
   });
 
-  function renderList() {
-    if (!shiftList) return;
+  // Both displays use the same filters so switching views never changes the visible record set.
+  function getFilteredCompleteShifts() {
     const employeeSelection = empFilter.value;
     const customerSelection = custFilter.value;
     let completeShifts = store.shifts.filter(shift => shift.isComplete);
@@ -400,49 +421,67 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (paidCheckbox.checked) completeShifts = completeShifts.filter(shift => !shift.isPaid);
 
     completeShifts.sort((a, b) => (b.clockInTime?.getTime() || 0) - (a.clockInTime?.getTime() || 0));
+    return completeShifts;
+  }
+
+  function createShiftCard(shift) {
+    const item = makeElement('li', `shift-card${shift.isPaid ? ' is-paid' : ''}`);
+    if (shift.isPaid) {
+      // DOMTokenList exposes add(), not append(); append crashes before paid history can render.
+      item.classList.add('paid-border');
+    }
+    if (shift.isNotWork) item.classList.add('not-work-border');
+    const date = makeElement('div', 'date-div');
+    date.appendChild(makeElement('p', '', shift.clockInTime?.toLocaleDateString() || 'Unknown date'));
+    const summary = makeElement('div', 'emp-cust-div');
+    const employeeName = makeElement('strong', '', shift.employee?.name || 'Unknown employee');
+    const details = makeElement('div', '', ` @ ${shift.customer?.name || 'Unknown customer'}`);
+    const timeLine = makeElement('small', 'time-small',
+      `In: ${shift.clockInTime?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'Unknown'}  ·  Out: ${shift.clockOutTime?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'Unknown'}`);
+    const workedLine = makeElement('small', 'time-small',
+      `Worked ${shift.getHoursWorked().toFixed(2)} h  ·  Paid ${shift.getPaidHours().toFixed(2)} h`);
+    summary.append(employeeName, details, document.createElement('br'), timeLine, document.createElement('br'), workedLine);
+
+    const actions = makeElement('div', 'list-item-buttons');
+    const editButton = makeElement('button', 'view-btn', 'Edit');
+    editButton.type = 'button';
+    editButton.dataset.id = shift.id;
+    const duplicateButton = makeElement('button', 'duplicate-btn', 'Duplicate work shift for…');
+    duplicateButton.type = 'button';
+    duplicateButton.dataset.id = shift.id;
+    const deleteButton = makeElement('button', 'delete-btn', 'Delete');
+    deleteButton.type = 'button';
+    deleteButton.dataset.id = shift.id;
+    actions.append(editButton, duplicateButton, deleteButton);
+    item.append(date, summary, actions);
+    return item;
+  }
+
+  function renderCalendarDay(date, shifts) {
+    shiftCalendarDate.textContent = date.toLocaleDateString(undefined, {
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    });
+    shiftCalendarList.replaceChildren();
+    if (!shifts.length) {
+      shiftCalendarList.appendChild(makeElement('li', 'empty-list shift-card', 'No completed shifts match these filters on this date.'));
+      return;
+    }
+    shifts.forEach(shift => shiftCalendarList.appendChild(createShiftCard(shift)));
+  }
+
+  function renderList() {
+    if (!shiftList) return;
+    const completeShifts = getFilteredCompleteShifts();
     shiftList.replaceChildren();
     if (completeShifts.length === 0) {
       shiftList.appendChild(makeElement('li', 'empty-list shift-card', 'No completed shifts match these filters.'));
-      return;
+    } else {
+      completeShifts.forEach(shift => shiftList.appendChild(createShiftCard(shift)));
     }
-
-    completeShifts.forEach(shift => {
-      const item = makeElement('li', `shift-card${shift.isPaid ? ' is-paid' : ''}`);
-      if (shift.isPaid) {
-        // DOMTokenList exposes add(), not append(); append crashes before paid history can render.
-        item.classList.add('paid-border');
-      }
-      if (shift.isNotWork) {
-        item.classList.add('not-work-border');
-      }
-      const date = makeElement('div', 'date-div');
-      date.appendChild(makeElement('p', '', shift.clockInTime?.toLocaleDateString() || 'Unknown date'));
-      const summary = makeElement('div', 'emp-cust-div');
-      const employeeName = makeElement('strong', '', shift.employee?.name || 'Unknown employee');
-      const details = makeElement('div', '', ` @ ${shift.customer?.name || 'Unknown customer'}`);
-      const timeLine = makeElement('small', 'time-small',
-        `In: ${shift.clockInTime?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'Unknown'}  ·  Out: ${shift.clockOutTime?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'Unknown'}`);
-      const workedLine = makeElement('small', 'time-small',
-        `Worked ${shift.getHoursWorked().toFixed(2)} h  ·  Paid ${shift.getPaidHours().toFixed(2)} h`);
-      summary.append(employeeName, details, document.createElement('br'), timeLine, document.createElement('br'), workedLine);
-
-      const actions = makeElement('div', 'list-item-buttons');
-      const editButton = makeElement('button', 'view-btn', 'Edit');
-      editButton.type = 'button';
-      editButton.dataset.id = shift.id;
-      const duplicateButton = makeElement('button', 'duplicate-btn', 'Duplicate work shift for…');
-      duplicateButton.type = 'button';
-      duplicateButton.dataset.id = shift.id;
-      const deleteButton = makeElement('button', 'delete-btn', 'Delete');
-      deleteButton.type = 'button';
-      deleteButton.dataset.id = shift.id;
-      actions.append(editButton, duplicateButton, deleteButton);
-      item.append(date, summary, actions);
-      shiftList.appendChild(item);
-    });
+    calendarDisplay.refresh();
   }
 
-  shiftList.addEventListener('click', async event => {
+  async function handleShiftCardAction(event) {
     const button = event.target.closest('button[data-id]');
     if (!button) return;
     const shift = store.shifts.find(candidate => candidate.id === button.dataset.id);
@@ -476,7 +515,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.alert('This shift could not be deleted. Please try again.');
       }
     }
-  });
+  }
+
+  shiftList.addEventListener('click', handleShiftCardAction);
+  shiftCalendarList.addEventListener('click', handleShiftCardAction);
 
   renderList();
 });

@@ -3,10 +3,11 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <link rel="stylesheet" href="../styles/ledger.css?v=runtime-repair-4">
+    <link rel="stylesheet" href="../styles/ledger.css?v=calendar-view-1">
+    <link rel="stylesheet" href="../styles/calendar-view.css">
     <script type="module" src="../scripts/keyboard.mjs" defer></script>
     <script type="module" src="../scripts/admin.js?v=runtime-repair-4" defer></script>
-    <script type="module" src="../scripts/ledger.js?v=runtime-repair-4" defer></script>
+    <script type="module" src="../scripts/ledger.js?v=calendar-view-1" defer></script>
     <title>Employee Ledger · Timekeeper</title>
   </head>
   <body>
@@ -93,6 +94,14 @@
       </fieldset>
     </section>
 
+    <div class="ledger-display-toolbar">
+      <p>Choose a row view or browse ledger entries by date.</p>
+      <div class="view-switch" role="group" aria-label="Ledger display">
+        <button type="button" id="ledger-list-view-button" aria-pressed="true">List</button>
+        <button type="button" id="ledger-calendar-view-button" aria-pressed="false">Calendar</button>
+      </div>
+    </div>
+    <div id="ledger-list-view" class="list-view ledger-list-view">
     <div class="table-div">
       <table id="ledger-table" aria-label="Employee ledger entries">
         <thead>
@@ -130,6 +139,28 @@
       </div>
     </section>
     <div id="ledger-mobile-list" class="ledger-mobile-list" aria-live="polite"></div>
+    </div>
+    <section id="ledger-calendar-view" class="calendar-view ledger-calendar-view" aria-label="Employee ledger calendar" hidden>
+      <div class="ledger-calendar-summary" aria-label="Overall ledger totals">
+        <div><span>Overall balance</span><strong id="ledger-calendar-balance">$0.00</strong></div>
+        <div><span>Total hours</span><strong id="ledger-calendar-hours">0.00 h</strong></div>
+      </div>
+      <div class="calendar-navigation">
+        <button type="button" id="ledger-calendar-previous" aria-label="Previous month">‹</button>
+        <h2 class="calendar-month-label" id="ledger-calendar-month"></h2>
+        <button type="button" id="ledger-calendar-next" aria-label="Next month">›</button>
+        <button type="button" id="ledger-calendar-today">Today</button>
+      </div>
+      <div id="ledger-calendar-grid" class="calendar-grid" aria-label="Ledger entry dates"></div>
+      <section class="calendar-selected-day" aria-live="polite">
+        <h3 id="ledger-calendar-selected-date"></h3>
+        <div id="ledger-calendar-day-list" class="calendar-selected-list"></div>
+      </section>
+      <section class="calendar-extra-records" aria-live="polite">
+        <h3>Undated entries</h3>
+        <div id="ledger-calendar-undated-list" class="calendar-selected-list"></div>
+      </section>
+    </section>
     <p class="ledger-archive-notice" id="ledger-entry-status" role="status" aria-live="polite"></p>
     <p class="ledger-archive-link"><a href="ledger-archive.html">View archived ledger history</a></p>
 

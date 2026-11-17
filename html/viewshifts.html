@@ -3,9 +3,10 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <link rel="stylesheet" href="../styles/shifts.css">
+    <link rel="stylesheet" href="../styles/shifts.css?v=calendar-view-1">
+    <link rel="stylesheet" href="../styles/calendar-view.css">
     <script type="module" src="../scripts/keyboard.mjs" defer></script>
-    <script type="module" src="../scripts/shifts.js?v=runtime-repair-4" defer></script>
+    <script type="module" src="../scripts/shifts.js?v=calendar-view-1" defer></script>
     <title>Shift History · Timekeeper</title>
   </head>
   <body>
@@ -33,12 +34,34 @@
         </div>
       </div>
       <hr>
-      <details class="shift-list-details" open>
-        <summary>Shift List</summary>
-        <ul id="shiftList" class="shifts-list" aria-live="polite">
-          <li class="empty-list shift-card">No Shift History</li>
-        </ul>
-      </details>
+      <div class="history-display-toolbar">
+        <p class="history-display-hint">Browse completed shifts by list or by date.</p>
+        <div class="view-switch" role="group" aria-label="Shift history display">
+          <button type="button" id="shift-list-view-button" aria-pressed="true">List</button>
+          <button type="button" id="shift-calendar-view-button" aria-pressed="false">Calendar</button>
+        </div>
+      </div>
+      <div id="shift-list-view" class="list-view">
+        <details class="shift-list-details" open>
+          <summary>Shift List</summary>
+          <ul id="shiftList" class="shifts-list" aria-live="polite">
+            <li class="empty-list shift-card">No Shift History</li>
+          </ul>
+        </details>
+      </div>
+      <section id="shift-calendar-view" class="calendar-view" aria-label="Shift history calendar" hidden>
+        <div class="calendar-navigation">
+          <button type="button" id="shift-calendar-previous" aria-label="Previous month">‹</button>
+          <h2 class="calendar-month-label" id="shift-calendar-month"></h2>
+          <button type="button" id="shift-calendar-next" aria-label="Next month">›</button>
+          <button type="button" id="shift-calendar-today">Today</button>
+        </div>
+        <div id="shift-calendar-grid" class="calendar-grid" aria-label="Shift dates"></div>
+        <section class="calendar-selected-day" aria-live="polite">
+          <h3 id="shift-calendar-selected-date"></h3>
+          <ul id="shift-calendar-day-list" class="calendar-selected-list"></ul>
+        </section>
+      </section>
     </main>
 
     <dialog class="shift-modal" id="viewShiftModal" aria-labelledby="shift-modal-title">

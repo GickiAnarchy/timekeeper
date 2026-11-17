@@ -3,10 +3,11 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <link rel="stylesheet" href="../styles/planned.css">
+    <link rel="stylesheet" href="../styles/planned.css?v=calendar-view-1">
+    <link rel="stylesheet" href="../styles/calendar-view.css">
     <title>Planned jobs · Mosher Lawns</title>
     <script type="module" src="../scripts/keyboard.mjs" defer></script>
-    <script type="module" src="../scripts/planned.js" defer></script>
+    <script type="module" src="../scripts/planned.js?v=calendar-view-1" defer></script>
   </head>
   <body class="planned-body">
     <main class="planned-page">
@@ -45,13 +46,38 @@
             <h2 id="schedule-heading">Your schedule</h2>
             <p id="job-count" class="muted-copy">Loading jobs…</p>
           </div>
-          <div class="job-filters" role="group" aria-label="Filter jobs">
-            <button type="button" class="filter-button is-active" data-filter="open" aria-pressed="true">Open</button>
-            <button type="button" class="filter-button" data-filter="completed" aria-pressed="false">Completed</button>
-            <button type="button" class="filter-button" data-filter="all" aria-pressed="false">All jobs</button>
+          <div class="schedule-controls">
+            <div class="view-switch" role="group" aria-label="Planned jobs display">
+              <button type="button" id="planned-list-view-button" aria-pressed="true">List</button>
+              <button type="button" id="planned-calendar-view-button" aria-pressed="false">Calendar</button>
+            </div>
+            <div class="job-filters" role="group" aria-label="Filter jobs">
+              <button type="button" class="filter-button is-active" data-filter="open" aria-pressed="true">Open</button>
+              <button type="button" class="filter-button" data-filter="completed" aria-pressed="false">Completed</button>
+              <button type="button" class="filter-button" data-filter="all" aria-pressed="false">All jobs</button>
+            </div>
           </div>
         </div>
-        <ul id="planned-list" class="planned-list" aria-live="polite"></ul>
+        <div id="planned-list-view" class="list-view">
+          <ul id="planned-list" class="planned-list" aria-live="polite"></ul>
+        </div>
+        <section id="planned-calendar-view" class="calendar-view" aria-label="Planned jobs calendar" hidden>
+          <div class="calendar-navigation">
+            <button type="button" id="planned-calendar-previous" aria-label="Previous month">‹</button>
+            <h3 class="calendar-month-label" id="planned-calendar-month"></h3>
+            <button type="button" id="planned-calendar-next" aria-label="Next month">›</button>
+            <button type="button" id="planned-calendar-today">Today</button>
+          </div>
+          <div id="planned-calendar-grid" class="calendar-grid" aria-label="Planned job dates"></div>
+          <section class="calendar-selected-day" aria-live="polite">
+            <h3 id="planned-calendar-selected-date"></h3>
+            <ul id="planned-calendar-day-list" class="calendar-selected-list planned-list"></ul>
+          </section>
+          <section class="calendar-extra-records" aria-live="polite">
+            <h3>Date TBD</h3>
+            <ul id="planned-calendar-tbd-list" class="calendar-selected-list planned-list"></ul>
+          </section>
+        </section>
       </section>
     </main>
 

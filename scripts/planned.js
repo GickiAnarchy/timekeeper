@@ -4,6 +4,7 @@ import {
   populateCustomerDropdowns
 } from './models.js';
 import { asValidDate, plannedDateStatus, plannedJobsForCompletedShift } from './domain.mjs';
+import { setupCalendarDisplay } from './calendar-view.mjs';
 
 // Planned-job helpers are shared by Home, Clock, Shifts, and this page. Keep the
 // page controller scoped to Planned so those imports do not bind unrelated DOM.
@@ -116,6 +117,8 @@ export function watchPlannedDayChange(refresh, doc = document, view = window) {
 
 async function initializePlannedPage() {
   const plannedList = document.getElementById('planned-list');
+  const plannedCalendarDayList = document.getElementById('planned-calendar-day-list');
+  const plannedCalendarTbdList = document.getElementById('planned-calendar-tbd-list');
   const addButton = document.getElementById('add-button');
   const modal = document.getElementById('add-modal');
   const form = document.getElementById('add-form');
@@ -132,6 +135,7 @@ async function initializePlannedPage() {
   const filterButtons = [...document.querySelectorAll('.filter-button')];
   let activeFilter = 'open';
   let editingJobId = null;
+  let calendarDisplay;
 
   await store.loadPageData({ customers: true, planned: true });
   populateCustomerDropdowns(customerSelect);
@@ -204,22 +208,67 @@ async function initializePlannedPage() {
     return item;
   }
 
-  function renderJobs() {
-    // List updates must not strand keyboard users on the page body.
-    const focusedButton = plannedList.contains(document.activeElement) ? document.activeElement : null;
-    const focusedId = focusedButton?.dataset.id;
-    const focusedAction = focusedButton?.dataset.action;
-    updateSummary();
-    const visibleJobs = sortedJobs().filter(job => {
+  function visibleJobs() {
+    return sortedJobs().filter(job => {
       if (activeFilter === 'open') return !job.isComplete;
       if (activeFilter === 'completed') return job.isComplete;
       return true;
     });
+  }
+
+  function renderCalendarDay(date, jobs) {
+    document.getElementById('planned-calendar-selected-date').textContent = formatJobDate.format(date);
+    plannedCalendarDayList.replaceChildren();
+    if (!jobs.length) {
+      plannedCalendarDayList.appendChild(makeElement('li', 'empty-state', 'No jobs match this filter on this date.'));
+      return;
+    }
+    jobs.forEach(job => plannedCalendarDayList.appendChild(createJobCard(job)));
+  }
+
+  function renderCalendarTbdJobs() {
+    plannedCalendarTbdList.replaceChildren();
+    const jobs = visibleJobs().filter(job => !asDate(job.scheduledDate));
+    if (!jobs.length) {
+      plannedCalendarTbdList.appendChild(makeElement('li', 'empty-state', 'No date-TBD jobs match this filter.'));
+      return;
+    }
+    jobs.forEach(job => plannedCalendarTbdList.appendChild(createJobCard(job)));
+  }
+
+  calendarDisplay = setupCalendarDisplay({
+    listButton: document.getElementById('planned-list-view-button'),
+    calendarButton: document.getElementById('planned-calendar-view-button'),
+    listView: document.getElementById('planned-list-view'),
+    calendarView: document.getElementById('planned-calendar-view'),
+    previousButton: document.getElementById('planned-calendar-previous'),
+    nextButton: document.getElementById('planned-calendar-next'),
+    todayButton: document.getElementById('planned-calendar-today'),
+    monthLabel: document.getElementById('planned-calendar-month'),
+    grid: document.getElementById('planned-calendar-grid'),
+    getRecords: visibleJobs,
+    getDate: job => job.scheduledDate,
+    getSummary: jobs => {
+      const open = jobs.filter(job => !job.isComplete).length;
+      const complete = jobs.length - open;
+      return `${jobs.length} job${jobs.length === 1 ? '' : 's'} · ${open} open${complete ? `, ${complete} done` : ''}`;
+    },
+    renderSelectedDay: renderCalendarDay
+  });
+
+  function renderJobs() {
+    // List updates must not strand keyboard users on the page body.
+    const jobLists = [plannedList, plannedCalendarDayList, plannedCalendarTbdList];
+    const focusedButton = jobLists.some(list => list.contains(document.activeElement)) ? document.activeElement : null;
+    const focusedId = focusedButton?.dataset.id;
+    const focusedAction = focusedButton?.dataset.action;
+    updateSummary();
+    const jobs = visibleJobs();
 
     plannedList.replaceChildren();
-    jobCount.textContent = `${visibleJobs.length} ${visibleJobs.length === 1 ? 'job' : 'jobs'}`;
+    jobCount.textContent = `${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'}`;
 
-    if (visibleJobs.length === 0) {
+    if (jobs.length === 0) {
       const empty = makeElement('li', 'empty-state');
       const icon = makeElement('span', 'empty-state-icon', activeFilter === 'completed' ? '✓' : '＋');
       icon.setAttribute('aria-hidden', 'true');
@@ -229,13 +278,17 @@ async function initializePlannedPage() {
         : 'Add a planned job to keep upcoming work in view.');
       empty.append(icon, heading, message);
       plannedList.appendChild(empty);
+      calendarDisplay.refresh();
+      renderCalendarTbdJobs();
       if (focusedId) filterButtons.find(button => button.dataset.filter === activeFilter)?.focus({ preventScroll: true });
       return;
     }
 
-    visibleJobs.forEach(job => plannedList.appendChild(createJobCard(job)));
+    jobs.forEach(job => plannedList.appendChild(createJobCard(job)));
+    calendarDisplay.refresh();
+    renderCalendarTbdJobs();
     if (focusedId) {
-      const replacement = [...plannedList.querySelectorAll('button[data-action]')]
+      const replacement = jobLists.flatMap(list => [...list.querySelectorAll('button[data-action]')])
         .find(button => button.dataset.id === focusedId && button.dataset.action === focusedAction);
       (replacement || filterButtons.find(button => button.dataset.filter === activeFilter))?.focus({ preventScroll: true });
     }
@@ -356,7 +409,7 @@ async function initializePlannedPage() {
     if (event.target === modal) closeModal();
   });
 
-  plannedList.addEventListener('click', async event => {
+  async function handlePlannedJobAction(event) {
     const button = event.target.closest('button[data-action]');
     if (!button) return;
     const job = store.plannedJobs.find(candidate => candidate.id === button.dataset.id);
@@ -392,7 +445,11 @@ async function initializePlannedPage() {
         window.alert('This job could not be removed. Please try again.');
       }
     }
-  });
+  }
+
+  plannedList.addEventListener('click', handlePlannedJobAction);
+  plannedCalendarDayList.addEventListener('click', handlePlannedJobAction);
+  plannedCalendarTbdList.addEventListener('click', handlePlannedJobAction);
 
   renderJobs();
   watchPlannedDayChange(renderJobs);

@@ -1,0 +1,110 @@
+/* Shared optional calendar presentation for shifts, planned jobs, and ledger entries. */
+.view-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  background: var(--canvas);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+}
+
+.view-switch button {
+  min-height: 32px;
+  padding: 0 11px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.view-switch button[aria-pressed="true"] {
+  color: var(--green-deep);
+  background: var(--surface);
+  box-shadow: 0 1px 4px rgba(25, 54, 39, .1);
+}
+
+.calendar-view[hidden],
+.list-view[hidden] { display: none !important; }
+
+.calendar-view {
+  width: min(100%, 1060px);
+  margin: 12px auto 0;
+  padding: clamp(12px, 2.4vw, 20px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+}
+
+.calendar-navigation {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.calendar-navigation button {
+  min-width: 38px;
+  min-height: 38px;
+  padding: 0 10px;
+  color: var(--green-deep);
+  background: var(--green-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.calendar-navigation button:hover { background: var(--surface-hover); }
+.calendar-month-label { margin: 0; text-align: center; font-size: clamp(14px, 2vw, 18px); }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.calendar-weekday { padding: 5px 2px; color: var(--muted); text-align: center; font-size: 10px; font-weight: 750; }
+
+.calendar-day {
+  display: flex;
+  min-width: 0;
+  min-height: 68px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 7px;
+  color: var(--ink);
+  text-align: left;
+  background: var(--surface-muted);
+  border: 1px solid var(--border-soft);
+  border-radius: 9px;
+}
+
+.calendar-day:not(.calendar-day-empty):hover { background: var(--surface-hover); border-color: var(--green-line); }
+.calendar-day.has-records { background: var(--green-soft); border-color: var(--green-line); }
+.calendar-day.is-selected { outline: 2px solid var(--green); outline-offset: 1px; }
+.calendar-day[aria-current="date"] .calendar-day-number { color: var(--green-deep); text-decoration: underline; text-underline-offset: 3px; }
+.calendar-day-empty { background: transparent; border-color: transparent; }
+.calendar-day-number { font-size: 12px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.calendar-day-summary { display: -webkit-box; width: 100%; overflow: hidden; color: var(--ink-soft); font-size: 9px; line-height: 1.25; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+
+.calendar-selected-day { margin-top: 16px; padding-top: 13px; border-top: 1px solid var(--border-soft); }
+.calendar-selected-day > h3 { margin: 0 0 8px; font-size: 14px; }
+.calendar-selected-day > p { margin: 0; color: var(--muted); font-size: 11px; }
+.calendar-selected-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.calendar-selected-list > li { list-style: none; }
+.calendar-extra-records { margin-top: 16px; padding-top: 13px; border-top: 1px solid var(--border-soft); }
+.calendar-extra-records > h3 { margin: 0 0 8px; font-size: 13px; }
+.calendar-extra-records:empty { display: none; }
+
+@media (max-width: 600px) {
+  .view-switch button { min-height: 38px; padding-inline: 10px; }
+  .calendar-view { margin-top: 9px; padding: 10px; border-radius: 13px; }
+  .calendar-navigation { grid-template-columns: 38px minmax(0, 1fr) 38px auto; gap: 5px; }
+  .calendar-navigation button { min-width: 34px; min-height: 38px; padding-inline: 7px; }
+  .calendar-day { min-height: 57px; gap: 3px; padding: 5px 4px; border-radius: 7px; }
+  .calendar-day-summary { font-size: 8px; }
+  .calendar-weekday { font-size: 9px; }
+}
+
+@media (max-width: 390px) {
+  .calendar-grid { gap: 2px; }
+  .calendar-day { min-height: 50px; padding: 4px 3px; }
+  .calendar-day-summary { font-size: 7px; }
+}
