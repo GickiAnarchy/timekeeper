@@ -80,7 +80,7 @@ let pendingBackup = null;
 
 async function loadBackupWorkspace() {
   try {
-    await store.init();
+    await store.ensureInitialized();
     if (store.loadFailures.length) {
       downloadBackupButton.disabled = true;
       backupStatus.textContent = 'Some workspace data could not be loaded. Retry the visible Firestore warning before downloading a full backup.';

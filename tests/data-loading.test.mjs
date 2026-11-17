@@ -10,7 +10,7 @@ const modelSource = readProjectFile('scripts', 'models.js');
 
 // Extract the real class method so its coordination behavior can be tested without importing browser-only Firebase URLs.
 const methodStart = modelSource.indexOf('  async loadPageData(');
-const methodEnd = modelSource.indexOf('\n\n  async init()', methodStart);
+const methodEnd = modelSource.indexOf('\n\n  async init(', methodStart);
 assert.ok(methodStart >= 0 && methodEnd > methodStart, 'AppDataStore.loadPageData should exist');
 const loadPageData = new Function(`return ({ ${modelSource.slice(methodStart, methodEnd).trim()} }).loadPageData;`)();
 
@@ -103,8 +103,12 @@ test('page startup uses narrowly scoped fresh loads while backup retains the ful
     assert.match(source, /settleLedgerArchives: true/, `${file} must preserve ledger archive recovery`);
     assert.doesNotMatch(source, /store\.init\s*\(/, `${file} should use the narrowed settlement-aware loader`);
   }
-  assert.match(readProjectFile('scripts', 'settings.js'), /await store\.init\(\)/,
-    'full backup must retain full-workspace loading');
+  assert.match(readProjectFile('scripts', 'settings.js'), /await store\.ensureInitialized\(\)/,
+    'full backup must await the session-level full-workspace initializer');
+  assert.match(modelSource, /async ensureInitialized\(\)[\s\S]*?return this\.init\(\)/,
+    'full backup initialization must enter init only when this app session has not completed it');
+  assert.match(modelSource, /await this\.init\(\{ force: true \}\)/,
+    'explicit data imports and restores must still refresh the full workspace');
   assert.doesNotMatch(readProjectFile('calendar', 'cal.js'), /store\.init\s*\(/,
     'Calendar must remain a shift-only read-only page');
 });

@@ -15,6 +15,7 @@ import {
   normalizeShiftRecords
 } from './domain.mjs';
 import { DAILY_QUOTES, normalizeDailyQuotes } from './daily-quotes.mjs';
+import { getSessionStore } from './session-store.mjs';
 
 // The invoice entity belongs with the app's other persisted models. This keeps
 // the public Invoice export intact without a separate single-class module.
@@ -477,6 +478,8 @@ export class AppDataStore {
     this.plannedJobs = [];
     this.loadFailures = [];
     this.isAdmin = null;
+    // Keep the full initializer stable while the shell's iframe changes pages.
+    this.initPromise = null;
   }
   
   async loadPageData({
@@ -532,19 +535,49 @@ export class AppDataStore {
     }
   }
 
-  async init() {
+  async init({ force = false } = {}) {
     // Keep the full-workspace path for backups and other callers that need its archive recovery.
-    return this.loadPageData({
-      employees: true,
-      customers: true,
-      shifts: true,
-      payments: true,
-      invoices: true,
-      ledger: true,
-      ledgerArchives: true,
-      planned: true,
-      settleLedgerArchives: true
-    });
+    if (force && this.initPromise) {
+      try {
+        await this.initPromise;
+      } catch (error) {
+        // A failed prior attempt must not prevent an explicit refresh from retrying.
+      }
+      this.initPromise = null;
+    }
+    if (!this.initPromise) {
+      this.initPromise = this.loadPageData({
+        employees: true,
+        customers: true,
+        shifts: true,
+        payments: true,
+        invoices: true,
+        ledger: true,
+        ledgerArchives: true,
+        planned: true,
+        settleLedgerArchives: true
+      });
+    }
+
+    const initialization = this.initPromise;
+    try {
+      const result = await initialization;
+      // Failed reads remain retryable; successful full initialization is shared
+      // for the rest of this app session and is not repeated on route changes.
+      if (this.loadFailures.length && this.initPromise === initialization) {
+        this.initPromise = null;
+      }
+      return result;
+    } catch (error) {
+      if (this.initPromise === initialization) this.initPromise = null;
+      throw error;
+    }
+  }
+
+  // Backup pages can be revisited without invoking the full initializer again.
+  async ensureInitialized() {
+    if (this.initPromise) return this.initPromise;
+    return this.init();
   }
   
   // LEDGER --
@@ -1265,7 +1298,7 @@ export class AppDataStore {
         billingRate
       });
     }
-    await this.init();
+    await this.init({ force: true });
   }
   
   exportShiftData() {
@@ -1547,7 +1580,7 @@ export class AppDataStore {
       throw new Error(`This restore needs ${operationCount} Firestore writes; one atomic restore is limited to 500. No data was changed.`);
     }
     if (operationCount) await commitBatch(batch, 'Restoring the selected backup failed.');
-    await this.init();
+    await this.init({ force: true });
   }
   
   
@@ -1643,7 +1676,9 @@ export class AppDataStore {
   
 }
 
-export const store = new AppDataStore();
+// The shell owns one store for the lifetime of its document; iframe pages reuse
+// it while their scoped loaders continue to refresh whichever records they need.
+export const store = getSessionStore(() => new AppDataStore());
 
 const nameCollator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
 
