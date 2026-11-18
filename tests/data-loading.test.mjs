@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Timestamp } from '@firebase/firestore';
+import { asValidDate } from '../scripts/domain.mjs';
+import { calendarDateKey } from '../scripts/calendar-view.mjs';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const readProjectFile = (...parts) => readFileSync(join(projectRoot, ...parts), 'utf8');
@@ -13,6 +16,14 @@ const methodStart = modelSource.indexOf('  async loadPageData(');
 const methodEnd = modelSource.indexOf('\n\n  async init(', methodStart);
 assert.ok(methodStart >= 0 && methodEnd > methodStart, 'AppDataStore.loadPageData should exist');
 const loadPageData = new Function(`return ({ ${modelSource.slice(methodStart, methodEnd).trim()} }).loadPageData;`)();
+
+const shiftLoaderStart = modelSource.indexOf('  async loadShifts()');
+const shiftLoaderEnd = modelSource.indexOf('\n  async saveShift(', shiftLoaderStart);
+assert.ok(shiftLoaderStart >= 0 && shiftLoaderEnd > shiftLoaderStart, 'AppDataStore.loadShifts should exist');
+const loadShifts = new Function(
+  'getDocs', 'collection', 'db', 'Employee', 'Customer', 'WorkShift', 'asValidDate',
+  `return ({ ${modelSource.slice(shiftLoaderStart, shiftLoaderEnd).trim()} }).loadShifts;`
+);
 
 function makeStore({ failedLoad = null } = {}) {
   const calls = [];
@@ -78,6 +89,64 @@ test('a failed required collection read prevents ledger archive recovery', async
   assert.ok(store.loadFailures.some(error => error.message === 'ledger read failed'));
   assert.ok(!store.calls.includes('resumeArchives'));
   assert.ok(!store.calls.includes('scanSettledLedgers'));
+});
+
+test('Shift History hydrates Firestore Timestamps into dates the calendar can group', async () => {
+  const expectedStart = new Date(2026, 10, 16, 9, 15);
+  const expectedEnd = new Date(2026, 10, 16, 17, 30);
+  const breakStart = new Date(2026, 10, 16, 12, 0);
+  const breakEnd = new Date(2026, 10, 16, 12, 30);
+  const employee = { id: 'employee-1', name: 'Jordan' };
+  const customer = { id: 'customer-1', name: 'North Yard' };
+  const store = {
+    employees: new Map([[employee.id, employee]]),
+    customers: new Map([[customer.id, customer]]),
+    shifts: [],
+    loadFailures: []
+  };
+  class TestWorkShift {
+    constructor(loadedEmployee, loadedCustomer, id, note, isPaid, breaks, paidHours, isNotWork) {
+      Object.assign(this, { employee: loadedEmployee, customer: loadedCustomer, id, note, isPaid, breaks, paidHours, isNotWork });
+      this.clockInTime = null;
+      this.clockOutTime = null;
+    }
+  }
+  const snapshot = {
+    forEach(callback) {
+      callback({
+        id: 'shift-1',
+        data: () => ({
+          employeeId: employee.id,
+          custId: customer.id,
+          clockInTime: Timestamp.fromDate(expectedStart),
+          clockOutTime: Timestamp.fromDate(expectedEnd),
+          breaks: [{ start: Timestamp.fromDate(breakStart), end: Timestamp.fromDate(breakEnd) }],
+          isPaid: false
+        })
+      });
+    }
+  };
+  const loader = loadShifts(
+    async () => snapshot,
+    (_database, collectionName) => collectionName,
+    {},
+    class TestEmployee {},
+    class TestCustomer {},
+    TestWorkShift,
+    asValidDate
+  );
+
+  await loader.call(store);
+
+  assert.deepEqual(store.loadFailures, []);
+  assert.equal(store.shifts.length, 1);
+  const [shift] = store.shifts;
+  assert.equal(shift.clockInTime.getTime(), expectedStart.getTime());
+  assert.equal(shift.clockOutTime.getTime(), expectedEnd.getTime());
+  assert.equal(calendarDateKey(shift.clockInTime), '2026-11-16',
+    'the Firestore shift should be visible on its calendar day');
+  assert.equal(shift.breaks[0].start.getTime(), breakStart.getTime());
+  assert.equal(shift.breaks[0].end.getTime(), breakEnd.getTime());
 });
 
 test('page startup uses narrowly scoped fresh loads while backup retains the full initializer', () => {

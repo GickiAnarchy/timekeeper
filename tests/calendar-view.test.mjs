@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { Timestamp } from '@firebase/firestore';
 import {
   calendarDateKey,
   calendarMonthLabel,
@@ -120,6 +121,25 @@ test('calendar grid renders date-specific record summaries and marks the selecte
   assert.equal(dayButton.classList.contains('has-records'), true);
   assert.equal(grid.children.filter(child => child.tagName === 'span' && child.classList.contains('calendar-weekday')).length, 7);
   assert.equal(grid.children.length % 7, 0, 'weekday headers and days should fill complete week rows');
+});
+
+test('calendar grid groups Firestore Timestamp values by their local date', () => {
+  const timestamp = Timestamp.fromDate(new Date(2026, 10, 16, 9, 15));
+  const grid = new FakeElement('div');
+  assert.equal(calendarDateKey(timestamp), '2026-11-16');
+  renderCalendarGrid({
+    container: grid,
+    month: new Date(2026, 10, 1, 12),
+    records: [{ date: timestamp, label: 'Firestore shift' }],
+    getDate: record => record.date,
+    getSummary: records => `${records.length} saved record`,
+    selectedDate: new Date(2026, 10, 16, 12),
+    documentRef: fakeDocument
+  });
+  const dayButton = grid.children.find(child => child.dataset.calendarDate === '2026-11-16');
+  assert.ok(dayButton, 'the Firestore date should map to a visible calendar day');
+  assert.equal(dayButton.classList.contains('has-records'), true);
+  assert.match(dayButton.attributes['aria-label'], /1 saved record/);
 });
 
 test('List is the default; toggle, month navigation, day selection, and refresh update the view', () => {

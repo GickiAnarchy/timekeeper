@@ -1,4 +1,5 @@
 import {
+  asValidDate,
   actualShiftHours,
   invoiceShiftIds,
   roundDown15Minutes,
@@ -1107,12 +1108,14 @@ export class AppDataStore {
         const data = docSnap.data();
         const emp = (this.employees && this.employees.get(data.employeeId)) || new Employee(data.employeeId, 'Unknown Employee', 0);
         const site = (this.customers && this.customers.get(data.custId)) || new Customer(data.custId, 'Unknown Site');
-        const parsedBreaks = (data.breaks || []).map(b => ({ start: b.start ? new Date(b.start) : null, end: b.end ? new Date(b.end) : null }));
+        const parsedBreaks = (data.breaks || []).map(b => ({ start: asValidDate(b.start), end: asValidDate(b.end) }));
         
         const shift = new WorkShift(emp, site, docSnap.id, data.note || null, data.isPaid, parsedBreaks, data.paidHours, data.isNotWork);
         
-        shift.clockInTime = data.clockInTime ? new Date(data.clockInTime) : null;
-        shift.clockOutTime = data.clockOutTime ? new Date(data.clockOutTime) : null;
+        // Firestore returns Timestamp objects; convert them before the calendar
+        // groups completed shifts by local day.
+        shift.clockInTime = asValidDate(data.clockInTime);
+        shift.clockOutTime = asValidDate(data.clockOutTime);
         shift.plannedJobsPrompted = data.plannedJobsPrompted === true;
         
         this.shifts.push(shift);
@@ -1678,7 +1681,11 @@ export class AppDataStore {
 
 // The shell owns one store for the lifetime of its document; iframe pages reuse
 // it while their scoped loaders continue to refresh whichever records they need.
-export const store = getSessionStore(() => new AppDataStore());
+export const store = getSessionStore(
+  () => new AppDataStore(),
+  globalThis.window,
+  sharedStore => Object.setPrototypeOf(sharedStore, AppDataStore.prototype)
+);
 
 const nameCollator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
 

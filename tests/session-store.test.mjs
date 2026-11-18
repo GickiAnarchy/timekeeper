@@ -80,6 +80,35 @@ test('the first iframe boot creates one shell-owned store and later page boots r
   assert.deepEqual(secondStore.records.get('written-record'), { value: 'saved in the shared store' });
 });
 
+test('a reused iframe store rebinds Firestore methods to the current page runtime', () => {
+  const shell = makeWindow(null);
+  shell.parent = shell;
+  const firstPage = makeWindow(shell);
+  const secondPage = makeWindow(shell);
+  class FirstPageStore {
+    readFromFirestore() { return 'first iframe runtime'; }
+  }
+  class SecondPageStore {
+    readFromFirestore() { return 'current iframe runtime'; }
+  }
+
+  const store = getSessionStore(() => new FirstPageStore(), firstPage);
+  store.cachedRecords = ['shared session data'];
+  store.initPromise = Promise.resolve('already initialized');
+  const sharedInitialization = store.initPromise;
+  const nextPageStore = getSessionStore(
+    () => new SecondPageStore(),
+    secondPage,
+    existingStore => Object.setPrototypeOf(existingStore, SecondPageStore.prototype)
+  );
+
+  assert.equal(nextPageStore, store, 'page navigation should keep the same session data store');
+  assert.deepEqual(nextPageStore.cachedRecords, ['shared session data']);
+  assert.equal(nextPageStore.initPromise, sharedInitialization, 'once-per-session initialization should remain cached');
+  assert.equal(nextPageStore.readFromFirestore(), 'current iframe runtime',
+    'Firestore methods must come from the current iframe instead of the navigated-away page');
+});
+
 test('a failed full initialization can retry, and explicit restore refresh can force a reload', async () => {
   let attempts = 0;
   const store = {
@@ -119,6 +148,7 @@ test('the first iframe page registers the shared store, and Settings uses the fu
   const models = readProjectFile('scripts', 'models.js');
 
   assert.match(markup, /<iframe[^>]+name="main-content"[^>]+src="html\/home\.html"/);
-  assert.match(models, /getSessionStore\(\(\) => new AppDataStore\(\)\)/);
+  assert.match(models, /getSessionStore\(\s*\(\) => new AppDataStore\(\),\s*globalThis\.window,\s*sharedStore => Object\.setPrototypeOf\(sharedStore, AppDataStore\.prototype\)\s*\)/,
+    'each iframe page should bind the shared store to its current Firestore runtime');
   assert.match(settings, /await store\.ensureInitialized\(\)/);
 });

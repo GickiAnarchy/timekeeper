@@ -3,7 +3,7 @@ const APP_DATA_STORE_KEY = '__timekeeperAppDataStore';
 // A same-origin iframe can reuse the shell's store even though navigation
 // replaces the iframe document and its module scope. Standalone pages still
 // keep their own store, and cross-origin contexts never share a store.
-export function getSessionStore(createStore, currentWindow = globalThis.window) {
+export function getSessionStore(createStore, currentWindow = globalThis.window, rebindStore = null) {
   if (typeof createStore !== 'function') {
     throw new TypeError('A store factory is required.');
   }
@@ -28,6 +28,10 @@ export function getSessionStore(createStore, currentWindow = globalThis.window) 
         value: createStore(),
         writable: true
       });
+    } else if (typeof rebindStore === 'function') {
+      // Keep the shared record state, but let this page use methods connected
+      // to its own Firestore module/runtime rather than a navigated-away iframe.
+      rebindStore(storeHost[APP_DATA_STORE_KEY]);
     }
     return storeHost[APP_DATA_STORE_KEY];
   } catch (error) {

@@ -7,16 +7,19 @@ const monthFormatter = new Intl.DateTimeFormat(undefined, { month: 'long', year:
 
 // Calendar dates are normalized to local noon so date-only records never shift across time zones.
 export function normalizeCalendarDate(value) {
+  // Firestore snapshots provide Timestamp instances, which must be converted
+  // explicitly; otherwise new Date(timestamp) is an Invalid Date.
+  const source = typeof value?.toDate === 'function' ? value.toDate() : value;
   let date;
-  if (value instanceof Date) {
-    if (!Number.isFinite(value.getTime())) return null;
-    date = new Date(value.getFullYear(), value.getMonth(), value.getDate(), 12);
-  } else if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    const [year, month, day] = value.split('-').map(Number);
+  if (source instanceof Date) {
+    if (!Number.isFinite(source.getTime())) return null;
+    date = new Date(source.getFullYear(), source.getMonth(), source.getDate(), 12);
+  } else if (typeof source === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(source)) {
+    const [year, month, day] = source.split('-').map(Number);
     date = new Date(year, month - 1, day, 12);
     if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
-  } else if (value !== null && value !== undefined && value !== '') {
-    const parsed = new Date(value);
+  } else if (source !== null && source !== undefined && source !== '') {
+    const parsed = new Date(source);
     if (!Number.isFinite(parsed.getTime())) return null;
     date = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate(), 12);
   } else {
