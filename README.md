@@ -2,18 +2,6 @@
 
 Timekeeper is Mosher Lawns Manager, a browser-based work-hour and job tracker with an Android project.
 
-## Branch safety
-
-Use `master` for ongoing work and testing. `live-stable` remains the production branch. Do not change `live-stable` unless Corey explicitly authorizes it. This version-alignment change does not authorize changes to APK assets or links, GitHub’s default branch, Pages publishing, Firebase settings or production data, or billing.
-
-## Source version and APK status
-
-The selected canonical source version is **1.8.0**. The web app badge, `package.json` and `package-lock.json`, and Android `versionName` are aligned to this value. Android `versionCode` is **10800**, which is higher than the **10501** code read from the manifest of the previously released APK.
-
-The existing **Get the app** link in `index.html` is intentionally unchanged. It still points to `Mosher_Lawns_Time_v1.5.1_1792472720850.apk` under the GitHub release tagged `v1.5`; that downloadable APK is the previous artifact, not a 1.8.0 build. No APK was built or uploaded as part of this source-version update. The link and downloadable artifact must remain understood as the old release until a replacement APK is separately built and published.
-
-Before shipping an Android update, review an app-identity mismatch: the previous APK manifest reports package name `com.gickistudios.timekeeper`, while the current `android/app/build.gradle` declares `applicationId "com.gickistudios.moshertime"`. These IDs may cause Android to treat a future build as a different app instead of an in-place upgrade. This change deliberately does not alter the application ID; resolve and test the intended upgrade behavior before publishing.
-
 ## Android release checklist
 
 1. **Keep production separate.** Do the work and testing on `master`. Treat `live-stable` as production and get Corey’s explicit authorization before changing it.
