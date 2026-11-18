@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   createInvoiceItem,
+  getCustomerById,
   groupInvoiceItemsByType,
   invoiceTotal,
   plannedJobsForCompletedShift
@@ -46,6 +48,19 @@ test('Invoice.addItem accepts (name, type, value), defaults to General, and nets
   assert.equal(invoice.totalBill(), 103.5);
   assert.throws(() => invoice.addItem('Invalid credit', 'payment', -5), /greater than zero/);
   assert.throws(() => invoice.addItem('Invalid amount', 'general', Number.NaN), /valid invoice item amount/);
+});
+
+test('invoice creation resolves a customer held in a Map from another window realm', () => {
+  const customer = { id: 'customer-1', name: 'Customer One' };
+  const sharedCustomers = vm.runInNewContext('new Map([["customer-1", customer]])', { customer });
+  assert.equal(sharedCustomers instanceof Map, false);
+  assert.equal(getCustomerById(sharedCustomers, 'customer-1'), customer);
+  assert.equal(getCustomerById(new Map([[1, customer]]), '1'), customer);
+  assert.equal(getCustomerById([customer], 'customer-1'), customer);
+
+  const invoiceSource = readProjectFile('scripts', 'invoice.js');
+  assert.match(invoiceSource, /getCustomerById\(store\.customers, custId\)/);
+  assert.doesNotMatch(invoiceSource, /store\.customers instanceof Map/);
 });
 
 test('invoice type groups retain original item indices and employee-grouped expandable labor data', () => {

@@ -5,6 +5,22 @@ export function asValidDate(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+// A shared store can hold a Map created by the shell or a previous iframe.
+// Check for the Map interface instead of instanceof, which fails across realms.
+export function getCustomerById(customers, customerId) {
+  const id = String(customerId ?? '');
+  if (!id) return null;
+
+  if (typeof customers?.get === 'function') {
+    return customers.get(id) ?? customers.get(Number(id)) ?? null;
+  }
+  if (Array.isArray(customers)) {
+    return customers.find(customer => String(customer?.id) === id) ?? null;
+  }
+  if (customers && typeof customers === 'object') return customers[id] ?? null;
+  return null;
+}
+
 export function sortLedgerEntriesByDate(entries = []) {
   const dateValue = value => asValidDate(value)?.getTime() ?? Number.NEGATIVE_INFINITY;
   return [...entries].sort((a, b) => {

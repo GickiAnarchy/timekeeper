@@ -4,8 +4,9 @@ import {
   store,
   populateCustomerDropdowns,
   Invoice
-} from './models.js?v=runtime-repair-5';
+} from './models.js?v=runtime-repair-6';
 import {
+  getCustomerById,
   invoiceShiftIds as getInvoiceShiftIds,
   makeShiftInvoiceLine,
   shiftInvoiceLineStatus,
@@ -13,7 +14,7 @@ import {
   groupInvoiceItemsByType,
   invoiceItemSignedValue,
   persistInvoicePaidStatus
-} from './domain.mjs?v=runtime-repair-5';
+} from './domain.mjs?v=runtime-repair-6';
 import { initializeTableSorting, sortTableRows } from './table-sort.mjs';
 
 
@@ -83,19 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   addInvBtn.addEventListener('click', async () => {
     const custId = custSelect.value;
-    let customer = null;
-
-    if (store.customers instanceof Map) {
-      customer = store.customers.get(custId) || store.customers.get(Number(custId));
-      console.log(`${custId} 1`);
-    } else if (typeof store.customers === 'object' && store.customers !== null) {
-      customer = store.customers[custId];
-      console.log(`${custId} 2`);
-    } else if (Array.isArray(store.customers)) {
-      customer = store.customers.find(c => String(c.id) === String(custId));
-      console.log(`${custId} 3`);
-    }
-
+    const customer = getCustomerById(store.customers, custId);
     if (!customer) return;
 
     const newInvoice = new Invoice(customer);
