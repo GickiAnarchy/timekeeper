@@ -87,10 +87,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (store.customers instanceof Map) {
       customer = store.customers.get(custId) || store.customers.get(Number(custId));
+      console.log(`${custId} 1`);
     } else if (typeof store.customers === 'object' && store.customers !== null) {
       customer = store.customers[custId];
+      console.log(`${custId} 2`);
     } else if (Array.isArray(store.customers)) {
       customer = store.customers.find(c => String(c.id) === String(custId));
+      console.log(`${custId} 3`);
     }
 
     if (!customer) return;
