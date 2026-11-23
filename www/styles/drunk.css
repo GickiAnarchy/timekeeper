@@ -4,12 +4,12 @@ html {}
 
 body {
   background-color: #000000;
-  background-image: url('../brb.png');
+  background-image: url('../assets/images/brb.png');
   background-repeat: no-repeat;
   background-attachment: fixed;
-  background-position: 50% 50%;
-  background-size: 75% auto; /* Gives your contained logo/graphic room to drift without distortion */
-  height: 50vh;
+  background-position: 50% 70%;
+  background-size: 65% auto; /* Gives your contained logo/graphic room to drift without distortion */
+  height: 45vh;
   margin: 0;
   
   animation: drunkenBgPan 15s ease-in-out infinite alternate;
@@ -56,14 +56,15 @@ body {
 .spacer-div {
   display: block;
   width: 100%;
-  height: 95%;
+  height: 75%;
 }
 
 .small-print {
-  color: var(--green);
+  color: white;
   display: flex;
   position: absolute;
   justify-self: center;
+  flex-direction: column;
   bottom: 15px;
   text-align: center;
 }
