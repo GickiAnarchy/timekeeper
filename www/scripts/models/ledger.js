@@ -20,11 +20,18 @@ class Ledger {
   }
 
   addEntry(newEntry) {
-  if (typeof newEntry !== LedgerEntry) {
-    return;
-  }
-  //TODO : Add check for the same id in the entries list.
+    // Require an actual entry object so malformed values cannot enter the ledger.
+    if (!(newEntry instanceof LedgerEntry)) {
+      return false;
+    }
+
+    // IDs identify saved records, so never append a second copy of the same entry.
+    if (this.entries.some((entry) => entry?.id === newEntry.id)) {
+      return false;
+    }
+
     this.entries.push(newEntry);
+    return true;
   }
 
   sortByDate() {
