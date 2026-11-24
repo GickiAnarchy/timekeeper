@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
+    "test:rework": "node --test tests/workshift.test.mjs tests/shift-service.test.mjs tests/rework-todos.test.mjs tests/www-app.test.mjs",
     "test:firebase-emulator": "ROOT=\"$PWD\"; WORK=\"$(mktemp -d)\"; trap 'rm -rf \"$WORK\"' EXIT; ln -s \"$ROOT/firestore.rules\" \"$WORK/firestore.rules\"; printf '{\"firestore\":{\"rules\":\"firestore.rules\"},\"emulators\":{\"firestore\":{\"host\":\"127.0.0.1\",\"port\":8080},\"ui\":{\"enabled\":false},\"singleProjectMode\":true}}' > \"$WORK/firebase.json\"; cd \"$WORK\" && \"$ROOT/node_modules/.bin/firebase\" emulators:exec --config \"$WORK/firebase.json\" --project demo-timekeeper --only firestore --log-verbosity=QUIET \"node --test $ROOT/tests/security-emulator.test.mjs\""
   },
   "devDependencies": {

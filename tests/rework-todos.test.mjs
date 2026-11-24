@@ -1,19 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { runInNewContext } from 'node:vm';
 import test from 'node:test';
-
-// Load the legacy branch model in a small isolated context without changing its script format.
-const ledgerSource = await readFile(new URL('../www/scripts/models/ledger.js', import.meta.url), 'utf8');
-const modelContext = {
-  crypto: { randomUUID: () => 'generated-ledger-entry-id' },
-  console,
-  Date,
-};
-runInNewContext(`${ledgerSource}\nglobalThis.LedgerForTest = Ledger; globalThis.LedgerEntryForTest = LedgerEntry;`, modelContext);
-
-const Ledger = modelContext.LedgerForTest;
-const LedgerEntry = modelContext.LedgerEntryForTest;
+import { Ledger, LedgerEntry } from '../www/scripts/models/ledger.js';
 
 function makeEntry(id, note) {
   return new LedgerEntry({
@@ -41,6 +29,13 @@ test('Ledger.addEntry rejects duplicate IDs without replacing the original', () 
   assert.equal(ledger.addEntry(makeEntry('entry-1', 'Duplicate')), false);
   assert.equal(ledger.entries.length, 1);
   assert.equal(ledger.entries[0].note, 'Original');
+});
+
+test('Ledger.addEntry rejects another row linked to the same source shift', () => {
+  const ledger = new Ledger();
+  ledger.addEntry(new LedgerEntry({ ...makeEntry('entry-1', 'Original'), sourceShiftId: 'shift-1' }));
+  assert.equal(ledger.addEntry(new LedgerEntry({ ...makeEntry('entry-2', 'Retry'), sourceShiftId: 'shift-1' })), false);
+  assert.equal(ledger.entries.length, 1);
 });
 
 test('Ledger.addEntry rejects non-entry values', () => {

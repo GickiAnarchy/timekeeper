@@ -1,8 +1,9 @@
 
 
-class LedgerEntry {
-  constructor({ id, date, entryType, amount, note }) {
+export class LedgerEntry {
+  constructor({ id, employeeId = null, date, entryType, amount, note, hours = null, sourceShiftId = null }) {
     this.id = id || crypto.randomUUID();
+    this.employeeId = employeeId;
     this.date = date;
     if (entryType !== 'general' && entryType !== 'advance') {
       entryType = 'general';
@@ -10,11 +11,13 @@ class LedgerEntry {
     this.entryType = entryType;
     this.amount = amount;
     this.note = note;
+    this.hours = hours;
+    this.sourceShiftId = sourceShiftId;
   }
 }
 
 
-class Ledger {
+export class Ledger {
   constructor(entries = []) {
     this.entries = entries;       //  List of LedgerEntry 
   }
@@ -27,6 +30,10 @@ class Ledger {
 
     // IDs identify saved records, so never append a second copy of the same entry.
     if (this.entries.some((entry) => entry?.id === newEntry.id)) {
+      return false;
+    }
+    // A shift is a second idempotency key even if a caller generates a new row ID.
+    if (newEntry.sourceShiftId && this.entries.some((entry) => entry?.sourceShiftId === newEntry.sourceShiftId)) {
       return false;
     }
 

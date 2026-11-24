@@ -1,14 +1,74 @@
 <!doctype html>
-
 <html lang="en">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <meta name="theme-color" content="#153a2a">
     <link rel="stylesheet" href="./styles/style.css">
-    <title>Mosher Lawns · Timekeeper</title>
+    <title>Timekeeper · Shifts &amp; payroll</title>
     <script type="module" src="./scripts/index.js" defer></script>
   </head>
   <body>
+    <main class="app-shell" id="app">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">TIMEKEEPER</p>
+          <h1>Shifts &amp; payroll</h1>
+          <p class="intro">A simple place to track a shift and its employee payroll entry.</p>
+        </div>
+        <p class="storage-notice"><strong>Saved on this browser only.</strong> This version does not sync across devices.</p>
+      </header>
 
+      <p id="app-status" class="status" role="status" aria-live="polite"></p>
+
+      <section class="panel setup-panel" aria-labelledby="setup-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">FIRST, SET UP</p><h2 id="setup-title">Employees &amp; customers</h2></div>
+          <p>Add the people and job before clocking in.</p>
+        </div>
+        <div class="setup-grid">
+          <form id="employee-form" class="entry-form">
+            <h3>Add employee</h3>
+            <label>Employee name<input name="name" type="text" autocomplete="name" required maxlength="80"></label>
+            <label>Employee payroll wage <span class="field-hint">per hour</span><input name="wage" type="number" min="0" step="0.01" inputmode="decimal" required></label>
+            <button type="submit">Save employee</button>
+            <ul id="employee-list" class="directory-list" aria-label="Saved employees"></ul>
+          </form>
+          <form id="customer-form" class="entry-form">
+            <h3>Add customer</h3>
+            <label>Customer name<input name="name" type="text" required maxlength="100"></label>
+            <label>Customer billing rate <span class="field-hint">per hour; billing only</span><input name="hourlyRate" type="number" min="0" step="0.01" inputmode="decimal" required></label>
+            <button type="submit">Save customer</button>
+            <ul id="customer-list" class="directory-list" aria-label="Saved customers"></ul>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel clock-panel" aria-labelledby="clock-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">CLOCK</p><h2 id="clock-title">Active shifts</h2></div>
+          <p>One active shift per employee. Clock times round to the nearest quarter-hour direction.</p>
+        </div>
+        <form id="clock-in-form" class="clock-in-form">
+          <label>Employee<select id="clock-employee" name="employeeId" required></select></label>
+          <label>Customer / job<select id="clock-customer" name="customerId" required></select></label>
+          <button id="clock-in-button" type="submit">Clock in</button>
+        </form>
+        <div id="active-shifts" class="record-list" aria-live="polite"></div>
+      </section>
+
+      <div class="records-grid">
+        <section class="panel" aria-labelledby="history-title">
+          <div class="section-heading"><div><p class="eyebrow">RECORDS</p><h2 id="history-title">Completed shifts</h2></div></div>
+          <div id="shift-history" class="record-list"></div>
+        </section>
+        <section class="panel" aria-labelledby="ledger-title">
+          <div class="section-heading"><div><p class="eyebrow">PAYROLL</p><h2 id="ledger-title">Employee ledger</h2></div></div>
+          <div id="payroll-ledger" class="record-list"></div>
+        </section>
+      </div>
+
+      <footer class="page-footer">Local browser data can be cleared by browser settings. There is no cloud backup in this version.</footer>
+    </main>
   </body>
 </html>

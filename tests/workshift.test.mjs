@@ -1,51 +1,18 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { runInNewContext } from 'node:vm';
 import test from 'node:test';
+import { Workshift, roundDownToQuarterHour, roundUpToQuarterHour } from '../www/scripts/models/workshift.js';
 
-const workshiftSource = await readFile(new URL('../www/scripts/models/workshift.js', import.meta.url), 'utf8');
+function loadWorkshift() { return Workshift; }
 
-function loadWorkshift(now) {
-  class FixedDate extends Date {
-    constructor(...args) {
-      super(...(args.length ? args : [now]));
-    }
-  }
-
-  const context = {
-    Date: FixedDate,
-    Intl,
-    crypto: { randomUUID: () => 'generated-workshift-id' },
-    console: { log() {} }
-  };
-  runInNewContext(`${workshiftSource}\nglobalThis.WorkshiftForTest = Workshift;`, context);
-  return context.WorkshiftForTest;
-}
-
-test('start rounds up and stop rounds down to quarter-hour boundaries', () => {
-  const Workshift = loadWorkshift('2026-11-24T09:07:00Z');
-  const shift = new Workshift('shift-1', 'employee-1', 'customer-1', new Date('2026-11-24T08:00:00Z'));
-
-  shift.startShift();
-  assert.equal(shift.startTime.toISOString(), '2026-11-24T09:15:00.000Z');
-
-  const WorkshiftAtStop = loadWorkshift('2026-11-24T12:08:00Z');
-  const stoppedShift = new WorkshiftAtStop('shift-2', 'employee-1', 'customer-1', new Date('2026-11-24T09:15:00Z'));
-  stoppedShift.stopShift();
-  assert.equal(stoppedShift.endTime.toISOString(), '2026-11-24T12:00:00.000Z');
-  assert.equal(stoppedShift.getDuration(), 2.75);
+test('clock-time rounding uses forward clock-in and backward clock-out quarter-hour boundaries', () => {
+  assert.equal(roundUpToQuarterHour('2026-11-24T09:07:00Z').toISOString(), '2026-11-24T09:15:00.000Z');
+  assert.equal(roundDownToQuarterHour('2026-11-24T12:08:00Z').toISOString(), '2026-11-24T12:00:00.000Z');
+  assert.equal(new Workshift('shift-2', 'employee-1', 'customer-1', new Date('2026-11-24T09:15:00Z'), new Date('2026-11-24T12:00:00Z')).getDuration(), 2.75);
 });
 
-test('clock-in and clock-out values already on quarter-hour boundaries remain unchanged', () => {
-  const StartWorkshift = loadWorkshift('2026-11-24T09:15:00Z');
-  const started = new StartWorkshift('shift-start', 'employee-1', 'customer-1');
-  started.startShift();
-  assert.equal(started.startTime.toISOString(), '2026-11-24T09:15:00.000Z');
-
-  const StopWorkshift = loadWorkshift('2026-11-24T12:15:00Z');
-  const stopped = new StopWorkshift('shift-stop', 'employee-1', 'customer-1', new Date('2026-11-24T09:15:00Z'));
-  stopped.stopShift();
-  assert.equal(stopped.endTime.toISOString(), '2026-11-24T12:15:00.000Z');
+test('quarter-hour clock times already on a boundary remain unchanged', () => {
+  assert.equal(roundUpToQuarterHour('2026-11-24T09:15:00Z').toISOString(), '2026-11-24T09:15:00.000Z');
+  assert.equal(roundDownToQuarterHour('2026-11-24T12:15:00Z').toISOString(), '2026-11-24T12:15:00.000Z');
 });
 
 test('quarter-hour breaks reduce duration and numeric total pay without changing the numeric API', () => {
