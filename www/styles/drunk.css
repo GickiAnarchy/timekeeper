@@ -53,6 +53,8 @@ body {
   }
 }
 
+
+/*TODO : Figure out how to move the spacer-div and small print to the bottom and centered.*/
 .spacer-div {
   display: block;
   width: 100%;

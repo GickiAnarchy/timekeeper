@@ -20,14 +20,23 @@ class Ledger {
   }
 
   addEntry(newEntry) {
-  if (typeof newEntry !== LedgerEntry ) {
+  if (typeof newEntry !== LedgerEntry) {
     return;
   }
+  //TODO : Add check for the same id in the entries list.
     this.entries.push(newEntry);
   }
 
   sortByDate() {
     this.entries.sort((a, b) => new Date(a.date) - new Date(b.date));
+  }
+  
+  sortByType() {
+    this.entries.sort((a,b) => {
+      const order = { 'general': 1, 'advance': 2};
+      return order[a.entryType] - order[b.entryType]
+    });
+    console.log("Ledger sorted by entry type.");
   }
 
   getTotal() {
@@ -61,7 +70,5 @@ class Ledger {
     });
     return totalGeneral;
   }
-
-
 
 }
