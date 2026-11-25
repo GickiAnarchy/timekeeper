@@ -1,0 +1,22 @@
+{
+  "name": "timekeeper-react-native",
+  "version": "2.0.0",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "expo": "~58.0.26",
+    "expo-crypto": "~58.0.8",
+    "expo-sqlite": "~58.0.18",
+    "expo-status-bar": "~58.0.5",
+    "react": "19.3.0",
+    "react-native": "0.88.1"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "test": "node --test"
+  },
+  "private": true
+}
